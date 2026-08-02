@@ -47,3 +47,6 @@ src/main/resources/database.properties
 
 #... и скрипты по развертыванию на удаленном сервере
 deploy-*.sh
+
+#не надо коммитить серкеты для сборки
+.env
