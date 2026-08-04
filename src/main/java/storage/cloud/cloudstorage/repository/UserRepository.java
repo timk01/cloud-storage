@@ -8,9 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-
-
-    //User save(User entity);
+    //User save(User entity); - НЕ НУЖНО!
 
     Optional<User> findByUserName(String name);
 

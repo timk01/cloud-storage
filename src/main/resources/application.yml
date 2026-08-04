@@ -4,7 +4,32 @@ spring:
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
 
+  liquibase:
+    enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  session:
+    data:
+      redis:
+        namespace: cloud-storage
+
 minio:
   url: ${MINIO_URL:http://localhost:9000}
   user: ${MINIO_USER}
   password: ${MINIO_PASSWORD}
+
+server:
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        secure: false
