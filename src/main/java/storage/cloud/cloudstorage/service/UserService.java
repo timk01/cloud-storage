@@ -1,10 +1,12 @@
 package storage.cloud.cloudstorage.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import storage.cloud.cloudstorage.dto.UserLoginDto;
-import storage.cloud.cloudstorage.dto.UserRegisterDto;
+import storage.cloud.cloudstorage.exception.InvalidLoginDataException;
+import storage.cloud.cloudstorage.exception.UserAlreadyExistsException;
+import storage.cloud.cloudstorage.request.UserLoginRequest;
+import storage.cloud.cloudstorage.request.UserRegisterRequst;
 import storage.cloud.cloudstorage.entity.User;
 import storage.cloud.cloudstorage.repository.UserRepository;
 import storage.cloud.cloudstorage.response.UserResponse;
@@ -14,30 +16,26 @@ import storage.cloud.cloudstorage.response.UserResponse;
 public class UserService {
 
     private final UserRepository repository;
+    private final PasswordEncoder encoder;
 
-    public UserResponse register(UserRegisterDto userRegisterDto) {
+    public UserResponse register(UserRegisterRequst userRegisterDto) {
         if (repository.existsByUserName(userRegisterDto.userName())) {
-            throw new RuntimeException("User name is already taken");
+            throw new UserAlreadyExistsException("User name is already taken");
         }
 
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         String encodedPass = encoder.encode(userRegisterDto.password());
-
         User user = repository.save(new User(userRegisterDto.userName(), encodedPass));
-        return new UserResponse(user.getId(), user.getUserName()); //convert to back, since user -- entity
-        //additionally, make encoder as field
+        return new UserResponse(user.getId(), user.getUserName());
     }
 
-    //стринга в возвращаемом - временно, нужен по идее ДТО
-    public UserResponse login(UserLoginDto userLoginDto) {
+    public UserResponse login(UserLoginRequest userLoginDto) {
         User user = repository.findByUserName(userLoginDto.userName())
-                .orElseThrow(() -> new RuntimeException("User is not found"));
+                .orElseThrow(() -> new InvalidLoginDataException("Invalid credentials"));
 
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         if (!encoder.matches(userLoginDto.password(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentianls");
+            throw new InvalidLoginDataException("Invalid credentials");
         }
 
-        return new UserResponse(user.getId(), user.getUserName()); //convert to back, since user -- entity
+        return new UserResponse(user.getId(), user.getUserName());
     }
 }

@@ -1,11 +1,9 @@
-package storage.cloud.cloudstorage.dto;
+package storage.cloud.cloudstorage.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record UserLoginDto(
-
-        //toDo какие пля - те же ?
+public record UserLoginRequest(
         @NotBlank(message = "User name should not be null and must contain at least one non-whitespace character")
         @Size(min = 2, max = 100, message = "User name must be between {min} and {max} characters")
         String userName,

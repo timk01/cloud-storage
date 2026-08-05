@@ -6,9 +6,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import storage.cloud.cloudstorage.dto.UserLoginDto;
-import storage.cloud.cloudstorage.dto.UserRegisterDto;
-import storage.cloud.cloudstorage.entity.User;
+import storage.cloud.cloudstorage.exception.UnauthorizedActionException;
+import storage.cloud.cloudstorage.exception.UserNotAuthenticatedException;
+import storage.cloud.cloudstorage.request.UserLoginRequest;
+import storage.cloud.cloudstorage.request.UserRegisterRequst;
 import storage.cloud.cloudstorage.response.UserResponse;
 import storage.cloud.cloudstorage.service.UserService;
 
@@ -20,18 +21,25 @@ public class UserController {
     private final UserService service;
 
     @PostMapping("/auth/sign-up")
-    public ResponseEntity<String> registerUser(@Valid @RequestBody UserRegisterDto userRegisterDto) {
-        try {
-            UserResponse register = service.register(userRegisterDto);
-            return new ResponseEntity<>(register.userName(), HttpStatus.CREATED);
-        } catch (RuntimeException rte) {
-            return new ResponseEntity<>(rte.getMessage(), HttpStatus.BAD_REQUEST);
+    public ResponseEntity<String> registerUser(@Valid @RequestBody UserRegisterRequst userRegisterDto) {
+        UserResponse register = service.register(userRegisterDto);
+        return new ResponseEntity<>(register.userName(), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/auth/sign-out")
+    public ResponseEntity<Void> logout(@SessionAttribute(name = "userId", required = false) Long userId,
+                                       HttpSession session
+    ) {
+        if (userId == null) {
+            throw new UserNotAuthenticatedException("Cannot do logout since user is not authorized");
         }
-        //подумать про ошибку ? (тут же не должно всее превращаться в 3 проект)
+
+        session.invalidate();
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PostMapping("/auth/sign-in")
-    public ResponseEntity<String> login(@Valid @RequestBody UserLoginDto userLoginDto, HttpSession session) {
+    public ResponseEntity<String> login(@Valid @RequestBody UserLoginRequest userLoginDto, HttpSession session) {
         UserResponse login = service.login(userLoginDto);
         session.setAttribute("userId", login.id());
         session.setAttribute("userName", login.userName());
@@ -45,9 +53,7 @@ public class UserController {
             @SessionAttribute(name = "userName", required = false) String userName
     ) {
         if (userId == null || userName == null) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body("You must be logged in to view this page."); //401! потом глобалЭксепшенХенлдр
+            throw new UnauthorizedActionException("User is not authorized");
         }
 
         return new ResponseEntity<>(userName, HttpStatus.OK);
