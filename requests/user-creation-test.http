@@ -1,0 +1,195 @@
+@baseUrl = http://localhost:8080/api
+
+### 201 - Successfully create a user
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": "Timur",
+  "password": "superPassword123"
+}
+
+> {%
+    client.test("Successfully create a user", function() {
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        client.assert(body.userName === "Timur", "Server should return name of user");
+    });
+%}
+
+### 201 - Successfully create a user (with min length user's name)
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": "tim",
+  "password": "superPassword123"
+}
+
+
+> {%
+    client.test("Successfully create a user", function() {
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        client.assert(body.userName === "tim", "Server should return name of user - username is short");
+    });
+%}
+
+### 201 - Successfully create a user (with max length user's name)
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "password": "superPassword123"
+}
+
+> {%
+    client.test("Successfully create a user", function() {
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        client.assert(body.userName === "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "Server should return name of user - username is long");
+    });
+%}
+
+### 201 - Successfully create a user (with min password length)
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": "tim1",
+  "password": "222"
+}
+
+> {%
+    client.test("Successfully create a user", function() {
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        client.assert(body.userName === "tim1", "Server should return name of user - password is short");
+    });
+%}
+
+### 201 - Successfully create a user (with max password length)
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": "tim2",
+  "password": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}
+
+> {%
+    client.test("Successfully create a user", function() {
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        client.assert(body.userName === "tim2", "Server should return name of user - password is long");
+    });
+%}
+
+### 400 - User name is empty
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": "",
+  "password": "abc123"
+}
+
+> {%
+    client.test("Cannot create a user", function() {
+        client.assert(response.status === 400, "Response status is 400 since name is empty ");
+    });
+%}
+
+### 400 - User name is blank (spaces only)
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": " ",
+  "password": "abc123"
+}
+
+> {%
+    client.test("Cannot create a user", function() {
+        client.assert(response.status === 400, "Response status is 400 since name is blank ");
+    });
+%}
+
+### 400 - User name is too short
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": "aa",
+  "password": "abc123"
+}
+
+> {%
+    client.test("Cannot create a user", function() {
+        client.assert(response.status === 400, "Response status is 400 since name is too short");
+    });
+%}
+
+### 400 - Password is empty
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": "tim1",
+  "password": ""
+}
+
+> {%
+    client.test("Cannot create a user", function() {
+        client.assert(response.status === 400, "Response status is 400 since password is empty ");
+    });
+%}
+
+### 400 - Password is blank (spaces only)
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": "tim1",
+  "password": " "
+}
+
+> {%
+    client.test("Cannot create a user", function() {
+        client.assert(response.status === 400, "Response status is 400 since password is blank ");
+    });
+%}
+
+### 400 - Password is too short
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": "tim1",
+  "password": "aa"
+}
+
+> {%
+    client.test("Cannot create a user", function() {
+        client.assert(response.status === 400, "Response status is 400 since password is too short");
+    });
+%}
+
+### 409 - User name is already taken
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": "Timur",
+  "password": "superPassword123"
+}
+
+> {%
+    client.test("Cannot create a user", function() {
+        client.assert(response.status === 409, "Response status is 409 since user name is already taken");
+    });
+%}
+
+###

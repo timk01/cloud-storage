@@ -1,0 +1,159 @@
+@baseUrl = http://localhost:8080/api
+
+@regUser = Timur_auto
+@regPass = superPassword123
+
+### Prereg (user creation) - method is needed for success test of log-in
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "userName": "Timur_auto_{{$uuid}}",
+  "password": "{{regPass}}"
+}
+
+> {%
+    client.global.set("active_user", response.body.userName);
+    client.global.set("active_pass", regPass);
+%}
+
+### 200 - Successfully logged-in (success)
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "userName": "{{active_user}}",
+  "password": "{{active_pass}}"
+}
+
+> {%
+    client.test("Successfully logged-in", function () {
+        client.assert(response.status === 200, "Response status is 200");
+        const body = response.body;
+        const expected_user = client.global.get("active_user")
+        client.assert(body.userName === expected_user, "Server should return name of user");
+    });
+%}
+
+### 400 - Cannot log-in since user name is empty
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "userName": "",
+  "password": "{{active_pass}}"
+}
+
+> {%
+    client.test("Cannot log-in since user name is empty", function() {
+        client.assert(response.status === 400, "Response status is 400 since name is empty ");
+    });
+%}
+
+### 400 - Cannot log-in since user name is blank (spaces only)
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "userName": " ",
+  "password": "{{active_pass}}"
+}
+
+
+> {%
+    client.test("Cannot log-in since user name is blank", function() {
+        client.assert(response.status === 400, "Response status is 400 since name is blank");
+    });
+%}
+
+### 400 - Cannot log-in since user name is too short
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "userName": "a",
+  "password": "{{active_pass}}"
+}
+
+> {%
+    client.test("Cannot log-in since user name is too short", function() {
+        client.assert(response.status === 400, "Response status is 400 since name is too short");
+    });
+%}
+
+### 400 - Cannot log-in since password is empty
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "userName": "{{active_user}}",
+  "password": ""
+}
+
+> {%
+    client.test("Cannot log-in since password is empty", function() {
+        client.assert(response.status === 400, "Response status is 400 since name is empty ");
+    });
+%}
+
+### 400 - Password is blank (spaces only)
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "userName": "{{active_user}}",
+  "password": " "
+}
+
+> {%
+    client.test("Cannot log-in password is blank", function() {
+        client.assert(response.status === 400, "Response status is 400 since password is blank");
+    });
+%}
+
+### 400 - Password is too short
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "userName": "{{active_user}}",
+  "password": "aa"
+}
+
+> {%
+    client.test("Cannot log-in password is too short", function() {
+        client.assert(response.status === 400, "Response status is 400 since password is too short");
+    });
+%}
+
+### 401 - Cannot log-in since password is wrong (userName is OK)
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "userName": "{{active_user}}",
+  "password": "wrong_pass"
+}
+
+> {%
+    client.test("Cannot log-in password is wrong", function() {
+        client.assert(response.status === 401, "Response status is 401 since password is wrong");
+    });
+%}
+
+### 401 - Cannot log-in since userName is wrong (password is OK)
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "userName": "wrong_userName",
+  "password": "{{active_pass}}"
+}
+
+> {%
+    client.test("Cannot log-in password is wrong", function() {
+        client.assert(response.status === 401, "Response status is 401 since password is wrong");
+    });
+%}
+
+###
