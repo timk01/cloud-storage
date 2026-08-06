@@ -1,1 +1,6 @@
 databaseChangeLog:
+  # release 1: 06.08.2026
+  - include:
+      file: db/changelog/changes/001-create-users-table.yml
+
+

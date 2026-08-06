@@ -5,11 +5,12 @@ spring:
     password: ${POSTGRES_PASSWORD}
 
   liquibase:
-    enabled: false
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
 
   data:
     redis:

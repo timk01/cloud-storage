@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      author: Tim
+      id: 1
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    unique: false
+
+        - sql:
+            sql: "ALTER TABLE users ADD CONSTRAINT chk_user_name_min_length CHECK (LENGTH(user_name) >= 3);"
+        - sql:
+            sql: "ALTER TABLE users ADD CONSTRAINT chk_password_min_length CHECK (LENGTH(password) >= 3);"
