@@ -1,0 +1,57 @@
+@baseUrl = http://localhost:8080/api
+
+@regUser = timur_auto
+@regPass = superPassword123
+
+### Prereg (user creation) - method is needed for success test of logout (1 pre-phase)
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "username": "timur_auto_{{$uuid}}",
+  "password": "{{regPass}}"
+}
+
+> {%
+    client.global.set("active_user", response.body.username);
+    client.global.set("active_pass", "superPassword123");
+%}
+
+### Prelog (user authorization)- method is needed for success test of logout (2 pre-phase)
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "username": "{{active_user}}",
+  "password": "{{active_pass}}"
+}
+
+> {%
+    client.global.set("active_user", response.body.username);
+    client.global.set("active_pass", "superPassword123");
+%}
+
+### 204 - Successfully logged out from previously logged-in user
+# once we do both (reg + log-in) we have session that is captured in memory Set-Cookie: SESSION=...,
+# now we can grab it (no need to do extra) and logout
+POST {{baseUrl}}/auth/sign-out
+
+> {%
+    client.test("Should return return just a proper code (no body)", function() {
+        client.assert(response.status === 204, "Response status is 204");
+        client.assert(response.body === null, "No body is supposed to be returned");
+
+    });
+%}
+
+### 401 - Failed to loggged-out since heuser wasn't logged-in previously
+# @no-cookie-jar
+POST {{baseUrl}}/auth/sign-out
+
+> {%
+    client.test("Cannot log-out", function() {
+        client.assert(response.status === 401, "Response status is 401");
+    });
+%}
+
+###

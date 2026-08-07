@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import storage.cloud.cloudstorage.exception.UnauthorizedActionException;
 import storage.cloud.cloudstorage.exception.UserNotAuthenticatedException;
 import storage.cloud.cloudstorage.request.UserLoginRequest;
-import storage.cloud.cloudstorage.request.UserRegisterRequst;
+import storage.cloud.cloudstorage.request.UserRegisterRequest;
 import storage.cloud.cloudstorage.response.UserResponse;
 import storage.cloud.cloudstorage.response.UsernameResponse;
 import storage.cloud.cloudstorage.service.UserService;
@@ -22,7 +22,7 @@ public class UserController {
     private final UserService service;
 
     @PostMapping("/auth/sign-up")
-    public ResponseEntity<UsernameResponse> registerUser(@Valid @RequestBody UserRegisterRequst userRegisterDto,
+    public ResponseEntity<UsernameResponse> registerUser(@Valid @RequestBody UserRegisterRequest userRegisterDto,
             HttpSession session
     ) {
         UserResponse register = service.register(userRegisterDto);

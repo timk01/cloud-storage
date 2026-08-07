@@ -6,11 +6,10 @@ import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.exception.InvalidLoginDataException;
 import storage.cloud.cloudstorage.exception.UserAlreadyExistsException;
 import storage.cloud.cloudstorage.request.UserLoginRequest;
-import storage.cloud.cloudstorage.request.UserRegisterRequst;
+import storage.cloud.cloudstorage.request.UserRegisterRequest;
 import storage.cloud.cloudstorage.entity.User;
 import storage.cloud.cloudstorage.repository.UserRepository;
 import storage.cloud.cloudstorage.response.UserResponse;
-import storage.cloud.cloudstorage.response.UsernameResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +18,7 @@ public class UserService {
     private final UserRepository repository;
     private final PasswordEncoder encoder;
 
-    public UserResponse register(UserRegisterRequst userRegisterDto) {
+    public UserResponse register(UserRegisterRequest userRegisterDto) {
         if (repository.existsByUsername(userRegisterDto.username())) {
             throw new UserAlreadyExistsException("User name is already taken");
         }

@@ -1,0 +1,59 @@
+@baseUrl = http://localhost:8080/api
+
+@regUser = timur_auto
+@regPass = superPassword123
+
+### Prereg (user creation) - method is needed for success test of prelog (1 pre-phase)
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "username": "timur_auto_{{$uuid}}",
+  "password": "{{regPass}}"
+}
+
+> {%
+    client.global.set("active_user", response.body.username);
+    client.global.set("active_pass", "superPassword123");
+%}
+
+### Prelog (user authorization) -  method is needed for success test of prelog (2 pre-phase)
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "username": "{{active_user}}",
+  "password": "{{active_pass}}"
+}
+
+> {%
+    client.global.set("active_user", response.body.username);
+    client.global.set("active_pass", "superPassword123");
+%}
+
+
+### 200 - Successfully get a previously logged-in user
+# once we do both (reg + log-in) we have session that is captured in memory Set-Cookie: SESSION=...,
+# now we can grab it (no need to do extra) and get a prev. user
+GET {{baseUrl}}/user/me
+
+> {%
+    client.test("Should return current username", function() {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const expected = client.global.get("active_user");
+        client.assert(response.body.username === expected, "Server should return name of user");
+    });
+%}
+
+### 401 - Failed to get a user since he wasn't logged-in
+# @no-cookie-jar
+GET {{baseUrl}}/user/me
+
+> {%
+    client.test("Cannot get user", function() {
+        client.assert(response.status === 401, "Response status is 401 sing user is not loggged in before");
+    });
+%}
+
+###
