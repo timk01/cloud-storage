@@ -17,15 +17,15 @@ public class User {
     private Long id;
 
     @Getter
-    @Column(name = "user_name", length = 100, nullable = false)
-    private String userName;
+    @Column(name = "username", length = 100, nullable = false)
+    private String username;
 
     @Getter
     @Column(name = "password", length = 100, nullable = false)
     private String password;
 
-    public User(String userName, String password) {
-        this.userName = userName;
+    public User(String username, String password) {
+        this.username = username;
         this.password = password;
     }
 }

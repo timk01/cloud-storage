@@ -14,7 +14,7 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: user_name
+                  name: username
                   type: varchar(100)
                   constraints:
                     nullable: false
@@ -27,6 +27,6 @@ databaseChangeLog:
                     unique: false
 
         - sql:
-            sql: "ALTER TABLE users ADD CONSTRAINT chk_user_name_min_length CHECK (LENGTH(user_name) >= 3);"
+            sql: "ALTER TABLE users ADD CONSTRAINT chk_username_min_length CHECK (LENGTH(username) >= 3);"
         - sql:
             sql: "ALTER TABLE users ADD CONSTRAINT chk_password_min_length CHECK (LENGTH(password) >= 3);"

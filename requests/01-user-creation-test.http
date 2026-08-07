@@ -5,15 +5,17 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": "Timur",
+  "username": "conflict_user_{{$uuid}}",
   "password": "superPassword123"
 }
 
 > {%
+    client.global.set("conflict_name", response.body.username);
     client.test("Successfully create a user", function() {
         client.assert(response.status === 201, "Response status is 201");
         const body = response.body;
-        client.assert(body.userName === "Timur", "Server should return name of user");
+        const expected = client.global.get("conflict_name");
+        client.assert(body.username === expected, "Server should return name of user");
     });
 %}
 
@@ -22,7 +24,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": "tim",
+  "username": "tim",
   "password": "superPassword123"
 }
 
@@ -31,7 +33,7 @@ Content-Type: application/json
     client.test("Successfully create a user", function() {
         client.assert(response.status === 201, "Response status is 201");
         const body = response.body;
-        client.assert(body.userName === "tim", "Server should return name of user - username is short");
+        client.assert(body.username === "tim", "Server should return name of user - username is short");
     });
 %}
 
@@ -40,7 +42,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "username": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "password": "superPassword123"
 }
 
@@ -48,7 +50,7 @@ Content-Type: application/json
     client.test("Successfully create a user", function() {
         client.assert(response.status === 201, "Response status is 201");
         const body = response.body;
-        client.assert(body.userName === "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        client.assert(body.username === "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             "Server should return name of user - username is long");
     });
 %}
@@ -58,7 +60,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": "tim1",
+  "username": "tim1",
   "password": "222"
 }
 
@@ -66,7 +68,7 @@ Content-Type: application/json
     client.test("Successfully create a user", function() {
         client.assert(response.status === 201, "Response status is 201");
         const body = response.body;
-        client.assert(body.userName === "tim1", "Server should return name of user - password is short");
+        client.assert(body.username === "tim1", "Server should return name of user - password is short");
     });
 %}
 
@@ -75,15 +77,15 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": "tim2",
-  "password": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  "username": "tim2",
+  "password": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 }
 
 > {%
     client.test("Successfully create a user", function() {
         client.assert(response.status === 201, "Response status is 201");
         const body = response.body;
-        client.assert(body.userName === "tim2", "Server should return name of user - password is long");
+        client.assert(body.username === "tim2", "Server should return name of user - password is long");
     });
 %}
 
@@ -92,7 +94,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": "",
+  "username": "",
   "password": "abc123"
 }
 
@@ -107,7 +109,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": " ",
+  "username": " ",
   "password": "abc123"
 }
 
@@ -122,7 +124,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": "aa",
+  "username": "aa",
   "password": "abc123"
 }
 
@@ -132,12 +134,27 @@ Content-Type: application/json
     });
 %}
 
+### 400 - Username is too long (over 100 characters)
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "username": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "password": "aaaa"
+}
+
+> {%
+    client.test("Cannot create a user since username is too long", function() {
+        client.assert(response.status === 400, "Response status is 400 since username is too long");
+    });
+%}
+
 ### 400 - Password is empty
 POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": "tim1",
+  "username": "tim1",
   "password": ""
 }
 
@@ -152,7 +169,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": "tim1",
+  "username": "tim1",
   "password": " "
 }
 
@@ -167,7 +184,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": "tim1",
+  "username": "tim1",
   "password": "aa"
 }
 
@@ -177,12 +194,27 @@ Content-Type: application/json
     });
 %}
 
+### 400 - Password is too long (over 50 characters)
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "username": "tim_too_long",
+  "password": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1"
+}
+
+> {%
+    client.test("Cannot create a user since password is too long", function() {
+        client.assert(response.status === 400, "esponse status is 400 since password is too long");
+    });
+%}
+
 ### 409 - User name is already taken
 POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": "Timur",
+  "username": "{{conflict_name}}",
   "password": "superPassword123"
 }
 

@@ -10,6 +10,7 @@ import storage.cloud.cloudstorage.request.UserRegisterRequst;
 import storage.cloud.cloudstorage.entity.User;
 import storage.cloud.cloudstorage.repository.UserRepository;
 import storage.cloud.cloudstorage.response.UserResponse;
+import storage.cloud.cloudstorage.response.UsernameResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -19,23 +20,23 @@ public class UserService {
     private final PasswordEncoder encoder;
 
     public UserResponse register(UserRegisterRequst userRegisterDto) {
-        if (repository.existsByUserName(userRegisterDto.userName())) {
+        if (repository.existsByUsername(userRegisterDto.username())) {
             throw new UserAlreadyExistsException("User name is already taken");
         }
 
         String encodedPass = encoder.encode(userRegisterDto.password());
-        User user = repository.save(new User(userRegisterDto.userName(), encodedPass));
-        return new UserResponse(user.getId(), user.getUserName());
+        User user = repository.save(new User(userRegisterDto.username(), encodedPass));
+        return new UserResponse(user.getId(), user.getUsername());
     }
 
     public UserResponse login(UserLoginRequest userLoginDto) {
-        User user = repository.findByUserName(userLoginDto.userName())
+        User user = repository.findByUsername(userLoginDto.username())
                 .orElseThrow(() -> new InvalidLoginDataException("Invalid credentials"));
 
         if (!encoder.matches(userLoginDto.password(), user.getPassword())) {
             throw new InvalidLoginDataException("Invalid credentials");
         }
 
-        return new UserResponse(user.getId(), user.getUserName());
+        return new UserResponse(user.getId(), user.getUsername());
     }
 }

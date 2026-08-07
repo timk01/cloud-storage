@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:8080/api
 
-@regUser = Timur_auto
+@regUser = timur_auto
 @regPass = superPassword123
 
 ### Prereg (user creation) - method is needed for success test of log-in
@@ -8,13 +8,13 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "userName": "Timur_auto_{{$uuid}}",
+  "username": "timur_auto_{{$uuid}}",
   "password": "{{regPass}}"
 }
 
 > {%
-    client.global.set("active_user", response.body.userName);
-    client.global.set("active_pass", regPass);
+    client.global.set("active_user", response.body.username);
+    client.global.set("active_pass", "superPassword123");
 %}
 
 ### 200 - Successfully logged-in (success)
@@ -22,7 +22,7 @@ POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
-  "userName": "{{active_user}}",
+  "username": "{{active_user}}",
   "password": "{{active_pass}}"
 }
 
@@ -31,7 +31,7 @@ Content-Type: application/json
         client.assert(response.status === 200, "Response status is 200");
         const body = response.body;
         const expected_user = client.global.get("active_user")
-        client.assert(body.userName === expected_user, "Server should return name of user");
+        client.assert(body.username === expected_user, "Server should return name of user");
     });
 %}
 
@@ -40,7 +40,7 @@ POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
-  "userName": "",
+  "username": "",
   "password": "{{active_pass}}"
 }
 
@@ -55,7 +55,7 @@ POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
-  "userName": " ",
+  "username": " ",
   "password": "{{active_pass}}"
 }
 
@@ -71,7 +71,7 @@ POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
-  "userName": "a",
+  "username": "a",
   "password": "{{active_pass}}"
 }
 
@@ -81,12 +81,27 @@ Content-Type: application/json
     });
 %}
 
+### 400 - Username is too long (over 100 characters)
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "username": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1",
+  "password": "{{active_pass}}"
+}
+
+> {%
+    client.test("Cannot log-in since username is too long", function() {
+        client.assert(response.status === 400, "Response status is 400 since username is too long");
+    });
+%}
+
 ### 400 - Cannot log-in since password is empty
 POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
-  "userName": "{{active_user}}",
+  "username": "{{active_user}}",
   "password": ""
 }
 
@@ -101,7 +116,7 @@ POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
-  "userName": "{{active_user}}",
+  "username": "{{active_user}}",
   "password": " "
 }
 
@@ -116,7 +131,7 @@ POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
-  "userName": "{{active_user}}",
+  "username": "{{active_user}}",
   "password": "aa"
 }
 
@@ -126,12 +141,28 @@ Content-Type: application/json
     });
 %}
 
-### 401 - Cannot log-in since password is wrong (userName is OK)
+### 400 - Password is too long (over 50 characters)
 POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
-  "userName": "{{active_user}}",
+  "username": "{{active_user}}",
+  "password": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1"
+}
+
+> {%
+    client.test("Cannot create a user since password is too long", function() {
+        client.assert(response.status === 400, "esponse status is 400 since password is too long");
+    });
+%}
+
+
+### 401 - Cannot log-in since password is wrong (username is OK)
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "username": "{{active_user}}",
   "password": "wrong_pass"
 }
 
@@ -141,12 +172,12 @@ Content-Type: application/json
     });
 %}
 
-### 401 - Cannot log-in since userName is wrong (password is OK)
+### 401 - Cannot log-in since username is wrong (password is OK)
 POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
-  "userName": "wrong_userName",
+  "username": "wrong_username",
   "password": "{{active_pass}}"
 }
 

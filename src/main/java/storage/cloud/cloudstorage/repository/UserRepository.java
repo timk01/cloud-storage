@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     //User save(User entity); - НЕ НУЖНО!
 
-    Optional<User> findByUserName(String name);
+    Optional<User> findByUsername(String name);
 
-    boolean existsByUserName(String name);
+    boolean existsByUsername(String name);
 }
