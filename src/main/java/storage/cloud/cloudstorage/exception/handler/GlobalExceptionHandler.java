@@ -23,6 +23,10 @@ public class GlobalExceptionHandler {
         KNOWN_EXCEPTIONS_STATUS_MAP.put(UserNotAuthenticatedException.class, HttpStatus.UNAUTHORIZED);
 
         KNOWN_EXCEPTIONS_STATUS_MAP.put(UserAlreadyExistsException.class, HttpStatus.CONFLICT);
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(FolderAlreadyExistsException.class, HttpStatus.CONFLICT);
+
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(FolderNotFoundException.class, HttpStatus.NOT_FOUND);
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(ParentFolderHasNotFoundException.class, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(BaseAppException.class)

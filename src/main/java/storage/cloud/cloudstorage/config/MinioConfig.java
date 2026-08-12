@@ -1,7 +1,6 @@
 package storage.cloud.cloudstorage.config;
 
 import io.minio.MinioClient;
-import io.minio.errors.MinioException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,14 +22,10 @@ public class MinioConfig {
 
     @Bean
     public MinioClient minioClient() {
-        //try {
-            return MinioClient.builder()
-                    .endpoint(minioUrl)
-                    .credentials(minioUser, minioPassword)
-                    .build();
-/*        } catch (MinioException me) {
-            throw new MinioLoginException("Cannot login with such credentials");
-        }*/
+        return MinioClient.builder()
+                .endpoint(minioUrl)
+                .credentials(minioUser, minioPassword)
+                .build();
     }
 
     @Bean
