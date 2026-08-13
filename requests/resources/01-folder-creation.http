@@ -1,0 +1,125 @@
+@baseUrlApi = http://localhost:8080/api
+@baseUrl = http://localhost:8080
+
+@regUser = timur_auto
+@regPass = superPassword123
+@test_folder = folder_{{$uuid}}
+
+### 401 - Failed to create a folder since user wasn't authorized (no cookies provided!)
+# @no-cookie-jar
+POST {{baseUrl}}/directory?path={{test_folder}}/
+
+> {%
+    client.test("Cannot create a folder", function() {
+        client.assert(response.status === 401, "Response status is 401 since user is not authorized");
+    });
+%}
+
+### Prereg (user creation) - method is needed for success test of prelog (1 pre-phase)
+POST {{baseUrlApi}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "username": "timur_auto_{{$uuid}}",
+  "password": "{{regPass}}"
+}
+
+> {%
+    client.global.set("active_user", response.body.username);
+    client.global.set("active_pass", "superPassword123");
+%}
+
+### Prelog (user authorization) -  method is needed for success test of prelog (2 pre-phase)
+POST {{baseUrlApi}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "username": "{{active_user}}",
+  "password": "{{active_pass}}"
+}
+
+> {%
+    client.test("Successfully logged-in", function () {
+        client.assert(response.status === 200, "Response status is 200");
+        const body = response.body;
+        const expected_user = client.global.get("active_user")
+        client.assert(body.username === expected_user, "Server should return name of user");
+    });
+%}
+
+### 201 - Succesfully created a folder with path ONLY from folder_name (without previous folders)
+POST {{baseUrl}}/directory?path={{test_folder}}/
+
+> {%
+    client.test("Successfully created a folder", function () {
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        const expected_parent_path = ""; //no parent = no "/"
+        client.assert(body.path === expected_parent_path, "Server should return parent path (no parent now");
+        client.assert(body.name.startsWith("folder_"), "Server should return name");
+        client.assert(body.type === "DIRECTORY", "Server should return type (directory)");
+    });
+    client.global.set("created_folder", response.body.name);
+%}
+
+### 201 - Succesfully created a folder (WITH previous folder as a parent)
+POST {{baseUrl}}/directory?path={{created_folder}}/the_child/
+
+> {%
+    client.test("Successfully created a folder", function () {
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        const expected_parent_path = client.global.get("created_folder") + "/";
+        const expected_folder_name = "the_child";
+        client.assert(body.path === expected_parent_path, "Server should return parent path");
+        client.assert(body.name === expected_folder_name, "Server should return name");
+        client.assert(body.type === "DIRECTORY", "Server should return type (directory)");
+    });
+%}
+
+### 400 - Failed to create a folder since user path is wrong (here = empty)
+POST {{baseUrl}}/directory?path=
+
+> {%
+    client.test("Cannot create a folder", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to create a folder since user path is wrong (here = has invalid symbol, with /)
+POST {{baseUrl}}/directory?path=№№№/
+
+> {%
+    client.test("Cannot create a folder", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to create a folder since user path is wrong (here = has rights symbols, but without /)
+POST {{baseUrl}}/directory?path=abc
+
+> {%
+    client.test("Cannot create a folder", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 404 - Failed to create a folder since folder has no parent
+POST {{baseUrl}}/directory?path={{created_folder}}/non-existed/child/
+
+> {%
+    client.test("Cannot create a folder", function() {
+        client.assert(response.status === 404, "Response status is 404 since no parent (created ebforehand) is found");
+    });
+%}
+
+### 409 - Failed to create a folder since folder has been already created
+POST {{baseUrl}}/directory?path={{created_folder}}/the_child/
+
+> {%
+    client.test("Cannot create a folder", function() {
+        client.assert(response.status === 409, "Response status is 409 since the same folder has been found");
+    });
+%}
+
+###

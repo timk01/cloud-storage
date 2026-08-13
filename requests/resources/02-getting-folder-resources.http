@@ -1,0 +1,176 @@
+@baseUrlApi = http://localhost:8080/api
+@baseUrl = http://localhost:8080
+
+@regUser = timur_auto
+@regPass = superPassword123
+@test_folder = folder_{{$uuid}}
+
+### 401 - Failed to get a folder info since user wasn't authorized (no cookies provided!)
+# @no-cookie-jar
+GET {{baseUrl}}/directory?path={{test_folder}}/
+
+> {%
+    client.test("Cannot get a folder info", function() {
+        client.assert(response.status === 401, "Response status is 401 since user is not authorized");
+    });
+%}
+
+### Prereg (user creation) - method is needed for success test of prelog (1 pre-phase)
+POST {{baseUrlApi}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "username": "timur_auto_{{$uuid}}",
+  "password": "{{regPass}}"
+}
+
+> {%
+    client.global.set("active_user", response.body.username);
+    client.global.set("active_pass", "superPassword123");
+%}
+
+### Prelog (user authorization) -  method is needed for success test of prelog (2 pre-phase)
+POST {{baseUrlApi}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "username": "{{active_user}}",
+  "password": "{{active_pass}}"
+}
+
+> {%
+    client.test("Successfully logged-in", function () {
+        client.assert(response.status === 200, "Response status is 200");
+        const body = response.body;
+        const expected_user = client.global.get("active_user")
+        client.assert(body.username === expected_user, "Server should return name of user");
+    });
+%}
+
+### Preadded initial info into folder part1 - created a base folder
+POST {{baseUrl}}/directory?path={{test_folder}}/
+
+> {%
+    client.test("Successfully created a folder", function () {
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        const expected_parent_path = ""; //no parent = no "/"
+        client.assert(body.path === expected_parent_path, "Server should return parent path (no parent now");
+        client.assert(body.name.startsWith("folder_"), "Server should return name");
+        client.assert(body.type === "DIRECTORY", "Server should return type (directory)");
+    });
+    client.global.set("created_folder", response.body.name);
+%}
+
+### 200 - Successcully got a folder with info: 0 folders inside (empty array, [])
+GET {{baseUrl}}/directory?path={{created_folder}}/
+
+> {%
+    client.test("Successfully got a folder info", function () {
+        client.assert(response.status === 200, "Response status is 200");
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 0, "Folder should be empty, hence array length is zero");
+    });
+%}
+
+### 201 - Preadded initial info into folder part2 - created a first folder
+POST {{baseUrl}}/directory?path={{created_folder}}/the_child1/
+
+> {%
+    client.test("Successfully created a folder", function () {
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        const expected_parent_path = client.global.get("created_folder") + "/";
+        const expected_folder_name = "the_child1";
+        client.assert(body.path === expected_parent_path, "Server should return parent path");
+        client.assert(body.name === expected_folder_name, "Server should return name");
+        client.assert(body.type === "DIRECTORY", "Server should return type (directory)");
+    });
+%}
+
+### 201 - Preadded initial info into folder part3 - created a second folder
+POST {{baseUrl}}/directory?path={{created_folder}}/the_child2/
+
+> {%
+    client.test("Successfully created a folder", function () {
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        const expected_parent_path = client.global.get("created_folder") + "/";
+        const expected_folder_name = "the_child2";
+        client.assert(body.path === expected_parent_path, "Server should return parent path");
+        client.assert(body.name === expected_folder_name, "Server should return name");
+        client.assert(body.type === "DIRECTORY", "Server should return type (directory)");
+    });
+%}
+
+### 200 - Successcully got a folder with info: 2 folders inside
+GET {{baseUrl}}/directory?path={{created_folder}}/
+
+> {%
+    client.test("Successfully got a folder info", function () {
+        client.assert(response.status === 200, "Response status is 200");
+        const body = response.body; //array
+        client.assert(Array.isArray(body), "Server should return an array");
+        //is's two NOW (we have only folders!)
+        client.assert(body.length === 2, "Folder should contain exactly 2 resources");
+
+        const expected_parent_path = client.global.get("created_folder") + "/";
+
+        //search for element in array named the_child1
+        const child_folder1 = body.find(item => item.name === "the_child1");
+        //and it's not empty
+        client.assert(child_folder1 !== undefined, "WE have folder1 element in array");
+        //hence, we can get some info from this array element (say, array[0]): such as name and type
+        client.assert(child_folder1.name === "the_child1", "Folder name is the_child1");
+        client.assert(child_folder1.type === "DIRECTORY", "the_child1 type is directory");
+        client.assert(child_folder1.path === expected_parent_path, "Folder1 should have correct parent path");
+        //but since it's directory, we have NO such field at all in this class
+        client.assert(!("size" in child_folder1), "size field should not exist in directory object");
+
+        const child_folder2 = body.find(item => item.name === "the_child2");
+        client.assert(child_folder2 !== undefined, "WE have folder2 element in array");
+        client.assert(child_folder2.name === "the_child2", "Folder name is the_child2");
+        client.assert(child_folder2.type === "DIRECTORY", "the_child2 type is directory");
+        client.assert(child_folder2.path === expected_parent_path, "Folder2 should have correct parent path");
+        client.assert(!("size" in child_folder2), "size field should not exist in directory object");
+    });
+%}
+
+### 400 - Failed to get a folder info since path is wrong (here = empty)
+GET {{baseUrl}}/directory?path=
+
+> {%
+    client.test("Cannot get a folder info", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to get a folder info since path is wrong (here = has invalid symbol, with /)
+GET {{baseUrl}}/directory?path=№№№/
+
+> {%
+    client.test("Cannot get a folder info", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to get a folder info since user path is wrong (here = has rights symbols, but without /)
+GET {{baseUrl}}/directory?path=abc
+
+> {%
+    client.test("Cannot get a folder infor", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 404 - Failed to get a folder info since the folder does not exist
+GET {{baseUrl}}/directory?path={{created_folder}}/non-existed/child/
+
+> {%
+    client.test("Cannot get a folder info", function() {
+        client.assert(response.status === 404, "Response status is 404 since no such directory was found");
+    });
+%}
+
+###

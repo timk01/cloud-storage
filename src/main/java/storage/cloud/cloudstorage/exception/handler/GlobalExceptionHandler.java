@@ -1,10 +1,13 @@
 package storage.cloud.cloudstorage.exception.handler;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import storage.cloud.cloudstorage.exception.*;
 import storage.cloud.cloudstorage.response.ErrorResponse;
 
@@ -44,9 +47,16 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler({MethodArgumentNotValidException.class})
+    @ExceptionHandler(
+            {
+                    MethodArgumentNotValidException.class,
+                    ConstraintViolationException.class,
+                    HandlerMethodValidationException.class,
+                    MissingServletRequestParameterException.class
+            }
+    )
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(
-            MethodArgumentNotValidException exception
+            Exception exception
     ) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
 

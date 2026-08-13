@@ -6,10 +6,10 @@ import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import storage.cloud.cloudstorage.exception.UnauthorizedActionException;
-import storage.cloud.cloudstorage.response.CreatedFolderResponse;
-import storage.cloud.cloudstorage.response.CreatedResourceResponse;
+import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.ResourcesService;
 
 import java.io.IOException;
@@ -19,6 +19,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
+@Validated
 @RequestMapping()
 public class ResourcesController {
     private static final String PATH_VALIDATOR_REGEXP = "^([\\p{L}\\p{N}_\\s-]+/)+$";
@@ -29,7 +30,7 @@ public class ResourcesController {
 
 
     @PostMapping("/directory")
-    public ResponseEntity<CreatedFolderResponse> createFolder(
+    public ResponseEntity<ResourceResponse> createFolder(
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("path")
             @NotNull
@@ -43,7 +44,7 @@ public class ResourcesController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        CreatedFolderResponse folder = service.createFolder(path, userId);
+        ResourceResponse folder = service.createFolder(path, userId);
 
         return new ResponseEntity<>(
                 folder,
@@ -52,7 +53,7 @@ public class ResourcesController {
     }
 
     @GetMapping("/directory")
-    public ResponseEntity<List<CreatedResourceResponse>> getFolderInfo(
+    public ResponseEntity<List<ResourceResponse>> getFolderInfo(
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("path")
             @NotNull
@@ -66,13 +67,12 @@ public class ResourcesController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        List<CreatedResourceResponse> folderInfo = service.getFolderInfo(path, userId);
+        List<ResourceResponse> folderInfo = service.getFolderInfo(path, userId);
 
         return new ResponseEntity<>(
                 folderInfo,
                 HttpStatus.OK
         );
-
     }
 }
 

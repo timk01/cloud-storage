@@ -8,8 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
-import storage.cloud.cloudstorage.response.CreatedFolderResponse;
-import storage.cloud.cloudstorage.response.CreatedResourceResponse;
+import storage.cloud.cloudstorage.response.ResourceResponse;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -25,7 +24,7 @@ public class ResourcesService {
     private final String minioBucketName;
     private final StorageInitializer initializer;
 
-    public CreatedFolderResponse createFolder(String path, Long userId) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public ResourceResponse createFolder(String path, Long userId) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         String fullPath = buildFullPath(path, userId);
         initializer.initStorage(fullPath);
 
@@ -33,7 +32,12 @@ public class ResourcesService {
 
         minioRepository.creaTeFolder(result.parentFolder(), fullPath);
 
-        return new CreatedFolderResponse(result.folderPath(), result.folderName(), Type.DIRECTORY.name());
+        return ResourceResponse
+                .builder()
+                .path(result.folderPath())
+                .name(result.folderName())
+                .type(Type.DIRECTORY.name())
+                .build();
     }
 
     @NotNull
@@ -63,13 +67,13 @@ public class ResourcesService {
         return trimmedOriginalPath.substring(0, lastFolderIndex + 1);
     }
 
-    public List<CreatedResourceResponse> getFolderInfo(String path, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public List<ResourceResponse> getFolderInfo(String path, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         String fullPath = buildFullPath(path, userId);
         initializer.initStorage(fullPath);
 
         Iterable<Result<Item>> folderInfo = minioRepository.getFolderInfo(fullPath);
 
-        List<CreatedResourceResponse> resources = new ArrayList<>();
+        List<ResourceResponse> resources = new ArrayList<>();
         for (Result<Item> itemResult : folderInfo) {
             Item item = itemResult.get();
             if (fullPath.equals(item.objectName())) {
@@ -77,7 +81,7 @@ public class ResourcesService {
             }
             if (item.isDir()) {
                 resources.add(
-                        CreatedResourceResponse
+                        ResourceResponse
                                 .builder()
                                 .path(path)
                                 .name(parseDirName(item))
@@ -86,7 +90,7 @@ public class ResourcesService {
                 );
             } else {
                 resources.add(
-                        CreatedResourceResponse
+                        ResourceResponse
                                 .builder()
                                 .path(path)
                                 .name(parseFileName(item))
