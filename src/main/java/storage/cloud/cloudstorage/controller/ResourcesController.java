@@ -103,15 +103,11 @@ public class ResourcesController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        if (files == null || files.length == 0) {
-            throw new InvalidFilesException("Provided invalid files");
-        }
-
         List<ResourceResponse> folderInfo = service.upload(path, files, userId);
 
         return new ResponseEntity<>(
                 folderInfo,
-                HttpStatus.OK
+                HttpStatus.CREATED
         );
     }
 }

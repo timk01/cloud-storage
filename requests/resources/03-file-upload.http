@@ -1,0 +1,304 @@
+@baseUrlApi = http://localhost:8080/api
+@baseUrl = http://localhost:8080
+
+@regUser = timur_auto
+@regPass = superPassword123
+@test_folder = folder_{{$uuid}}
+
+### 401 - Failed to upload a file since user wasn't authorized (no cookies provided!)
+# @no-cookie-jar
+POST {{baseUrl}}/resource?path={{test_folder}}/
+Content-Type: multipart/form-data; boundary=boundary
+
+# Part №1 of multipart-File (picture): several file will be converted into files
+--boundary
+Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Type: image/jpeg
+
+< ./docs/gorgon.jpg
+--boundary
+
+> {%
+    client.test("Cannot upload some files", function() {
+        client.assert(response.status === 401, "Response status is 401 since user is not authorized");
+    });
+%}
+
+### Prereg (user creation) - method is needed for success test of prelog (1 pre-phase)
+POST {{baseUrlApi}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "username": "timur_auto_{{$uuid}}",
+  "password": "{{regPass}}"
+}
+
+> {%
+    client.global.set("active_user", response.body.username);
+    client.global.set("active_pass", "superPassword123");
+%}
+
+### Prelog (user authorization) -  method is needed for success test of prelog (2 pre-phase)
+POST {{baseUrlApi}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "username": "{{active_user}}",
+  "password": "{{active_pass}}"
+}
+
+> {%
+    client.test("Successfully logged-in", function () {
+        client.assert(response.status === 200, "Response status is 200");
+        const body = response.body;
+        const expected_user = client.global.get("active_user")
+        client.assert(body.username === expected_user, "Server should return name of user");
+    });
+%}
+
+### 201 - Succesfully created a folder with path ONLY from folder_name (without previous folders)
+POST {{baseUrl}}/directory?path={{test_folder}}/
+
+> {%
+    client.test("Successfully created a folder", function () {
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        const expected_parent_path = ""; //no parent = no "/"
+        client.assert(body.path === expected_parent_path, "Server should return parent path (no parent now");
+        client.assert(body.name.startsWith("folder_"), "Server should return name");
+        client.assert(body.type === "DIRECTORY", "Server should return type (directory)");
+    });
+    client.global.set("created_folder", response.body.name);
+%}
+
+
+### 201 - Successfully uploaded TWO files (picture and text file) to a previosly created folder
+# Path to files (passed in query, say, POST {{baseUrl}}/resource?path=folder1/)
+POST {{baseUrl}}/resource?path={{created_folder}}/
+Content-Type: multipart/form-data; boundary=boundary
+
+# Part №1 of multipart-File (picture): several file will be converted into files
+--boundary
+Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Type: image/jpeg
+
+< ./docs/gorgon.jpg
+--boundary
+# Part №2 of multipart-File (text file)
+Content-Disposition: form-data; name="file"; filename="description.txt"
+Content-Type: text/plain
+
+< ./docs/description.txt
+--boundary
+
+#
+#        example:
+#        [
+#            {
+#                "path": "folder1/",
+#                "name": "gorgon.jpg",
+#                "size": 1500,
+#                "type": "FILE"
+#            },
+#            {
+#                "path": "folder1/",
+#                "name": "description.txt",
+#                "size": 123,
+#                "type": "FILE"
+#            }
+#        ]
+
+> {%
+    client.test("Successfully uploaded two files into folder", function () {
+
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 2, "Folder should contain exactly 2 resources");
+
+        const expected_parent_path = client.global.get("created_folder") + "/";
+
+        const firstFile = body.find(item => item.name === "gorgon.jpg");
+        //and it's not empty
+        client.assert(firstFile !== undefined, "WE have firstFile element in array");
+        //hence, we can get some info from this array element (say, array[0]): such as path, name, size and type
+        client.assert(firstFile.path === expected_parent_path, "firstFile should have correct parent path");
+        client.assert(firstFile.name === "gorgon.jpg", "firstFile name is gorgon.jpg");
+        client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "firstFile size field should be > 0");
+        client.assert(firstFile.type === "FILE", "firstFile type is file");
+
+        const secondFile = body.find(item => item.name === "description.txt");
+        client.assert(secondFile !== undefined, "WE have secondFile element in array");
+        //hence, we can get some info from this array element (say, array[0]): such as path, name, size and type
+        client.assert(secondFile.path === expected_parent_path, "secondFile should have correct parent path");
+        client.assert(secondFile.name === "description.txt", "secondFile name is description.txt");
+        client.assert(typeof secondFile.size === "number" && secondFile.size > 0, "secondFile size field should be > 0");
+        client.assert(secondFile.type === "FILE", "secondFile type is file");
+    });
+%}
+
+### 400 - Failed to upload resources since path is wrong (here = empty)
+POST {{baseUrl}}/resource?path=
+Content-Type: multipart/form-data; boundary=boundary
+
+# Part №1 of multipart-File (picture): several file will be converted into files
+--boundary
+Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Type: image/jpeg
+
+< ./docs/gorgon.jpg
+--boundary
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to upload resources since path is wrong (here = has invalid symbol, with /)
+POST {{baseUrl}}/resource?path=№№№/
+Content-Type: multipart/form-data; boundary=boundary
+
+# Part №1 of multipart-File (picture): several file will be converted into files
+--boundary
+Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Type: image/jpeg
+
+< ./docs/gorgon.jpg
+--boundary
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to to upload resources since user path is wrong (here = has rights symbols, but without /)
+POST {{baseUrl}}/resource?path=abc
+Content-Type: multipart/form-data; boundary=boundary
+
+# Part №1 of multipart-File (picture): several file will be converted into files
+--boundary
+Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Type: image/jpeg
+
+< ./docs/gorgon.jpg
+--boundary
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to to upload resources since required multipart part "file" is not present -- MissingServletRequestPartException
+# (MissingServletRequestPartException is a spring exception)
+POST {{baseUrl}}/resource?path={{created_folder}}/
+Content-Type: multipart/form-data; boundary=boundary
+
+# Part №1 of multipart-File (picture): several file will be converted into files
+--boundary
+Content-Disposition: form-data; name="file22"; filename="gorgon.jpg"
+Content-Type: image/jpeg
+
+< ./docs/gorgon.jpg
+--boundary
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to to upload resources since file name has "/" in path
+POST {{baseUrl}}/resource?path={{created_folder}}/
+Content-Type: multipart/form-data; boundary=boundary
+
+# Part №1 of multipart-File (picture): several file will be converted into files
+--boundary
+Content-Disposition: form-data; name="file22"; filename="folder1/gorgon.jpg"
+Content-Type: image/jpeg
+
+< ./docs/gorgon.jpg
+--boundary
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to upload resources since cleaned file name is ".."
+POST {{baseUrl}}/resource?path={{created_folder}}/
+Content-Type: multipart/form-data; boundary=boundary
+
+# Part №1 of multipart-File (picture): several file will be converted into files
+--boundary
+Content-Disposition: form-data; name="file"; filename=".."
+Content-Type: image/jpeg
+
+< ./docs/gorgon.jpg
+--boundary
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to to upload resources since file size is too large (> 5MB)
+POST {{baseUrl}}/resource?path={{created_folder}}/
+Content-Type: multipart/form-data; boundary=boundary
+
+# Part №1 of multipart-File (picture): several file will be converted into files
+--boundary
+Content-Disposition: form-data; name="file"; filename="Obektno_orientirovanny_podkhod.rar"
+Content-Type: application/vnd.rar
+
+< ./docs/Obektno_orientirovanny_podkhod.rar
+--boundary
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 413, "Response status is 413 since file size is too large");
+    });
+%}
+
+### 409 - Failed to to upload resources since file is not provided:
+# but since it's files with ZERO lenght it's still valid and we already downloaded .jpg before, it's still a somethat
+# valid query
+POST {{baseUrl}}/resource?path={{created_folder}}/
+Content-Type: multipart/form-data; boundary=boundary
+
+# Part №1 of multipart-File (picture): several file will be converted into files
+--boundary
+Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Type: image/jpeg
+
+# missed file here: - but see above
+--boundary
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 409, "Response status is 409 since file was already downloaded");
+    });
+%}
+
+### 409 - Failed to to upload resources since file is provided, but was already uploaded ealier:
+
+POST {{baseUrl}}/resource?path={{created_folder}}/
+Content-Type: multipart/form-data; boundary=boundary
+
+# Part №1 of multipart-File (picture): several file will be converted into files
+--boundary
+Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Type: image/jpeg
+
+< ./docs/gorgon.jpg
+--boundary
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 409, "Response status is 409 since file was already downloaded");
+    });
+%}
