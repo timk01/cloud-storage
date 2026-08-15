@@ -104,7 +104,52 @@ POST {{baseUrl}}/directory?path={{created_folder}}/the_child2/
     });
 %}
 
-### 200 - Successcully got a folder with info: 2 folders inside
+### 201 - Successfully uploaded TWO files (picture and text file) to a previosly created parent folder
+# Path to files (passed in query, say, POST {{baseUrl}}/resource?path=folder1/)
+POST {{baseUrl}}/resource?path={{created_folder}}/
+Content-Type: multipart/form-data; boundary=boundary
+
+# Part №1 of multipart-File (picture): several file will be converted into files
+--boundary
+Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Type: image/jpeg
+
+< ./docs/gorgon.jpg
+--boundary
+
+#
+#        example:
+#        [
+#            {
+#                "path": "folder1/",
+#                "name": "gorgon.jpg",
+#                "size": 1500,
+#                "type": "FILE"
+#            }
+#        ]
+
+> {%
+    client.test("Successfully uploaded one file into folder", function () {
+
+        client.assert(response.status === 201, "Response status is 201");
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 1, "Folder should contain exactly 1 resource");
+
+        const expected_parent_path = client.global.get("created_folder") + "/";
+
+        const firstFile = body.find(item => item.name === "gorgon.jpg");
+        //and it's not empty
+        client.assert(firstFile !== undefined, "WE have firstFile element in array");
+        //hence, we can get some info from this array element (say, array[0]): such as path, name, size and type
+        client.assert(firstFile.path === expected_parent_path, "firstFile should have correct parent path");
+        client.assert(firstFile.name === "gorgon.jpg", "firstFile name is gorgon.jpg");
+        client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "firstFile size field should be > 0");
+        client.assert(firstFile.type === "FILE", "firstFile type is file");
+    });
+%}
+
+### 200 - Successcully got a folder with info: 2 folders inside + 1 file inside
 GET {{baseUrl}}/directory?path={{created_folder}}/
 
 > {%
@@ -112,8 +157,8 @@ GET {{baseUrl}}/directory?path={{created_folder}}/
         client.assert(response.status === 200, "Response status is 200");
         const body = response.body; //array
         client.assert(Array.isArray(body), "Server should return an array");
-        //is's two NOW (we have only folders!)
-        client.assert(body.length === 2, "Folder should contain exactly 2 resources");
+        //is's three NOW (we have 2 folders + 1 file)
+        client.assert(body.length === 3, "Folder should contain exactly 3 resources");
 
         const expected_parent_path = client.global.get("created_folder") + "/";
 
@@ -134,6 +179,14 @@ GET {{baseUrl}}/directory?path={{created_folder}}/
         client.assert(child_folder2.type === "DIRECTORY", "the_child2 type is directory");
         client.assert(child_folder2.path === expected_parent_path, "Folder2 should have correct parent path");
         client.assert(!("size" in child_folder2), "size field should not exist in directory object");
+
+        //added third resource: file
+        const firstFile = body.find(item => item.name === "gorgon.jpg");
+        client.assert(firstFile !== undefined, "WE have firstFile element in array");
+        client.assert(firstFile.path === expected_parent_path, "firstFile should have correct parent path");
+        client.assert(firstFile.name === "gorgon.jpg", "firstFile name is gorgon.jpg");
+        client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "firstFile size field should be > 0");
+        client.assert(firstFile.type === "FILE", "firstFile type is file");
     });
 %}
 
