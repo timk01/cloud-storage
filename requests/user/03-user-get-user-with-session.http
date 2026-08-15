@@ -31,7 +31,6 @@ Content-Type: application/json
     client.global.set("active_pass", "superPassword123");
 %}
 
-
 ### 200 - Successfully get a previously logged-in user
 # once we do both (reg + log-in) we have session that is captured in memory Set-Cookie: SESSION=...,
 # now we can grab it (no need to do extra) and get a prev. user
