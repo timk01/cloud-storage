@@ -21,6 +21,8 @@ public class GlobalExceptionHandler {
             = new HashMap<>();
 
     static {
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(InvalidFilesException.class, HttpStatus.BAD_REQUEST);
+
         KNOWN_EXCEPTIONS_STATUS_MAP.put(InvalidLoginDataException.class, HttpStatus.UNAUTHORIZED);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(UnauthorizedActionException.class, HttpStatus.UNAUTHORIZED);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(UserNotAuthenticatedException.class, HttpStatus.UNAUTHORIZED);

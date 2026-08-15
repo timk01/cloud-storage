@@ -5,9 +5,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import storage.cloud.cloudstorage.exception.InvalidFilesException;
 import storage.cloud.cloudstorage.exception.UnauthorizedActionException;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.ResourcesService;
@@ -74,20 +77,32 @@ public class ResourcesController {
                 HttpStatus.OK
         );
     }
+
+    @PostMapping(value = "/resource", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<List<ResourceResponse>> upload(
+            @SessionAttribute(name = "userId", required = false) Long userId,
+            @RequestParam("file") MultipartFile[] files,
+            @RequestParam("path")
+            @NotNull
+            @Pattern(
+                    regexp = PATH_VALIDATOR_REGEXP,
+                    message = WRONG_PATH
+            )
+            String path
+    ) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        if (userId == null) {
+            throw new UnauthorizedActionException("User is not authorized");
+        }
+
+        if (files == null || files.length == 0 || files[0].isEmpty()) {
+            throw new InvalidFilesException("Provided invalid files");
+        }
+
+        List<ResourceResponse> folderInfo = service.upload(path, files, userId);
+
+        return new ResponseEntity<>(
+                folderInfo,
+                HttpStatus.OK
+        );
+    }
 }
-
-/*
-GET /directory?path=$path
-
-Ответ в случае успеха: 200 OK со следующим телом (application/json). Коллекция ресурсов, лежащих в папке (не рекурсивно):
-
-[
-  {
-    "path": "folder1/folder2/", // путь к папке, в которой лежит ресурс
-    "name": "file.txt",
-    "size": 123, // размер файла в байтах. Если ресурс - папка, это поле отсутствует
-    "type": "FILE" // DIRECTORY или FILE
-  }
-]
-
- */
