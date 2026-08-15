@@ -4,6 +4,11 @@ spring:
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
 
+  servlet:
+    multipart:
+      max-file-size: 5MB #1 file maxzise
+      max-request-size: 30MB #whole batch (files)
+
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml

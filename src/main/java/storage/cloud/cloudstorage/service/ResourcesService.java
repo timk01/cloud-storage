@@ -1,6 +1,5 @@
 package storage.cloud.cloudstorage.service;
 
-import io.minio.ObjectWriteResponse;
 import io.minio.Result;
 import io.minio.errors.*;
 import io.minio.messages.Item;
@@ -9,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import storage.cloud.cloudstorage.exception.InvalidFileNameException;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
@@ -131,7 +131,7 @@ public class ResourcesService {
     }
 
     @NotNull
-    private String buildPreparedPath(String path, Long userId) { //подумать над именеем.... это не совсем оно
+    private String buildPreparedPath(String path, Long userId) {
         String[] splitBucket = minioBucketName.split("-");
         String userRoot = splitBucket[0] + "-" + userId + "-" + splitBucket[1];
 
@@ -142,70 +142,88 @@ public class ResourcesService {
         String preparedPath = buildPreparedPath(path, userId);
         initializer.initStorage(preparedPath);
 
-        List<MultipartFile> cleanFiles = new ArrayList<>();
-        List<String> cleanFullPaths = new ArrayList<>();
-        for (MultipartFile file : files) {
+        List<PreparedFile> preparedFiles = getPreparedFiles(files, preparedPath);
 
-            String uncheckedFilename = file.getOriginalFilename();
+        List<String> fullPathTillFile = preparedFiles.stream()
+                .map((preparedFile) -> preparedFile.fullPathTillFile)
+                .toList();
+
+        minioRepository.checkFiles(fullPathTillFile);
+
+        List<MultipartFile> multipartFiles = preparedFiles.stream()
+                .map((preparedFile) -> preparedFile.multipartFile)
+                .toList();
+        minioRepository.upload(multipartFiles, fullPathTillFile);
+
+        List<ResourceResponse> resources = new ArrayList<>();
+        for (PreparedFile file : preparedFiles) {
+            resources.add(
+                    ResourceResponse
+                            .builder()
+                            .path(path)
+                            .name(file.cleanedPathName())
+                            .size(file.multipartFile.getSize())
+                            .type(Type.FILE.name())
+                            .build()
+            );
+        }
+
+        return resources;
+    }
+
+    @NotNull
+    private List<PreparedFile> getPreparedFiles(MultipartFile[] files, String preparedPath) {
+        List<PreparedFile> preparedFiles = new ArrayList<>();
+        for (MultipartFile multipartFile : files) {
+
+            String uncheckedFilename = multipartFile.getOriginalFilename();
             if (uncheckedFilename == null || uncheckedFilename.isEmpty()) {
                 continue;
             }
 
+            validateOriginalFileName(uncheckedFilename);
+
             String cleanedPathName = StringUtils.cleanPath(uncheckedFilename);
 
-            String fullPath = preparedPath + cleanedPathName;
+            validateCleanedPathName(cleanedPathName);
 
-            minioRepository.checkFile(fullPath); //даже 1 прокунтый вариант - гг
+            String fullPathTillFile = preparedPath + cleanedPathName;
 
-            cleanFullPaths.add(fullPath);
+            preparedFiles.add(
+                    new PreparedFile(
+                            cleanedPathName,
+                            fullPathTillFile,
+                            multipartFile
+                    )
+            );
         }
-
-        List<ObjectWriteResponse> uploaded = minioRepository.upload(List.of(files), cleanFullPaths);
-
-        for (ObjectWriteResponse response : uploaded) {
-
-        }
-
-        //ИЛИ ПРОЩЕ::
-
-/*        resources.add(
-                ResourceResponse.builder()
-                        .path(path)                    // Ваша переменная пути
-                        .name(file.getOriginalFilename()) // Или имя из currentPath
-                        .size(file.getSize())          // РАЗМЕР БЕРЕМ НАПРЯМУЮ ИЗ MULTIPARTFILE!
-                        .type(Type.FILE.name())
-                        .build()
-        );*/
-/*
-        for (Result<Item> itemResult : folderInfo) {
-            Item item = itemResult.get();
-            if (fullPath.equals(item.objectName())) {
-                continue;
-            }
-            if (item.isDir()) {
-                resources.add(
-                        ResourceResponse
-                                .builder()
-                                .path(path)
-                                .name(parseDirName(item))
-                                .type(Type.DIRECTORY.name())
-                                .build()
-                );
-            } else {
-                resources.add(
-                        ResourceResponse
-                                .builder()
-                                .path(path)
-                                .name(parseFileName(item))
-                                .size(item.size())
-                                .type(Type.FILE.name())
-                                .build()
-                );
-            }*/
-        }
-
-
-        return null;
+        return preparedFiles;
     }
 
+    private static void validateCleanedPathName(String cleanedPathName) {
+        if (".".equals(cleanedPathName) || "..".equals(cleanedPathName)) {
+            throw new InvalidFileNameException(
+                    String.format(
+                            "Multipartfile is a invalid: %s ", cleanedPathName
+                    )
+            );
+        }
+    }
+
+    private void validateOriginalFileName(String uncheckedFilename) {
+        if (uncheckedFilename.contains("/") || uncheckedFilename.contains("\\")) {
+            throw new InvalidFileNameException(
+                    String.format(
+                            "Multipartfile is a invalid: %s ", uncheckedFilename
+                    )
+            );
+        }
+    }
+
+    public record PreparedFile(
+            String cleanedPathName,
+            String fullPathTillFile,
+            MultipartFile multipartFile
+    ) {
+    }
 }

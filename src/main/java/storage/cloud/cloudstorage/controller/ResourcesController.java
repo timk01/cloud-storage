@@ -78,6 +78,15 @@ public class ResourcesController {
         );
     }
 
+    /**
+     * Upload contract:
+     * - max file size: 5 MB, while max request size (all files): 30 MB;
+     * - zero-byte files are allowed;
+     * - all files are uploaded to the same directory specified by path;
+     * - filename must not contain path separators;
+     * - existing file -> 409;
+     * - multi-file upload is not atomic.
+     */
     @PostMapping(value = "/resource", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<ResourceResponse>> upload(
             @SessionAttribute(name = "userId", required = false) Long userId,
@@ -94,7 +103,7 @@ public class ResourcesController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        if (files == null || files.length == 0 || files[0].isEmpty()) {
+        if (files == null || files.length == 0) {
             throw new InvalidFilesException("Provided invalid files");
         }
 

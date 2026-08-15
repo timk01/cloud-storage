@@ -6,6 +6,7 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
+import storage.cloud.cloudstorage.exception.FileAlreadyExistsException;
 import storage.cloud.cloudstorage.exception.FolderAlreadyExistsException;
 import storage.cloud.cloudstorage.exception.FolderNotFoundException;
 import storage.cloud.cloudstorage.exception.ParentFolderHasNotFoundException;
@@ -14,7 +15,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -112,48 +112,56 @@ public class MinioRepository {
         }
     }
 
-    public void checkFile(String fullPath) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        try {
-            minioClient.statObject(
-                    StatObjectArgs
-                            .builder()
-                            .bucket(minioBucketName)
-                            .object(fullPath)
-                            .build()
-            );
-        } catch (ErrorResponseException  e) {
-            if (!"NoSuchKey".equals(e.errorResponse().code())) {
-                //409 - файл уже существует
+    /**
+     * если файл ЕСТЬ в батче (т.е. нашли что любой из файлов уже был загружен) - значит эксепшнион
+     *
+     * @param fullPaths
+     * @throws ServerException
+     * @throws InsufficientDataException
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeyException
+     * @throws InvalidResponseException
+     * @throws XmlParserException
+     * @throws InternalException
+     */
+
+    public void checkFiles(List<String> fullPaths) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
+        for (String fullPath : fullPaths) {
+            try {
+                minioClient.statObject(
+                        StatObjectArgs
+                                .builder()
+                                .bucket(minioBucketName)
+                                .object(fullPath)
+                                .build()
+                );
+
+                throw new FileAlreadyExistsException(
+                        String.format(
+                                "File already exists: %s ", fullPath
+                        )
+                );
+            } catch (ErrorResponseException ere) {
+                if ("NoSuchKey".equals(ere.errorResponse().code())) {
+                    continue;
+                }
+                throw ere;
             }
         }
     }
 
-    public List<ObjectWriteResponse> upload(List<MultipartFile> files, List<String> cleanPaths) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        List<ObjectWriteResponse> filesAdded = new ArrayList<>();
-        try {
-            int index = 0;
-            for (MultipartFile file : files) {
-                //подумать... про вариант когда файлов записалось, а потом ошибка ?
-
-                if (index >= cleanPaths.size()) {
-                    break;
-                }
-
-                ObjectWriteResponse objectWriteResponse = minioClient.putObject(
-                        PutObjectArgs
-                                .builder()
-                                .bucket(minioBucketName)
-                                .object(cleanPaths.get(index++))
-                                .stream(file.getInputStream(), file.getSize(), -1)
-                                .contentType(file.getContentType())
-                                .build());
-
-                filesAdded.add(objectWriteResponse);
-            }
-        } catch (ServerException e) {
-            //ignored ?
+    public void upload(List<MultipartFile> files, List<String> cleanPaths) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        int index = 0;
+        for (MultipartFile file : files) {
+            minioClient.putObject(
+                    PutObjectArgs
+                            .builder()
+                            .bucket(minioBucketName)
+                            .object(cleanPaths.get(index++))
+                            .stream(file.getInputStream(), file.getSize(), -1)
+                            .contentType(file.getContentType())
+                            .build());
         }
-
-        return filesAdded;
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import storage.cloud.cloudstorage.exception.*;
 import storage.cloud.cloudstorage.response.ErrorResponse;
 
@@ -22,6 +23,7 @@ public class GlobalExceptionHandler {
 
     static {
         KNOWN_EXCEPTIONS_STATUS_MAP.put(InvalidFilesException.class, HttpStatus.BAD_REQUEST);
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(InvalidFileNameException.class, HttpStatus.BAD_REQUEST);
 
         KNOWN_EXCEPTIONS_STATUS_MAP.put(InvalidLoginDataException.class, HttpStatus.UNAUTHORIZED);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(UnauthorizedActionException.class, HttpStatus.UNAUTHORIZED);
@@ -29,6 +31,7 @@ public class GlobalExceptionHandler {
 
         KNOWN_EXCEPTIONS_STATUS_MAP.put(UserAlreadyExistsException.class, HttpStatus.CONFLICT);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(FolderAlreadyExistsException.class, HttpStatus.CONFLICT);
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(FileAlreadyExistsException.class, HttpStatus.CONFLICT);
 
         KNOWN_EXCEPTIONS_STATUS_MAP.put(FolderNotFoundException.class, HttpStatus.NOT_FOUND);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(ParentFolderHasNotFoundException.class, HttpStatus.NOT_FOUND);
@@ -45,6 +48,18 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(
                 errorResponse,
+                status
+        );
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException exception
+    ) {
+        HttpStatus status = HttpStatus.PAYLOAD_TOO_LARGE;
+
+        return new ResponseEntity<>(
+                new ErrorResponse("Maximum ulpoad size exceeded"),
                 status
         );
     }
