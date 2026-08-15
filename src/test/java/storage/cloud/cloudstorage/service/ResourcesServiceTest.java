@@ -34,7 +34,6 @@ class ResourcesServiceTest {
     @Mock
     private StorageInitializer storageInitializer;
 
-
     @Test
     public void createStorageIsSucceeded() throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         ReflectionTestUtils.setField(
@@ -66,6 +65,10 @@ class ResourcesServiceTest {
         assertThat(actual.type()).isEqualTo(expected.type());
     }
 
+    /**
+     * Особное внимание на currentParent - в результаты он не попадает, т.к. мы ищем ресурсы в самой папочке,
+     * а не на уровне выше
+     */
     @Test
     public void getStorageInfoIsSucceeded() throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         ReflectionTestUtils.setField(
@@ -79,6 +82,10 @@ class ResourcesServiceTest {
 
         Long userId = 1L;
 
+        Item currentParent = mock(Item.class);
+        when(currentParent.objectName()).thenReturn(fullPath);
+        Result<Item> parentFolder = new Result<>(currentParent);
+
         String child1 = "child1";
         Item firstFolder = new Contents("user-1-files/parent1/child1/");
         Result<Item> firstFolderResult = new Result<>(firstFolder);
@@ -86,7 +93,23 @@ class ResourcesServiceTest {
         String child2 = "child2";
         Item secondFolder = new Contents("user-1-files/parent1/child2/");
         Result<Item> secondFolderResult = new Result<>(secondFolder);
-        when(repository.getFolderInfo(fullPath)).thenReturn(List.of(firstFolderResult, secondFolderResult));
+
+        String file = "gorgon.jpg";
+        String pathTillFile = "user-1-files/parent1/gorgon.jpg";
+        Item fileDownloaded = mock(Item.class);
+        when(fileDownloaded.objectName()).thenReturn(pathTillFile);
+        when(fileDownloaded.isDir()).thenReturn(false);
+        when(fileDownloaded.size()).thenReturn(1500L);
+        Result<Item> fileResult = new Result<>(fileDownloaded);
+
+        when(repository.getFolderInfo(fullPath)).thenReturn(
+                List.of(
+                        parentFolder,
+                        firstFolderResult,
+                        secondFolderResult,
+                        fileResult
+                )
+        );
 
         List<ResourceResponse> expected = List.of(
                 ResourceResponse
@@ -100,6 +123,13 @@ class ResourcesServiceTest {
                         .path(parent)
                         .name(child2)
                         .type(Type.DIRECTORY.name())
+                        .build(),
+                ResourceResponse
+                        .builder()
+                        .path(parent)
+                        .name(file)
+                        .size(1500L)
+                        .type(Type.FILE.name())
                         .build()
         );
         List<ResourceResponse> actual = service.getFolderInfo(parent, userId);

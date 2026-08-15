@@ -11,7 +11,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 import org.springframework.test.context.ActiveProfiles;
@@ -27,8 +27,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import storage.cloud.cloudstorage.repository.UserRepository;
 import storage.cloud.cloudstorage.request.UserRegisterRequest;
 import storage.cloud.cloudstorage.response.ResourceResponse;
-import storage.cloud.cloudstorage.response.UsernameResponse;
-import storage.cloud.cloudstorage.service.ResourcesService;
 import storage.cloud.cloudstorage.service.Type;
 
 import java.util.List;
@@ -36,8 +34,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Testcontainers
@@ -134,6 +131,27 @@ public class ResourcesControllerIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
+        byte[] gorgonSize = new byte[1500];
+        String gorgonFilename = "gorgon.jpg";
+        String gorgonType = Type.FILE.name();
+        MockMultipartFile gorgon = new MockMultipartFile(
+                "file",
+                "gorgon.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                gorgonSize
+        );
+
+        mockMvc.perform(multipart("/resource")
+                        .file(gorgon)
+                        .cookie(sessionCookie)
+                        .param("path", path))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].path").value(path))
+                .andExpect(jsonPath("$[0].name").value(gorgonFilename))
+                .andExpect(jsonPath("$[0].size").value(1500))
+                .andExpect(jsonPath("$[0].type").value(gorgonType));
+
         String parentFolder = folderName + "/";
         folderName = "child1";
         path = parentFolder + folderName + "/";
@@ -167,15 +185,22 @@ public class ResourcesControllerIntegrationTest {
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$", hasSize(3)))
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
 
         List<ResourceResponse> actualResponses
-                = objectMapper.readValue(content, new TypeReference<List<ResourceResponse>>(){});
+                = objectMapper.readValue(content, new TypeReference<List<ResourceResponse>>() {
+        });
 
         List<ResourceResponse> expected = List.of(
+                ResourceResponse.builder()
+                        .path("folder1/")
+                        .name(gorgonFilename)
+                        .size(1500L)
+                        .type(Type.FILE.name())
+                        .build(),
                 ResourceResponse.builder()
                         .path("folder1/")
                         .name("child1")
