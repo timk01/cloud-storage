@@ -181,8 +181,6 @@ public class ResourcesService {
                 continue;
             }
 
-            validateOriginalFileName(uncheckedFilename);
-
             String cleanedPathName = StringUtils.cleanPath(uncheckedFilename);
 
             validateCleanedPathName(cleanedPathName);
@@ -200,21 +198,11 @@ public class ResourcesService {
         return preparedFiles;
     }
 
-    private static void validateCleanedPathName(String cleanedPathName) {
-        if (".".equals(cleanedPathName) || "..".equals(cleanedPathName)) {
+    private void validateCleanedPathName(String cleanedPathName) {
+        if (cleanedPathName.isEmpty() || ".".equals(cleanedPathName) || "..".equals(cleanedPathName)) {
             throw new InvalidFileNameException(
                     String.format(
                             "Multipartfile is a invalid: %s ", cleanedPathName
-                    )
-            );
-        }
-    }
-
-    private void validateOriginalFileName(String uncheckedFilename) {
-        if (uncheckedFilename.contains("/") || uncheckedFilename.contains("\\")) {
-            throw new InvalidFileNameException(
-                    String.format(
-                            "Multipartfile is a invalid: %s ", uncheckedFilename
                     )
             );
         }

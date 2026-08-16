@@ -151,14 +151,14 @@ public class MinioRepository {
         }
     }
 
-    public void upload(List<MultipartFile> files, List<String> cleanPaths) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public void upload(List<MultipartFile> files, List<String> fullPathTillFiles) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         int index = 0;
         for (MultipartFile file : files) {
             minioClient.putObject(
                     PutObjectArgs
                             .builder()
                             .bucket(minioBucketName)
-                            .object(cleanPaths.get(index++))
+                            .object(fullPathTillFiles.get(index++))
                             .stream(file.getInputStream(), file.getSize(), -1)
                             .contentType(file.getContentType())
                             .build());
