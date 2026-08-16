@@ -2,29 +2,34 @@ package storage.cloud.cloudstorage.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
+import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.session.Session;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import storage.cloud.cloudstorage.entity.User;
 import storage.cloud.cloudstorage.request.UserLoginRequest;
 import storage.cloud.cloudstorage.request.UserRegisterRequest;
+import storage.cloud.cloudstorage.response.UserResponse;
 import storage.cloud.cloudstorage.service.UserService;
 
+import java.util.Base64;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static reactor.core.publisher.Mono.when;
 
 @WebMvcTest(UserController.class)
 class UserControllerWebMvcTest {
@@ -39,6 +44,42 @@ class UserControllerWebMvcTest {
     private UserService userService;
 
     private ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    public void registrationIsSucceeded() throws Exception {
+        String username = "tim1";
+        String passwordOriginal = "sadfasfkljkjl22##";
+        UserRegisterRequest dto = new UserRegisterRequest(username, passwordOriginal);
+
+        UserResponse userResponse = new UserResponse(1L, username);
+
+        when(userService.register(dto)).thenReturn(userResponse);
+
+       mockMvc.perform(post("/api/auth/sign-up")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.username").exists())
+                .andExpect(jsonPath("$.username").value(username));
+    }
+
+    @Test
+    public void loginIsSucceeded() throws Exception {
+        String username = "tim1";
+        String passwordOriginal = "sadfasfkljkjl22##";
+        UserLoginRequest dto = new UserLoginRequest(username, passwordOriginal);
+
+        UserResponse userResponse = new UserResponse(1L, username);
+
+        when(userService.login(dto)).thenReturn(userResponse);
+
+        mockMvc.perform(post("/api/auth/sign-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").exists())
+                .andExpect(jsonPath("$.username").value(username));
+    }
 
     @Test
     public void gettingUserIsOkIfItHasSession() throws Exception {
