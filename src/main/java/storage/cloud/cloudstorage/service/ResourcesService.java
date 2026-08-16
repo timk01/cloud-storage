@@ -61,8 +61,8 @@ public class ResourcesService {
             String folderPath,
             String folderName
     ) {
-    }
 
+    }
     @NotNull
     private String extractParentPath(String path) {
         String trimmedOriginalPath = removeTrailingSlash(path);
@@ -213,5 +213,20 @@ public class ResourcesService {
             String fullPathTillFile,
             MultipartFile multipartFile
     ) {
+
+    }
+    public List<ResourceResponse> search(String path, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        String preparedPath = buildPreparedPath(path, userId);
+        initializer.initStorage(preparedPath);
+
+        Iterable<Result<Item>> searchResult = minioRepository.search(preparedPath);
+        for (Result<Item> item : searchResult) {
+            //разбираем на папочки и файлы, собираем ответ.
+            //1 в 1 как в гет - ручке.
+
+
+        }
+
+        return null;
     }
 }

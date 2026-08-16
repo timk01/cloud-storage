@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import storage.cloud.cloudstorage.exception.InvalidFilesException;
 import storage.cloud.cloudstorage.exception.UnauthorizedActionException;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.ResourcesService;
@@ -104,6 +103,29 @@ public class ResourcesController {
         }
 
         List<ResourceResponse> folderInfo = service.upload(path, files, userId);
+
+        return new ResponseEntity<>(
+                folderInfo,
+                HttpStatus.CREATED
+        );
+    }
+
+    @GetMapping(value = "/resource/search")
+    public ResponseEntity<List<ResourceResponse>> search(
+            @SessionAttribute(name = "userId", required = false) Long userId,
+            @RequestParam("query")
+            @NotNull
+/*            @Pattern(
+                    regexp = PATH_VALIDATOR_REGEXP,
+                    message = WRONG_PATH
+            )*/
+            String query
+    ) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        if (userId == null) {
+            throw new UnauthorizedActionException("User is not authorized");
+        }
+
+        List<ResourceResponse> folderInfo = service.search(query, userId);
 
         return new ResponseEntity<>(
                 folderInfo,

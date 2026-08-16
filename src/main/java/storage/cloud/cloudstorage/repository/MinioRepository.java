@@ -164,4 +164,15 @@ public class MinioRepository {
                             .build());
         }
     }
+
+    public Iterable<Result<Item>> search(String query) {
+        return minioClient.listObjects(
+                ListObjectsArgs
+                        .builder()
+                        .bucket(minioBucketName)
+                        .prefix(query)
+                        .recursive(true)
+                        .build()
+        );
+    }
 }
