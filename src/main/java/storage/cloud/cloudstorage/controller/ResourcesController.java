@@ -82,8 +82,7 @@ public class ResourcesController {
      * Upload contract:
      * - max file size: 5 MB, while max request size (all files): 30 MB;
      * - zero-byte files are allowed;
-     * - all files are uploaded to the same directory specified by path;
-     * - filename must not contain path separators;
+     * - all files are uploaded to the same directory specified by path;s;
      * - existing file -> 409;
      * - multi-file upload is not atomic.
      */

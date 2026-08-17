@@ -27,7 +27,13 @@ public class MinioRepository {
     public void creaTeFolder(String minioParentPath, String fullPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         checkParentFolder(minioParentPath);
 
-        checkCurrentFolder(fullPath);
+        if (doesFolderExist(fullPath)) {
+            throw new FolderAlreadyExistsException(
+                    String.format(
+                            "Folder already exists: %s", fullPath
+                    )
+            );
+        }
 
         minioClient.putObject(
                 PutObjectArgs
@@ -37,9 +43,6 @@ public class MinioRepository {
                         .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
                         .build()
         );
-
-        //toDo посмотреть для остальных ручек (где файлы), тут сайз есть
-
     }
 
     private void checkParentFolder(String parentFolder) {
@@ -58,31 +61,28 @@ public class MinioRepository {
             throw new ParentFolderHasNotFoundException(
                     String.format(
                             "No parent folder has been found: %s", parentFolder
-                    ));
+                    )
+            );
         }
     }
 
-    private void checkCurrentFolder(String fullPath) {
-        Iterable<Result<Item>> folderResults = minioClient.listObjects(
-                ListObjectsArgs
-                        .builder()
-                        .bucket(minioBucketName)
-                        .prefix(fullPath)
-                        .maxKeys(1)
-                        .build()
-        );
+    private boolean doesFolderExist(String fullPath) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
+        try {
+            minioClient.statObject(
+                    StatObjectArgs
+                            .builder()
+                            .bucket(minioBucketName)
+                            .object(fullPath)
+                            .build()
+            );
 
-        checkFolderDoesNotExist(fullPath, folderResults);
-    }
+            return true;
 
-    private void checkFolderDoesNotExist(String fullPath, Iterable<Result<Item>> folderResults) {
-        boolean hasFolder = folderResults.iterator().hasNext();
-
-        if (hasFolder) {
-            throw new FolderAlreadyExistsException(
-                    String.format(
-                            "Folder already exist: %s ", fullPath
-                    ));
+        } catch (ErrorResponseException ere) {
+            if ("NoSuchKey".equals(ere.errorResponse().code())) {
+                return false;
+            }
+            throw ere;
         }
     }
 
@@ -152,6 +152,8 @@ public class MinioRepository {
     }
 
     public void upload(List<MultipartFile> files, List<String> fullPathTillFiles) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        createFoldersRecursively(fullPathTillFiles);
+
         int index = 0;
         for (MultipartFile file : files) {
             minioClient.putObject(
@@ -162,6 +164,34 @@ public class MinioRepository {
                             .stream(file.getInputStream(), file.getSize(), -1)
                             .contentType(file.getContentType())
                             .build());
+        }
+    }
+
+    private void createFoldersRecursively(List<String> fullPathTillFiles) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
+        StringBuilder pathToFolder = new StringBuilder();
+        for (String fullPathTillFile : fullPathTillFiles) {
+            String[] partsTillFile = fullPathTillFile.split("/");
+            pathToFolder.setLength(0);
+
+            for (int i = 0; i < partsTillFile.length - 1; i++) {
+                if (partsTillFile[i].isEmpty()) {
+                    continue;
+                }
+
+                pathToFolder.append(partsTillFile[i]).append("/");
+                String pathToFolderNormalized = String.valueOf(pathToFolder);
+                if (!doesFolderExist(pathToFolderNormalized)) {
+                    minioClient.putObject(
+                            PutObjectArgs
+                                    .builder()
+                                    .bucket(minioBucketName)
+                                    .object(pathToFolderNormalized)
+                                    .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
+                                    .build()
+                    );
+                }
+
+            }
         }
     }
 
