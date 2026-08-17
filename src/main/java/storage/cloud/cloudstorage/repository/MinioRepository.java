@@ -24,8 +24,8 @@ public class MinioRepository {
     private final MinioClient minioClient;
     private final String minioBucketName;
 
-    public void creaTeFolder(String parentFolder, String fullPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
-        checkParentFolder(parentFolder);
+    public void creaTeFolder(String minioParentPath, String fullPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        checkParentFolder(minioParentPath);
 
         checkCurrentFolder(fullPath);
 

@@ -17,26 +17,19 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 import storage.cloud.cloudstorage.exception.InvalidFileNameException;
-import storage.cloud.cloudstorage.exception.InvalidLoginDataException;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
-import storage.cloud.cloudstorage.request.UserLoginRequest;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 class ResourcesServiceTest {
@@ -73,7 +66,7 @@ class ResourcesServiceTest {
                 .build();
         ResourceResponse actual = service.createFolder(pathAsDirectory, userId);
 
-        verify(storageInitializer, times(1)).initStorage(fullPath);
+        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(repository, times(1)).creaTeFolder(minioRootFolder, fullPath);
 
         assertThat(actual.path()).isEqualTo(expected.path());
@@ -90,7 +83,7 @@ class ResourcesServiceTest {
         );
 
         String parent = "parent1/";
-        String fullPath = "user-1-files/" + parent;
+        String minioRootFolder = "user-1-files/";
 
         Long userId = 1L;
 
@@ -107,7 +100,7 @@ class ResourcesServiceTest {
                         .build()
         );
 
-        MultipartFile[] gorgonFile = new MultipartFile[] {new MockMultipartFile(
+        MultipartFile[] gorgonFile = new MultipartFile[]{new MockMultipartFile(
                 "file",
                 gorgonFilename,
                 MediaType.IMAGE_JPEG_VALUE,
@@ -122,7 +115,7 @@ class ResourcesServiceTest {
                 userId
         );
 
-        verify(storageInitializer, times(1)).initStorage(fullPath);
+        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(repository, times(1))
                 .checkFiles(List.of(fullPathTillFile));
         verify(repository, times(1))
@@ -144,7 +137,8 @@ class ResourcesServiceTest {
         );
 
         String parent = "parent1/";
-        String fullPath = "user-1-files/" + parent;
+        String minioRootFolder = "user-1-files/";
+        String fullPath = minioRootFolder + parent;
 
         Long userId = 1L;
 
@@ -200,7 +194,7 @@ class ResourcesServiceTest {
         );
         List<ResourceResponse> actual = service.getFolderInfo(parent, userId);
 
-        verify(storageInitializer, times(1)).initStorage(fullPath);
+        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(repository, times(1)).getFolderInfo(fullPath);
 
         assertThat(actual).containsExactlyElementsOf(expected);
@@ -216,13 +210,13 @@ class ResourcesServiceTest {
         );
 
         String parent = "parent1/";
-        String fullPath = "user-1-files/" + parent;
+        String minioRootFolder = "user-1-files/";
 
         Long userId = 1L;
 
         byte[] gorgonSize = new byte[1500];
 
-        MultipartFile[] gorgonFile = new MultipartFile[] {new MockMultipartFile(
+        MultipartFile[] gorgonFile = new MultipartFile[]{new MockMultipartFile(
                 "file",
                 gorgonFilename,
                 MediaType.IMAGE_JPEG_VALUE,
@@ -235,7 +229,7 @@ class ResourcesServiceTest {
                 userId
         );
 
-        verify(storageInitializer, times(1)).initStorage(fullPath);
+        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(repository, times(1))
                 .checkFiles(List.of());
         verify(repository, times(1))
@@ -261,11 +255,11 @@ class ResourcesServiceTest {
         );
 
         String parent = "parent1/";
-        String fullPath = "user-1-files/" + parent;
+        String minioRootFolder = "user-1-files/";
 
         Long userId = 1L;
 
-        MultipartFile[] gorgonFile = new MultipartFile[] {new MockMultipartFile(
+        MultipartFile[] gorgonFile = new MultipartFile[]{new MockMultipartFile(
                 "file",
                 gorgonFilename,
                 MediaType.IMAGE_JPEG_VALUE,
@@ -275,7 +269,7 @@ class ResourcesServiceTest {
         assertThatThrownBy(() -> service.upload(parent, gorgonFile, userId))
                 .isInstanceOf(InvalidFileNameException.class);
 
-        verify(storageInitializer, times(1)).initStorage(fullPath);
+        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(repository, never())
                 .checkFiles(anyList());
         verify(repository, never()).upload(anyList(), anyList());

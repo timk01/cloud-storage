@@ -1,6 +1,7 @@
 package storage.cloud.cloudstorage.controller;
 
 import io.minio.errors.MinioException;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -115,10 +116,7 @@ public class ResourcesController {
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("query")
             @NotNull
-/*            @Pattern(
-                    regexp = PATH_VALIDATOR_REGEXP,
-                    message = WRONG_PATH
-            )*/
+            @NotEmpty
             String query
     ) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         if (userId == null) {
@@ -129,7 +127,7 @@ public class ResourcesController {
 
         return new ResponseEntity<>(
                 folderInfo,
-                HttpStatus.CREATED
+                HttpStatus.OK
         );
     }
 }

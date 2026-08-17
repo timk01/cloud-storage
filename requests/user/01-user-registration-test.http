@@ -11,6 +11,17 @@ Content-Type: application/json
 
 > {%
     client.global.set("conflict_name", response.body.username);
+
+    const runId = response.body.username.substring("conflict_user_".length);
+
+    client.global.set("min_username", runId.substring(0, 3));
+    client.global.set(
+        "max_username",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" + runId
+    );
+    client.global.set("min_password_username", "tim1_" + runId);
+    client.global.set("max_password_username", "tim2_" + runId);
+
     client.test("Successfully create a user", function() {
         client.assert(response.status === 201, "Response status is 201");
         const body = response.body;
@@ -24,16 +35,16 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "tim",
+  "username": "{{min_username}}",
   "password": "superPassword123"
 }
-
 
 > {%
     client.test("Successfully create a user", function() {
         client.assert(response.status === 201, "Response status is 201");
         const body = response.body;
-        client.assert(body.username === "tim", "Server should return name of user - username is short");
+        const expected = client.global.get("min_username");
+        client.assert(body.username === expected, "Server should return name of user - username is short");
     });
 %}
 
@@ -42,7 +53,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "username": "{{max_username}}",
   "password": "superPassword123"
 }
 
@@ -50,7 +61,8 @@ Content-Type: application/json
     client.test("Successfully create a user", function() {
         client.assert(response.status === 201, "Response status is 201");
         const body = response.body;
-        client.assert(body.username === "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        const expected = client.global.get("max_username");
+        client.assert(body.username === expected,
             "Server should return name of user - username is long");
     });
 %}
@@ -60,7 +72,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "tim1",
+  "username": "{{min_password_username}}",
   "password": "222"
 }
 
@@ -68,7 +80,8 @@ Content-Type: application/json
     client.test("Successfully create a user", function() {
         client.assert(response.status === 201, "Response status is 201");
         const body = response.body;
-        client.assert(body.username === "tim1", "Server should return name of user - password is short");
+        const expected = client.global.get("min_password_username");
+        client.assert(body.username === expected, "Server should return name of user - password is short");
     });
 %}
 
@@ -77,7 +90,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "tim2",
+  "username": "{{max_password_username}}",
   "password": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 }
 
@@ -85,7 +98,8 @@ Content-Type: application/json
     client.test("Successfully create a user", function() {
         client.assert(response.status === 201, "Response status is 201");
         const body = response.body;
-        client.assert(body.username === "tim2", "Server should return name of user - password is long");
+        const expected = client.global.get("max_password_username");
+        client.assert(body.username === expected, "Server should return name of user - password is long");
     });
 %}
 

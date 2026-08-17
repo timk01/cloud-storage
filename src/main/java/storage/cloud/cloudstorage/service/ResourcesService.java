@@ -28,37 +28,38 @@ public class ResourcesService {
     private final StorageInitializer initializer;
 
     public ResourceResponse createFolder(String path, Long userId) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
-        String fullPath = buildPreparedPath(path, userId);
-        initializer.initStorage(fullPath);
+        String preparedRoot = buildPreparedRoot(userId);
+        initializer.initStorage(preparedRoot);
 
+        String fullPath = buildPreparedPath(preparedRoot, path);
         FolderPathParts result = getResult(path, fullPath);
 
-        minioRepository.creaTeFolder(result.parentFolder(), fullPath);
+        minioRepository.creaTeFolder(result.minioParentPath(), fullPath);
 
         return ResourceResponse
                 .builder()
-                .path(result.folderPath())
+                .path(result.resourceParentPath())
                 .name(result.folderName())
                 .type(Type.DIRECTORY.name())
                 .build();
     }
 
     @NotNull
-    private FolderPathParts getResult(String path, String fullPath) {
-        String trimmedFullPath = removeTrailingSlash(fullPath);
+    private FolderPathParts getResult(String resourcePath, String fullMinioPath) {
+        String trimmedFullPath = removeTrailingSlash(fullMinioPath);
         int lastFolderIndex = trimmedFullPath.lastIndexOf("/");
-        String parentFolder = trimmedFullPath.substring(0, lastFolderIndex + 1);
+        String minioParentPath = trimmedFullPath.substring(0, lastFolderIndex + 1);
 
-        String folderPath = extractParentPath(path);
-        String lastFolder = fullPath.substring(lastFolderIndex + 1);
+        String resourceParentPath = extractParentPath(resourcePath);
+        String lastFolder = fullMinioPath.substring(lastFolderIndex + 1);
         String folderName = removeTrailingSlash(lastFolder);
 
-        return new FolderPathParts(parentFolder, folderPath, folderName);
+        return new FolderPathParts(minioParentPath, resourceParentPath, folderName);
     }
 
     private record FolderPathParts(
-            String parentFolder,
-            String folderPath,
+            String minioParentPath,
+            String resourceParentPath,
             String folderName
     ) {
 
@@ -71,9 +72,10 @@ public class ResourcesService {
     }
 
     public List<ResourceResponse> getFolderInfo(String path, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        String fullPath = buildPreparedPath(path, userId);
-        initializer.initStorage(fullPath);
+        String preparedRoot = buildPreparedRoot(userId);
+        initializer.initStorage(preparedRoot);
 
+        String fullPath = buildPreparedPath(preparedRoot, path);
         Iterable<Result<Item>> folderInfo = minioRepository.getFolderInfo(fullPath);
 
         List<ResourceResponse> resources = new ArrayList<>();
@@ -131,17 +133,21 @@ public class ResourcesService {
     }
 
     @NotNull
-    private String buildPreparedPath(String path, Long userId) {
+    private String buildPreparedRoot(Long userId) {
         String[] splitBucket = minioBucketName.split("-");
-        String userRoot = splitBucket[0] + "-" + userId + "-" + splitBucket[1];
+        return splitBucket[0] + "-" + userId + "-" + splitBucket[1] + "/";
+    }
 
-        return userRoot + "/" + path;
+    @NotNull
+    private String buildPreparedPath(String preparedRoot, String path) {
+        return preparedRoot + path;
     }
 
     public List<ResourceResponse> upload(String path, MultipartFile[] files, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        String preparedPath = buildPreparedPath(path, userId);
-        initializer.initStorage(preparedPath);
+        String preparedRoot = buildPreparedRoot(userId);
+        initializer.initStorage(preparedRoot);
 
+        String preparedPath = buildPreparedPath(preparedRoot, path);
         List<PreparedFile> preparedFiles = getPreparedFiles(files, preparedPath);
 
         List<String> fullPathTillFile = preparedFiles.stream()
@@ -215,18 +221,50 @@ public class ResourcesService {
     ) {
 
     }
-    public List<ResourceResponse> search(String path, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        String preparedPath = buildPreparedPath(path, userId);
-        initializer.initStorage(preparedPath);
+    public List<ResourceResponse> search(String query, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        String preparedRoot = buildPreparedRoot(userId);
+        initializer.initStorage(preparedRoot);
 
-        Iterable<Result<Item>> searchResult = minioRepository.search(preparedPath);
-        for (Result<Item> item : searchResult) {
-            //разбираем на папочки и файлы, собираем ответ.
-            //1 в 1 как в гет - ручке.
+        Iterable<Result<Item>> searchResult = minioRepository.search(preparedRoot);
+        List<ResourceResponse> resources = new ArrayList<>();
+        for (Result<Item> itemResult : searchResult) {
+            Item item = itemResult.get();
+            String fullPathTillItem = item.objectName(); //user-1-files/folder1/my-gorgon-folder/
+            String itemFullPathWithoutRoot = fullPathTillItem.replace(preparedRoot, ""); //folder1/my-gorgon-folder/
 
+            String normalizedQuery = query.toLowerCase();
+            if (itemFullPathWithoutRoot.endsWith("/")) {
 
+                FolderPathParts result = getResult(itemFullPathWithoutRoot, fullPathTillItem);
+
+                String folderName = result.folderName;
+                if (folderName.toLowerCase().contains(normalizedQuery)) {
+                    resources.add(
+                            ResourceResponse
+                                    .builder()
+                                    .path(result.resourceParentPath)
+                                    .name(folderName)
+                                    .type(Type.DIRECTORY.name())
+                                    .build()
+                    );
+                }
+            } else {
+                String fileName = parseFileName(item);
+                if (fileName.toLowerCase().contains(normalizedQuery)) {
+                    String path = itemFullPathWithoutRoot.replace(fileName, "");
+                    resources.add(
+                            ResourceResponse
+                                    .builder()
+                                    .path(path)
+                                    .name(fileName)
+                                    .size(item.size())
+                                    .type(Type.FILE.name())
+                                    .build()
+                    );
+                }
+            }
         }
 
-        return null;
+        return resources;
     }
 }

@@ -40,9 +40,7 @@ public class StorageInitializer {
         }
     }
 
-    private void initRoot(String fullPath) throws ErrorResponseException, InsufficientDataException, InternalException, InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException, XmlParserException {
-        String root = fullPath.split("/")[0] + "/";
-
+    private void initRoot(String root) throws ErrorResponseException, InsufficientDataException, InternalException, InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException, XmlParserException {
         Iterable<Result<Item>> rootResults = minioClient.listObjects(
                 ListObjectsArgs
                         .builder()

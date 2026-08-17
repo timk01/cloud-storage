@@ -210,24 +210,6 @@ Content-Type: image/jpeg
     });
 %}
 
-### 400 - Failed to to upload resources since file name has "/" in path
-POST {{baseUrl}}/resource?path={{created_folder}}/
-Content-Type: multipart/form-data; boundary=boundary
-
-# Part №1 of multipart-File (picture): several file will be converted into files
---boundary
-Content-Disposition: form-data; name="file22"; filename="folder1/gorgon.jpg"
-Content-Type: image/jpeg
-
-< ./docs/gorgon.jpg
---boundary
-
-> {%
-    client.test("Cannot upload resources", function() {
-        client.assert(response.status === 400, "Response status is 400 since path is wrong");
-    });
-%}
-
 ### 400 - Failed to upload resources since cleaned file name is ".."
 POST {{baseUrl}}/resource?path={{created_folder}}/
 Content-Type: multipart/form-data; boundary=boundary

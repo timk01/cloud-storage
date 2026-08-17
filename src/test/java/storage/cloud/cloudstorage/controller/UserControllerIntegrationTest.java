@@ -13,9 +13,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -56,6 +59,18 @@ class UserControllerIntegrationTest {
     private static GenericContainer<?> redis =
             new GenericContainer<>("redis:7.4-alpine")
                     .withExposedPorts(6379);
+
+    @Container
+    private static final MinIOContainer minio =
+            new MinIOContainer("minio/minio:RELEASE.2023-09-04T19-57-37Z");
+
+    @DynamicPropertySource
+    static void minioProperties(DynamicPropertyRegistry registry) {
+        registry.add("minio.url", minio::getS3URL);
+        registry.add("minio.user", minio::getUserName);
+        registry.add("minio.password", minio::getPassword);
+        registry.add("minio.bucket.name", () -> "test-bucket");
+    }
 
     @Autowired
     private SessionRepository<? extends Session> sessionRepository;
