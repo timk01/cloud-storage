@@ -71,7 +71,6 @@ POST {{baseUrl}}/directory?path={{test_folder}}/
     client.global.set("created_folder", response.body.name);
 %}
 
-
 ### 201 - Successfully uploaded TWO files (picture and text file) to a previosly created folder
 # Path to files (passed in query, say, POST {{baseUrl}}/resource?path=folder1/)
 POST {{baseUrl}}/resource?path={{created_folder}}/
