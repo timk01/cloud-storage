@@ -1,6 +1,7 @@
 package storage.cloud.cloudstorage.controller;
 
 import io.minio.errors.MinioException;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -114,7 +115,7 @@ public class ResourcesController {
     public ResponseEntity<List<ResourceResponse>> search(
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("query")
-            @NotNull
+            @NotBlank
             @NotEmpty
             String query
     ) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {

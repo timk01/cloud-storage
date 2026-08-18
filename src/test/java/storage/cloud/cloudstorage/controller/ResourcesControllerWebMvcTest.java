@@ -65,7 +65,7 @@ class ResourcesControllerWebMvcTest {
     }
 
     @Test
-    public void uploadingFolderOkWithSession() throws Exception {
+    public void uploadingResourceThinOkWithSession() throws Exception {
         String path = "folder1/";
         Long userId = 1L;
 
@@ -109,6 +109,72 @@ class ResourcesControllerWebMvcTest {
     }
 
     @Test
+    public void uploadingResourceWideOkWithSession() throws Exception {
+        String path = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
+        Long userId = 1L;
+
+        byte[] gorgonSize = new byte[1500];
+        String gorgonFilename = "gorgon.jpg";
+        String gorgonType = Type.FILE.name();
+        MockMultipartFile gorgonJpg = new MockMultipartFile(
+                "file",
+                "gorgon.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                gorgonSize
+        );
+
+        byte[] gorgonTxtSize = new byte[123];
+        String gorgonTxtFilename = "description_gorgon.txt";
+        String gorgonTxtType = Type.FILE.name();
+        MockMultipartFile gorgonTxt = new MockMultipartFile(
+                "file",
+                "description_gorgon.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                gorgonTxtSize
+        );
+
+        List<ResourceResponse> resourceResponses = List.of(
+                ResourceResponse.builder()
+                        .path(path)
+                        .name(gorgonFilename)
+                        .size(1500L)
+                        .type(gorgonType)
+                        .build(),
+
+                ResourceResponse.builder()
+                        .path(path)
+                        .name(gorgonTxtFilename)
+                        .size(123L)
+                        .type(gorgonTxtType)
+                        .build()
+        );
+
+        when(resourcesService.upload(
+                eq(path),
+                any(MultipartFile[].class),
+                eq(userId))
+        ).thenReturn(resourceResponses);
+
+        mockMvc.perform(multipart("/resource")
+                        .file(gorgonJpg)
+                        .file(gorgonTxt)
+                        .sessionAttr("userId", userId)
+                        .param("path", path))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$", hasSize(2)))
+
+                .andExpect(jsonPath("$[0].path").value(path))
+                .andExpect(jsonPath("$[0].name").value(gorgonFilename))
+                .andExpect(jsonPath("$[0].size").value(1500L))
+                .andExpect(jsonPath("$[0].type").value(gorgonType))
+
+                .andExpect(jsonPath("$[1].path").value(path))
+                .andExpect(jsonPath("$[1].name").value(gorgonTxtFilename))
+                .andExpect(jsonPath("$[1].size").value(123L))
+                .andExpect(jsonPath("$[1].type").value(gorgonTxtType));
+    }
+
+    @Test
     public void gettingFolderInfoOkWithSession() throws Exception {
         String path = "folder1/";
         Long userId = 1L;
@@ -135,7 +201,6 @@ class ResourcesControllerWebMvcTest {
                 userId
         )).thenReturn(resourceResponses);
 
-
         mockMvc.perform(get("/directory")
                         .sessionAttr("userId", userId)
                         .param("path", path))
@@ -148,6 +213,87 @@ class ResourcesControllerWebMvcTest {
                 .andExpect(jsonPath("$[1].name").value(gorgonFilename))
                 .andExpect(jsonPath("$[1].size").value(1500L))
                 .andExpect(jsonPath("$[1].type").value(gorgonType));
+    }
+
+    @Test
+    public void searchingResourceByMaskOkWithSession() throws Exception {
+        String path = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
+        String query = "gorgon";
+        Long userId = 1L;
+
+        String gorgonFilename = "gorgon.jpg";
+        String gorgonType = Type.FILE.name();
+
+        String gorgonTxtFilename = "description_gorgon.txt";
+        String gorgonTxtType = Type.FILE.name();
+
+        List<ResourceResponse> searchResponses = List.of(
+                ResourceResponse.builder()
+                        .path("")
+                        .name("gorgon_root")
+                        .type(Type.DIRECTORY.name())
+                        .build(),
+
+                ResourceResponse.builder()
+                        .path("gorgon_root/")
+                        .name("gorgon_archive")
+                        .type(Type.DIRECTORY.name())
+                        .build(),
+
+                ResourceResponse.builder()
+                        .path("gorgon_root/gorgon_archive/")
+                        .name("gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000")
+                        .type(Type.DIRECTORY.name())
+                        .build(),
+
+                ResourceResponse.builder()
+                        .path(path)
+                        .name(gorgonFilename)
+                        .size(1500L)
+                        .type(gorgonType)
+                        .build(),
+
+                ResourceResponse.builder()
+                        .path(path)
+                        .name(gorgonTxtFilename)
+                        .size(123L)
+                        .type(gorgonTxtType)
+                        .build()
+        );
+
+        when(resourcesService.search(query, userId))
+                .thenReturn(searchResponses);
+
+        mockMvc.perform(get("/resource/search")
+                        .sessionAttr("userId", userId)
+                        .param("query", query))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(5)))
+                .andExpect(jsonPath("$[0].path").value(""))
+                .andExpect(jsonPath("$[0].name").value("gorgon_root"))
+                .andExpect(jsonPath("$[0].type").value(Type.DIRECTORY.name()))
+                .andExpect(jsonPath("$[0].size").doesNotExist())
+
+                .andExpect(jsonPath("$[1].path").value("gorgon_root/"))
+                .andExpect(jsonPath("$[1].name").value("gorgon_archive"))
+                .andExpect(jsonPath("$[1].type").value(Type.DIRECTORY.name()))
+                .andExpect(jsonPath("$[1].size").doesNotExist())
+
+                .andExpect(jsonPath("$[2].path").value("gorgon_root/gorgon_archive/"))
+                .andExpect(jsonPath("$[2].name")
+                        .value("gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000"))
+                .andExpect(jsonPath("$[2].type").value(Type.DIRECTORY.name()))
+                .andExpect(jsonPath("$[2].size").doesNotExist())
+
+                .andExpect(jsonPath("$[3].path").value(path))
+                .andExpect(jsonPath("$[3].name").value(gorgonFilename))
+                .andExpect(jsonPath("$[3].size").value(1500L))
+                .andExpect(jsonPath("$[3].type").value(gorgonType))
+
+                .andExpect(jsonPath("$[4].path").value(path))
+                .andExpect(jsonPath("$[4].name").value(gorgonTxtFilename))
+                .andExpect(jsonPath("$[4].size").value(123L))
+                .andExpect(jsonPath("$[4].type").value(gorgonTxtType));
     }
 
     private static Stream<Arguments> invalidPath() {
@@ -254,6 +400,23 @@ class ResourcesControllerWebMvcTest {
     }
 
     @Test
+    public void searchingResourceFailedDueToEmptyQuery() throws Exception {
+        mockMvc.perform(get("/resource/search")
+                        .sessionAttr("userId", 1L)
+                        .param("query", ""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    public void searchingResourceFailedDueToNoQuery() throws Exception {
+        mockMvc.perform(get("/resource/search")
+                        .sessionAttr("userId", 1L))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
     public void folderCreationFailedSinceUserIsUnauthorized() throws Exception {
         mockMvc.perform(post("/directory")
                         .param("path", "folder1/"))
@@ -281,6 +444,14 @@ class ResourcesControllerWebMvcTest {
         mockMvc.perform(multipart("/resource")
                         .file(gorgon)
                         .param("path", "folder1/"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    public void searchingResourceFailedSinceUserIsUnauthorized() throws Exception {
+        mockMvc.perform(get("/resource/search")
+                        .param("query", "query"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").exists());
     }

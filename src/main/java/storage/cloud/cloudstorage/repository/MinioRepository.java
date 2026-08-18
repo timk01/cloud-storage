@@ -195,12 +195,12 @@ public class MinioRepository {
         }
     }
 
-    public Iterable<Result<Item>> search(String query) {
+    public Iterable<Result<Item>> search(String preparedRoot) {
         return minioClient.listObjects(
                 ListObjectsArgs
                         .builder()
                         .bucket(minioBucketName)
-                        .prefix(query)
+                        .prefix(preparedRoot)
                         .recursive(true)
                         .build()
         );

@@ -229,8 +229,8 @@ public class ResourcesService {
         List<ResourceResponse> resources = new ArrayList<>();
         for (Result<Item> itemResult : searchResult) {
             Item item = itemResult.get();
-            String fullPathTillItem = item.objectName(); //user-1-files/folder1/my-gorgon-folder/
-            String itemFullPathWithoutRoot = fullPathTillItem.replace(preparedRoot, ""); //folder1/my-gorgon-folder/
+            String fullPathTillItem = item.objectName();
+            String itemFullPathWithoutRoot = fullPathTillItem.replace(preparedRoot, "");
 
             String normalizedQuery = query.toLowerCase();
             if (itemFullPathWithoutRoot.endsWith("/")) {

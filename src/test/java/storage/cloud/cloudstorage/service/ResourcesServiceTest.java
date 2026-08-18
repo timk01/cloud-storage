@@ -129,7 +129,7 @@ class ResourcesServiceTest {
      * а не на уровне выше
      */
     @Test
-    public void getStorageInfoIsSucceeded() throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public void getFolderInfoIsSucceeded() throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         ReflectionTestUtils.setField(
                 service,
                 "minioBucketName",
@@ -198,6 +198,132 @@ class ResourcesServiceTest {
         verify(repository, times(1)).getFolderInfo(fullPath);
 
         assertThat(actual).containsExactlyElementsOf(expected);
+    }
+
+    @Test
+    public void searchIsSucceededWide() throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        ReflectionTestUtils.setField(
+                service,
+                "minioBucketName",
+                "user-files"
+        );
+
+        String path = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
+        String minioRootFolder = "user-1-files/";
+
+        Long userId = 1L;
+
+        Item firstDirectory = new Contents("user-1-files/gorgon_root/");
+        Result<Item> firstFodlerResult = new Result<>(firstDirectory);
+
+        Item secondDirectory = new Contents("user-1-files/gorgon_root/gorgon_archive/");
+        Result<Item> secondFolderResult = new Result<>(secondDirectory);
+
+        Item thirdDirectory = new Contents("user-1-files/gorgon_root/gorgon_archive/" +
+                "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/");
+        Result<Item> thirdFolderResult = new Result<>(thirdDirectory);
+
+        String pathTillFirstFile = "user-1-files/gorgon_root/gorgon_archive/" +
+                "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/gorgon.jpg";
+        Item firstFile = mock(Item.class);
+        when(firstFile.objectName()).thenReturn(pathTillFirstFile);
+        when(firstFile.size()).thenReturn(1500L);
+        Result<Item> firstFileResult = new Result<>(firstFile);
+
+        String pathTillSecondFile = "user-1-files/gorgon_root/gorgon_archive/" +
+                "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/description_gorgon.txt";
+        Item secondFile = mock(Item.class);
+        when(secondFile.objectName()).thenReturn(pathTillSecondFile);
+        when(secondFile.size()).thenReturn(123L);
+        Result<Item> secondFileResult = new Result<>(secondFile);
+
+        when(repository.search(minioRootFolder)).thenReturn(
+                List.of(
+                        firstFodlerResult,
+                        secondFolderResult,
+                        thirdFolderResult,
+                        firstFileResult,
+                        secondFileResult
+                )
+        );
+
+        List<ResourceResponse> expected = List.of(
+                ResourceResponse.builder()
+                        .path("")
+                        .name("gorgon_root")
+                        .type(Type.DIRECTORY.name())
+                        .build(),
+
+                ResourceResponse.builder()
+                        .path("gorgon_root/")
+                        .name("gorgon_archive")
+                        .type(Type.DIRECTORY.name())
+                        .build(),
+
+                ResourceResponse.builder()
+                        .path("gorgon_root/gorgon_archive/")
+                        .name("gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000")
+                        .type(Type.DIRECTORY.name())
+                        .build(),
+
+                ResourceResponse.builder()
+                        .path(path)
+                        .name("gorgon.jpg")
+                        .size(1500L)
+                        .type(Type.FILE.name())
+                        .build(),
+
+                ResourceResponse.builder()
+                        .path(path)
+                        .name("description_gorgon.txt")
+                        .size(123L)
+                        .type(Type.FILE.name())
+                        .build()
+        );
+
+        String query = "GoRgOn";
+        List<ResourceResponse> actual = service.search(query, userId);
+
+        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
+        verify(repository, times(1)).search(minioRootFolder);
+
+        assertThat(actual).containsExactlyElementsOf(expected);
+    }
+
+    @Test
+    public void searchIsSucceededButNothingMatchesQuery() throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        ReflectionTestUtils.setField(
+                service,
+                "minioBucketName",
+                "user-files"
+        );
+
+        String minioRootFolder = "user-1-files/";
+
+        Long userId = 1L;
+
+        Item firstDirectory = new Contents("user-1-files/gorgon_root/");
+        Result<Item> firstFodlerResult = new Result<>(firstDirectory);
+
+        String pathTillSecondFile = "user-1-files/gorgon_root/description_gorgon.txt";
+        Item secondFile = mock(Item.class);
+        when(secondFile.objectName()).thenReturn(pathTillSecondFile);
+        Result<Item> secondFileResult = new Result<>(secondFile);
+
+        when(repository.search(minioRootFolder)).thenReturn(
+                List.of(
+                        firstFodlerResult,
+                        secondFileResult
+                )
+        );
+
+        String query = "cat";
+        List<ResourceResponse> actual = service.search(query, userId);
+
+        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
+        verify(repository, times(1)).search(minioRootFolder);
+
+        assertThat(actual).isEmpty();
     }
 
     @ParameterizedTest
