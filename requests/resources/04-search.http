@@ -3,12 +3,15 @@
 
 @regUser = timur_auto
 @regPass = superPassword123
-@test_file_for_search = gorgon
+@test_file_for_search_mask = gorgon
+@test_file_for_search_full_file_name = gorgon.jpg
+@test_file_for_search_full_folder_name = gorgon_archive
+@test_file_for_search = oh_well_no_found
 @test_folder_for_search = folder3/
 
 ### 401 - Failed to search a file since user wasn't authorized (no cookies provided!)
 # @no-cookie-jar
-GET {{baseUrl}}/resource/search?query={{test_file_for_search}}
+GET {{baseUrl}}/resource/search?query={{test_file_for_search_mask}}
 
 > {%
     client.test("Cannot find resource", function() {
@@ -30,7 +33,7 @@ Content-Type: application/json
     client.global.set("active_pass", "superPassword123");
 %}
 
-### Prelog (user authorization) -  method is needed for success test of prelog (2 pre-phase) - with preparation path for search!
+### Prelog (user authorization) -  method is needed for success test of prelog (2 pre-phase) -> with preparation path for search!
 POST {{baseUrlApi}}/auth/sign-in
 Content-Type: application/json
 
@@ -54,7 +57,7 @@ Content-Type: application/json
     );
 %}
 
-### 201 - Successfully uploaded TWO files (picture and text file) to a previosly created folder
+### Successfully uploaded TWO files (picture and text file) to a previosly created folder (3 pre-phase)
 # Path to files (passed in query, say, POST {{baseUrl}}/resource?path=folder1/)
 POST {{baseUrl}}/resource?path={{path_for_upload}}
 Content-Type: multipart/form-data; boundary=boundary
@@ -119,8 +122,8 @@ Content-Type: text/plain
     });
 %}
 
-### 200 - Success - searched all files (2) and foldiers (3)
-GET {{baseUrl}}/resource/search?query={{test_file_for_search}}
+### 200 - Success#1 - searched all files (2) and foldiers (3) by mask (gorgon)
+GET {{baseUrl}}/resource/search?query={{test_file_for_search_mask}}
 
 > {%
     client.test("Successfully searched for two files and three folders", function () {
@@ -173,3 +176,78 @@ GET {{baseUrl}}/resource/search?query={{test_file_for_search}}
         client.assert(secondFile.type === "FILE", "description_gorgon.txt type is file");
     });
 %}
+
+### 200 - Success#2 - searched files (1) and folders (0) by 1-to-1 matching (gorgon.jpg)
+GET {{baseUrl}}/resource/search?query={{test_file_for_search_full_file_name}}
+
+> {%
+    client.test("Successfully searched for one files and zero folders", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 1, "Search should return exactly 1 resources");
+
+        const path_for_upload = client.global.get("path_for_upload");
+
+        // gorgon.jpg
+        const firstFile = body.find(item => item.name === "gorgon.jpg");
+        client.assert(firstFile !== undefined, "gorgon.jpg should be found");
+        client.assert(firstFile.path === path_for_upload, "gorgon.jpg should have correct parent path");
+        client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "gorgon.jpg size should be > 0");
+        client.assert(firstFile.type === "FILE", "gorgon.jpg type is file");
+    });
+%}
+
+### 200 - Success#3 - searched files (0) and folders (1) by 1-to-1 matching (gorgon_archive)
+GET {{baseUrl}}/resource/search?query={{test_file_for_search_full_folder_name}}
+
+> {%
+    client.test("Successfully searched for zero files and one folders", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 1, "Search should return exactly 1 resources");
+
+        // gorgon_root/gorgon_archive/
+        const archive_folder = body.find(item => item.name === "gorgon_archive");
+        client.assert(archive_folder !== undefined, "gorgon_archive should be found");
+        client.assert(archive_folder.path === "gorgon_root/", "gorgon_archive should have correct parent path");
+        client.assert(archive_folder.type === "DIRECTORY", "gorgon_archive type is directory");
+        client.assert(!("size" in archive_folder), "size field should not exist in directory object");
+    });
+%}
+
+### 200 - Success#4 - searched files (0) and folders (0) by 1-to-1 matching (nothing to match)
+GET {{baseUrl}}/resource/search?query={{test_file_for_search}}
+
+> {%
+    client.test("Successfully searched for zero files and zero folders (nothing to be found)", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 0, "Search should return exactly 0 resources, since nothing is found");
+    });
+%}
+
+### 400 - Failed to search files (0) and folders (0) by 1-to-1 matching due to empty query
+GET {{baseUrl}}/resource/search?query=
+
+> {%
+    client.test("Failed to search fany resource", function () {
+        client.assert(response.status === 400, "Response status is 400");
+    });
+%}
+
+### 400 - Failed to search files (0) and folders (0) by 1-to-1 matching due to no query at all
+GET {{baseUrl}}/resource/search
+
+> {%
+    client.test("Failed to search fany resource", function () {
+        client.assert(response.status === 400, "Response status is 400");
+    });
+%}
+
+###
