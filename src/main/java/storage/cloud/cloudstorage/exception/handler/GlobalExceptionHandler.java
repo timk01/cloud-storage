@@ -25,17 +25,27 @@ public class GlobalExceptionHandler {
     static {
         KNOWN_EXCEPTIONS_STATUS_MAP.put(InvalidFilesException.class, HttpStatus.BAD_REQUEST);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(InvalidFileNameException.class, HttpStatus.BAD_REQUEST);
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(ResourceTypeMismatchException.class, HttpStatus.BAD_REQUEST);
 
         KNOWN_EXCEPTIONS_STATUS_MAP.put(InvalidLoginDataException.class, HttpStatus.UNAUTHORIZED);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(UnauthorizedActionException.class, HttpStatus.UNAUTHORIZED);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(UserNotAuthenticatedException.class, HttpStatus.UNAUTHORIZED);
 
-        KNOWN_EXCEPTIONS_STATUS_MAP.put(UserAlreadyExistsException.class, HttpStatus.CONFLICT);
-        KNOWN_EXCEPTIONS_STATUS_MAP.put(FolderAlreadyExistsException.class, HttpStatus.CONFLICT);
-        KNOWN_EXCEPTIONS_STATUS_MAP.put(FileAlreadyExistsException.class, HttpStatus.CONFLICT);
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(ParentFolderHasNotFoundException.class, HttpStatus.NOT_FOUND);
 
         KNOWN_EXCEPTIONS_STATUS_MAP.put(FolderNotFoundException.class, HttpStatus.NOT_FOUND);
-        KNOWN_EXCEPTIONS_STATUS_MAP.put(ParentFolderHasNotFoundException.class, HttpStatus.NOT_FOUND);
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(SourceResourceNotFoundException.class, HttpStatus.NOT_FOUND);
+        //toDo а не замена ли соурса первых 2 (тут пока нет файла... но похоже будет) ?
+
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(UserAlreadyExistsException.class, HttpStatus.CONFLICT);
+
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(FolderAlreadyExistsException.class, HttpStatus.CONFLICT);
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(FileAlreadyExistsException.class, HttpStatus.CONFLICT);
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(DestinationResourceAlreadyExistsException.class, HttpStatus.CONFLICT);
+        //toDo а не замена ли 3-его первых 2 ?
+
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(SourceAndDestinationAreEqualException.class, HttpStatus.CONFLICT);
+        KNOWN_EXCEPTIONS_STATUS_MAP.put(ResourceMoveConflictException.class, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(BaseAppException.class)

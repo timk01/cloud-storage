@@ -2,8 +2,6 @@ package storage.cloud.cloudstorage.controller;
 
 import io.minio.errors.MinioException;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,9 +24,10 @@ import java.util.List;
 @Validated
 @RequestMapping()
 public class ResourcesController {
-    private static final String PATH_VALIDATOR_REGEXP = "^([\\p{L}\\p{N}_\\s-]+/)+$";
+    private static final String PATH_STRICT_VALIDATOR_REGEXP = "^([\\p{L}\\p{N}_\\s-]+/)+$";
+    private static final String PATH_COMMON_VALIDATOR_REGEXP = "^[\\p{L}\\p{N}_\\s./-]+$";
     private static final String WRONG_PATH = "Wrong path is provided";
-
+    private static final String INVALID_SYMBOLS_IN_PATH = "Invalid symbols in path are detected";
 
     private final ResourcesService service;
 
@@ -37,9 +36,9 @@ public class ResourcesController {
     public ResponseEntity<ResourceResponse> createFolder(
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("path")
-            @NotNull
+            @NotBlank
             @Pattern(
-                    regexp = PATH_VALIDATOR_REGEXP,
+                    regexp = PATH_STRICT_VALIDATOR_REGEXP,
                     message = WRONG_PATH
             )
             String path
@@ -60,9 +59,9 @@ public class ResourcesController {
     public ResponseEntity<List<ResourceResponse>> getFolderInfo(
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("path")
-            @NotNull
+            @NotBlank
             @Pattern(
-                    regexp = PATH_VALIDATOR_REGEXP,
+                    regexp = PATH_STRICT_VALIDATOR_REGEXP,
                     message = WRONG_PATH
             )
             String path
@@ -92,9 +91,9 @@ public class ResourcesController {
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("file") MultipartFile[] files,
             @RequestParam("path")
-            @NotNull
+            @NotBlank
             @Pattern(
-                    regexp = PATH_VALIDATOR_REGEXP,
+                    regexp = PATH_STRICT_VALIDATOR_REGEXP,
                     message = WRONG_PATH
             )
             String path
@@ -116,7 +115,6 @@ public class ResourcesController {
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("query")
             @NotBlank
-            @NotEmpty
             String query
     ) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         if (userId == null) {
@@ -124,6 +122,36 @@ public class ResourcesController {
         }
 
         List<ResourceResponse> folderInfo = service.search(query, userId);
+
+        return new ResponseEntity<>(
+                folderInfo,
+                HttpStatus.OK
+        );
+    }
+
+    @PostMapping(value = "/resource/move")
+    public ResponseEntity<ResourceResponse> move(
+            @SessionAttribute(name = "userId", required = false) Long userId,
+            @RequestParam("from")
+            @NotBlank
+            @Pattern(
+                    regexp = PATH_COMMON_VALIDATOR_REGEXP,
+                    message = INVALID_SYMBOLS_IN_PATH
+            )
+            String fromPath,
+            @RequestParam("to")
+            @NotBlank
+            @Pattern(
+                    regexp = PATH_COMMON_VALIDATOR_REGEXP,
+                    message = INVALID_SYMBOLS_IN_PATH
+            )
+            String toPath
+    ) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        if (userId == null) {
+            throw new UnauthorizedActionException("User is not authorized");
+        }
+
+        ResourceResponse folderInfo = service.move(fromPath, toPath, userId);
 
         return new ResponseEntity<>(
                 folderInfo,

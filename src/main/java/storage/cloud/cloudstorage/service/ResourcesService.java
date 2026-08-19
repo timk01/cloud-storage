@@ -1,6 +1,7 @@
 package storage.cloud.cloudstorage.service;
 
 import io.minio.Result;
+import io.minio.StatObjectResponse;
 import io.minio.errors.*;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import storage.cloud.cloudstorage.exception.InvalidFileNameException;
+import storage.cloud.cloudstorage.exception.*;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
@@ -50,7 +51,7 @@ public class ResourcesService {
         int lastFolderIndex = trimmedFullPath.lastIndexOf("/");
         String minioParentPath = trimmedFullPath.substring(0, lastFolderIndex + 1);
 
-        String resourceParentPath = extractParentPath(resourcePath);
+        String resourceParentPath = extractParentPathForFolder(resourcePath);
         String lastFolder = fullMinioPath.substring(lastFolderIndex + 1);
         String folderName = removeTrailingSlash(lastFolder);
 
@@ -63,12 +64,19 @@ public class ResourcesService {
             String folderName
     ) {
 
+
     }
+
     @NotNull
-    private String extractParentPath(String path) {
-        String trimmedOriginalPath = removeTrailingSlash(path);
-        int lastFolderIndex = trimmedOriginalPath.lastIndexOf("/");
-        return trimmedOriginalPath.substring(0, lastFolderIndex + 1);
+    private String extractParentPathForFolder(String folderPath) {
+        String trimmedOriginalPath = removeTrailingSlash(folderPath);
+        return extractParentPathForFile(trimmedOriginalPath);
+    }
+
+    @NotNull
+    private String extractParentPathForFile(String filePath) {
+        int lastFolderIndex = filePath.lastIndexOf("/");
+        return filePath.substring(0, lastFolderIndex + 1);
     }
 
     public List<ResourceResponse> getFolderInfo(String path, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
@@ -220,7 +228,9 @@ public class ResourcesService {
             MultipartFile multipartFile
     ) {
 
+
     }
+
     public List<ResourceResponse> search(String query, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         String preparedRoot = buildPreparedRoot(userId);
         initializer.initStorage(preparedRoot);
@@ -266,5 +276,102 @@ public class ResourcesService {
         }
 
         return resources;
+    }
+
+    public ResourceResponse move(String fromPath, String toPath, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        String preparedRoot = buildPreparedRoot(userId);
+        initializer.initStorage(preparedRoot);
+
+        String fullPathFrom = buildPreparedPath(preparedRoot, fromPath);
+        validateSource(fullPathFrom);
+
+        String fullPathTo = buildPreparedPath(preparedRoot, toPath);
+        validateSourceAndDestinationAreDistinct(fullPathFrom, fullPathTo);
+
+        String fromType = fromPath.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
+        String toType = toPath.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
+        validateResourcesTypes(fromType, toType);
+
+        validateDestination(fullPathTo);
+
+        validateDirectoryPaths(fromPath, toPath, fromType);
+
+        //gogogo
+
+        //toDo файлы и папочи-подумать про атомарность.
+        if ("FILE".equals(fromType)) {
+            StatObjectResponse objectResponse = minioRepository.getObjectResponse(fromPath);
+
+            minioRepository.moveFile(fromPath, toPath);
+
+            String name = extractName(toPath);
+            String path = extractParentPathForFile(toPath);
+            return ResourceResponse.builder()
+                    .path(path)
+                    .name(name)
+                    .size(objectResponse.size())
+                    .type(Type.FILE.name())
+                    .build();
+        } else {
+            /*
+DIRECTORY MOVE:
+
+получить recursive все object key по prefix = from
+→ для каждого:
+    relativePath = objectPath - from
+    destinationPath = to + relativePath
+    copy(objectPath → destinationPath)
+→ после успешного копирования всего дерева удалить старые object key
+             */
+        }
+
+        return null;
+    }
+
+    private void validateSource(String fullPathFrom) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
+        if (!minioRepository.doesPathExist(fullPathFrom)) {
+            throw new SourceResourceNotFoundException(
+                    String.format(
+                            "Resource is not found by path: %s", fullPathFrom
+                    )
+            );
+        }
+    }
+
+    private void validateSourceAndDestinationAreDistinct(String fullPathFrom, String fullPathTo) {
+        if (fullPathFrom.equals(fullPathTo)) {
+            throw new SourceAndDestinationAreEqualException(
+                    String.format(
+                            "Source and destination are equal by path: %s", fullPathTo
+                    )
+            );
+        }
+    }
+
+    private void validateResourcesTypes(String fromType, String toType) {
+        if (!fromType.equals(toType)) {
+            throw new ResourceTypeMismatchException("Source and destination types are different");
+        }
+    }
+
+    private void validateDestination(String fullPathTo) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
+        if (minioRepository.doesPathExist(fullPathTo)) {
+            throw new DestinationResourceAlreadyExistsException(
+                    String.format(
+                            "Resource already exists by path: %s", fullPathTo
+                    )
+            );
+        }
+    }
+
+    private void validateDirectoryPaths(String fromPath, String toPath, String fromType) {
+        if (fromType.equals("DIRECTORY") && toPath.startsWith(fromPath)) {
+            throw new ResourceMoveConflictException(
+                    String.format(
+                            "Resource cannot moved by path " +
+                                    "since it's impossible to move folder into it's subdirectory: %s", toPath
+                    )
+            );
+        }
     }
 }

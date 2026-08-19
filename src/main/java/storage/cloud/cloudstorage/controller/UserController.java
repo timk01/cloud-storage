@@ -57,7 +57,6 @@ public class UserController {
         );
     }
 
-
     @GetMapping("/user/me")
     public ResponseEntity<UsernameResponse> getCurrentUser(
             @SessionAttribute(name = "userId", required = false) Long userId,
