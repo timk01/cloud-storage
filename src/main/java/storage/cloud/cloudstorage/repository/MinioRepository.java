@@ -15,6 +15,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -24,7 +25,8 @@ public class MinioRepository {
     private final MinioClient minioClient;
     private final String minioBucketName;
 
-    public void creaTeFolder(String minioParentPath, String fullPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public void creaTeFolder(String minioParentPath, String fullPath)
+            throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         checkParentFolder(minioParentPath);
 
         if (doesPathExist(fullPath)) {
@@ -63,26 +65,6 @@ public class MinioRepository {
                             "No parent folder has been found: %s", parentFolder
                     )
             );
-        }
-    }
-
-    public boolean doesPathExist(String fullPath) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
-        try {
-            minioClient.statObject(
-                    StatObjectArgs
-                            .builder()
-                            .bucket(minioBucketName)
-                            .object(fullPath)
-                            .build()
-            );
-
-            return true;
-
-        } catch (ErrorResponseException ere) {
-            if ("NoSuchKey".equals(ere.errorResponse().code())) {
-                return false;
-            }
-            throw ere;
         }
     }
 
@@ -126,7 +108,9 @@ public class MinioRepository {
      * @throws InternalException
      */
 
-    public void checkFiles(List<String> fullPaths) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
+    public void checkFiles(List<String> fullPaths) throws ServerException, InsufficientDataException, IOException,
+            NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException,
+            InternalException, ErrorResponseException {
         for (String fullPath : fullPaths) {
             try {
                 minioClient.statObject(
@@ -151,7 +135,9 @@ public class MinioRepository {
         }
     }
 
-    public void upload(List<MultipartFile> files, List<String> fullPathTillFiles) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public void upload(List<MultipartFile> files, List<String> fullPathTillFiles) throws ServerException,
+            InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException,
+            InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         createFoldersRecursively(fullPathTillFiles);
 
         int index = 0;
@@ -178,59 +164,174 @@ public class MinioRepository {
         );
     }
 
-    public void moveFile(String fromPath, String toPath) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public void moveFile(String fromPath, String toPath) throws ServerException, InsufficientDataException,
+            ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException,
+            InvalidResponseException, XmlParserException, InternalException {
         createFoldersRecursively(List.of(toPath));
 
-        copyFile(fromPath, toPath);
+        List<String> copiedResources = new ArrayList<>();
+        copyResource(List.of(fromPath), List.of(toPath), copiedResources);
 
-        removeFile(fromPath);
-    }
-
-    private void createFoldersRecursively(List<String> fullPathTillFiles) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
-        StringBuilder pathToFolder = new StringBuilder();
-        for (String fullPathTillFile : fullPathTillFiles) {
-            String[] partsTillFile = fullPathTillFile.split("/");
-            pathToFolder.setLength(0);
-
-            for (int i = 0; i < partsTillFile.length - 1; i++) {
-                if (partsTillFile[i].isEmpty()) {
-                    continue;
-                }
-
-                pathToFolder.append(partsTillFile[i]).append("/");
-                String pathToFolderNormalized = String.valueOf(pathToFolder);
-                if (!doesPathExist(pathToFolderNormalized)) {
-                    minioClient.putObject(
-                            PutObjectArgs
-                                    .builder()
-                                    .bucket(minioBucketName)
-                                    .object(pathToFolderNormalized)
-                                    .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
-                                    .build()
-                    );
-                }
+        try {
+            removeResources(List.of(fromPath));
+        } catch (IOException deletionException) {
+            try {
+                removeResource(toPath);
+            } catch (IOException rollbackException) {
+                throw new RuntimeException(
+                        "Cannot rollback file move",
+                        rollbackException
+                );
             }
+
+            throw deletionException;
         }
     }
 
-    private void copyFile(String fromPath, String toPath) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        minioClient.copyObject(
-                CopyObjectArgs
+    public StatObjectResponse getObjectResponse(String pathTillObject) throws ServerException,
+            InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException,
+            InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        return minioClient.statObject(
+                StatObjectArgs
                         .builder()
                         .bucket(minioBucketName)
-                        .object(toPath)
-                        .source(
-                                CopySource
-                                        .builder()
-                                        .bucket(minioBucketName)
-                                        .object(fromPath)
-                                        .build()
-                        )
+                        .object(pathTillObject)
                         .build()
         );
     }
 
-    private void removeFile(String fromPath) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public void moveDirectory(String fromPath, String toPath) throws ServerException, InsufficientDataException,
+            ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException,
+            InvalidResponseException, XmlParserException, InternalException {
+        Iterable<Result<Item>> searchResultsFromOldPath = search(fromPath);
+
+        List<String> fullPathTillResourceOldLocations = new ArrayList<>();
+        List<String> fullPathTillResourceNewLocations = new ArrayList<>();
+        prepareLocations(
+                fromPath,
+                toPath,
+                searchResultsFromOldPath,
+                fullPathTillResourceOldLocations,
+                fullPathTillResourceNewLocations
+        );
+
+        List<String> createdFoldersRecursively = createFoldersRecursively(fullPathTillResourceNewLocations);
+
+        List<String> copiedResources = new ArrayList<>();
+        try {
+            copyResource(fullPathTillResourceOldLocations, fullPathTillResourceNewLocations, copiedResources);
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            rollBackCopiedResources(copiedResources, createdFoldersRecursively);
+
+            throw e;
+        }
+
+        removeResources(fullPathTillResourceOldLocations);
+    }
+
+    private void prepareLocations(
+            String fromPath,
+            String toPath,
+            Iterable<Result<Item>> searchResultsFromOldPath,
+            List<String> fullPathTillResourceOldLocations,
+            List<String> fullPathTillResourceNewLocations
+    ) throws ErrorResponseException, InsufficientDataException, InternalException, InvalidKeyException,
+            InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException, XmlParserException {
+        for (Result<Item> itemResult : searchResultsFromOldPath) {
+            Item item = itemResult.get();
+            String oldLocationObjectName = item.objectName();
+            fullPathTillResourceOldLocations.add(oldLocationObjectName);
+
+            String relativePathToOldLocation = oldLocationObjectName.substring(fromPath.length());
+            String fullPathTillResourceNewLocation = toPath + relativePathToOldLocation;
+            fullPathTillResourceNewLocations.add(fullPathTillResourceNewLocation);
+        }
+    }
+
+    private List<String> createFoldersRecursively(List<String> fullPathTillFiles) throws ServerException,
+            InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException,
+            InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
+        StringBuilder pathToFolder = new StringBuilder();
+        List<String> createdFolders = new ArrayList<>();
+        try {
+            for (String fullPathTillFile : fullPathTillFiles) {
+                String[] partsTillFile = fullPathTillFile.split("/");
+                pathToFolder.setLength(0);
+
+                for (int i = 0; i < partsTillFile.length - 1; i++) {
+                    if (partsTillFile[i].isEmpty()) {
+                        continue;
+                    }
+
+                    pathToFolder.append(partsTillFile[i]).append("/");
+                    String pathToFolderNormalized = String.valueOf(pathToFolder);
+                    if (!doesPathExist(pathToFolderNormalized)) {
+                        minioClient.putObject(
+                                PutObjectArgs
+                                        .builder()
+                                        .bucket(minioBucketName)
+                                        .object(pathToFolderNormalized)
+                                        .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
+                                        .build()
+                        );
+                        createdFolders.add(pathToFolderNormalized);
+                    }
+                }
+            }
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            rollBackCreatedFolders(createdFolders);
+
+            throw e;
+        }
+        return createdFolders;
+    }
+
+    private void rollBackCreatedFolders(List<String> createdFolders) throws ServerException, InsufficientDataException,
+            ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException,
+            InvalidResponseException, XmlParserException, InternalException {
+        for (int i = createdFolders.size() - 1; i >= 0; i--) {
+            removeResource(createdFolders.get(i));
+        }
+    }
+
+    private List<String> copyResource(List<String> fromPaths, List<String> toPath, List<String> copiedResources)
+            throws ServerException, InsufficientDataException, ErrorResponseException, IOException,
+            NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException,
+            InternalException {
+        for (int i = 0; i < toPath.size(); i++) {
+            minioClient.copyObject(
+                    CopyObjectArgs
+                            .builder()
+                            .bucket(minioBucketName)
+                            .object(toPath.get(i))
+                            .source(
+                                    CopySource
+                                            .builder()
+                                            .bucket(minioBucketName)
+                                            .object(fromPaths.get(i))
+                                            .build()
+                            )
+                            .build()
+            );
+            copiedResources.add(toPath.get(i));
+        }
+        return copiedResources;
+    }
+
+    private void rollBackCopiedResources(List<String> createdResources, List<String> createdFolders)
+            throws ServerException, InsufficientDataException, ErrorResponseException, IOException,
+            NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException,
+            InternalException {
+        for (int i = createdResources.size() - 1; i >= 0; i--) {
+            removeResource(createdResources.get(i));
+        }
+
+        rollBackCreatedFolders(createdFolders);
+    }
+
+    private void removeResource(String fromPath) throws ServerException, InsufficientDataException,
+            ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException,
+            InvalidResponseException, XmlParserException, InternalException {
         minioClient.removeObject(
                 RemoveObjectArgs
                         .builder()
@@ -240,13 +341,52 @@ public class MinioRepository {
         );
     }
 
-    public StatObjectResponse getObjectResponse (String pathTillObject) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        return minioClient.statObject(
-                StatObjectArgs
-                        .builder()
-                        .bucket(minioBucketName)
-                        .object(pathTillObject)
-                        .build()
-        );
+    private void removeResources(List<String> paths) throws ServerException,
+            InsufficientDataException,
+            ErrorResponseException,
+            IOException,
+            NoSuchAlgorithmException,
+            InvalidKeyException,
+            InvalidResponseException,
+            XmlParserException,
+            InternalException {
+
+        for (String path : paths) {
+            try {
+                removeResource(path);
+            } catch (IOException firstIoEx) {
+                try {
+                    removeResource(path);
+                } catch (IOException secondIoEx) {
+
+                    if (doesPathExist(path)) {
+                        throw secondIoEx;
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean doesPathExist(String fullPath)
+            throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException,
+            InvalidKeyException, InvalidResponseException, XmlParserException, InternalException,
+            ErrorResponseException {
+        try {
+            minioClient.statObject(
+                    StatObjectArgs
+                            .builder()
+                            .bucket(minioBucketName)
+                            .object(fullPath)
+                            .build()
+            );
+
+            return true;
+
+        } catch (ErrorResponseException ere) {
+            if ("NoSuchKey".equals(ere.errorResponse().code())) {
+                return false;
+            }
+            throw ere;
+        }
     }
 }

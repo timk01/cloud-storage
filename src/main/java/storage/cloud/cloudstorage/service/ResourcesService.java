@@ -283,49 +283,22 @@ public class ResourcesService {
         initializer.initStorage(preparedRoot);
 
         String fullPathFrom = buildPreparedPath(preparedRoot, fromPath);
-        validateSource(fullPathFrom);
-
         String fullPathTo = buildPreparedPath(preparedRoot, toPath);
-        validateSourceAndDestinationAreDistinct(fullPathFrom, fullPathTo);
-
         String fromType = fromPath.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
         String toType = toPath.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
+
+        validateSource(fullPathFrom);
+
+        validateSourceAndDestinationAreDistinct(fullPathFrom, fullPathTo);
+
         validateResourcesTypes(fromType, toType);
 
         validateDestination(fullPathTo);
 
         validateDirectoryPaths(fromPath, toPath, fromType);
 
-        //gogogo
-
         //toDo файлы и папочи-подумать про атомарность.
-        if ("FILE".equals(fromType)) {
-            StatObjectResponse objectResponse = minioRepository.getObjectResponse(fromPath);
-
-            minioRepository.moveFile(fromPath, toPath);
-
-            String name = extractName(toPath);
-            String path = extractParentPathForFile(toPath);
-            return ResourceResponse.builder()
-                    .path(path)
-                    .name(name)
-                    .size(objectResponse.size())
-                    .type(Type.FILE.name())
-                    .build();
-        } else {
-            /*
-DIRECTORY MOVE:
-
-получить recursive все object key по prefix = from
-→ для каждого:
-    relativePath = objectPath - from
-    destinationPath = to + relativePath
-    copy(objectPath → destinationPath)
-→ после успешного копирования всего дерева удалить старые object key
-             */
-        }
-
-        return null;
+        return moveResource(toPath, fromType, fullPathFrom, fullPathTo);
     }
 
     private void validateSource(String fullPathFrom) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
@@ -372,6 +345,32 @@ DIRECTORY MOVE:
                                     "since it's impossible to move folder into it's subdirectory: %s", toPath
                     )
             );
+        }
+    }
+
+    private ResourceResponse moveResource(String toPath, String fromType, String fullPathFrom, String fullPathTo) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        if ("FILE".equals(fromType)) {
+            StatObjectResponse objectResponse = minioRepository.getObjectResponse(fullPathFrom);
+
+            minioRepository.moveFile(fullPathFrom, fullPathTo);
+
+            String name = extractName(toPath);
+            String path = extractParentPathForFile(toPath);
+            return ResourceResponse.builder()
+                    .path(path)
+                    .name(name)
+                    .size(objectResponse.size())
+                    .type(Type.FILE.name())
+                    .build();
+        } else {
+            minioRepository.moveDirectory(fullPathFrom, fullPathTo);
+
+            FolderPathParts result = getResult(toPath, fullPathTo);
+            return ResourceResponse.builder()
+                    .path(result.resourceParentPath)
+                    .name(result.folderName)
+                    .type(Type.DIRECTORY.name())
+                    .build();
         }
     }
 }
