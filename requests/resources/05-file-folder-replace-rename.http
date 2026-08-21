@@ -120,18 +120,26 @@ Content-Type: text/plain
     });
 %}
 
-### Successfully created a folder "unnamed/" to a previously created folder "gorgon_archive/" (4 pre-phase)
-POST {{baseUrl}}/directory?path=gorgon_root/gorgon_archive/unnamed/
+### Successfully created a folder "unnamed_${active_user}" to a previously created folder "gorgon_archive/" (4 pre-phase)
+POST {{baseUrl}}/directory?path=gorgon_root/gorgon_archive/unnamed_{{active_user}}/
 
 > {%
     client.test("Successfully created a folder", function () {
         client.assert(response.status === 201, "Response status is 201");
 
         const body = response.body;
+        const expected_folder_name = "unnamed_" + client.global.get("active_user");
+
         client.assert(body.path === "gorgon_root/gorgon_archive/", "Folder should have correct parent path");
-        client.assert(body.name === "unnamed", "Folder name should be unnamed");
+        client.assert(body.name === expected_folder_name, "Folder should have correct name");
         client.assert(body.type === "DIRECTORY", "Folder type should be DIRECTORY");
     });
+    client.global.set(
+        "unnamed_folder_path",
+        "gorgon_root/gorgon_archive/unnamed_" +
+        client.global.get("active_user") +
+        "/"
+    );
 %}
 
 ### Successfully uploaded files ("file1.txt", "file2.txt") to new folder (".../different/") (5 pre-phase)
@@ -158,7 +166,7 @@ Content-Type: text/plain
 #
 #gorgon_root/
 #└── gorgon_archive/
-#    ├── unnamed/
+#    ├── unnamed_${active_user}/
 #    └── gorgon_files_${active_user}/
 #        ├── gorgon.jpg
 #        ├── description_gorgon.txt
@@ -175,6 +183,7 @@ Content-Type: text/plain
         client.assert(body.length === 2, "Response should contain exactly 2 resources");
 
         const expected_parent_path = "gorgon_root/gorgon_archive/gorgon_files_" + client.global.get("active_user") + "/different/";
+        client.global.set("different_folder_path", expected_parent_path);
 
         const firstFile = body.find(item => item.name === "file1.txt");
         client.assert(firstFile !== undefined, "WE have firstFile element in array");
@@ -192,4 +201,382 @@ Content-Type: text/plain
     });
 %}
 
-###
+### 200 - Successfully moved file "file1.txt" (from "different/"r) AND renamed it as  "test_file1.txt" to previously created empty folder ("unnamed_${active_user}")
+POST {{baseUrl}}/resource/move?from={{different_folder_path}}file1.txt&to={{unnamed_folder_path}}test_file1.txt
+
+> {%
+    client.test("Successfully moved 1 file (and renamed it) into old folder", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+
+        const expected_parent_path = client.global.get("unnamed_folder_path")
+
+        client.assert(body.path === expected_parent_path, "file should have correct parent path");
+        client.assert(body.name === "test_file1.txt", "file name is test_file1.txt");
+        client.assert(typeof body.size === "number" && body.size > 0, "file size field should be > 0");
+        client.assert(body.type === "FILE", "file type is FILE");
+    });
+%}
+
+### Verifying the renamed file "test_file1.txt" is located in new folder "unnamed_${active_user}"
+GET {{baseUrl}}/directory?path={{unnamed_folder_path}}
+
+> {%
+    client.test("Successfully got a folder info", function () {
+        client.assert(response.status === 200, "Response status is 200");
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 1, "Folder should contain exactly 1 resources");
+
+        const expected_parent_path = client.global.get("unnamed_folder_path")
+
+        const firstFile = body.find(item => item.name === "test_file1.txt");
+        client.assert(firstFile !== undefined, "WE have firstFile element in array");
+        client.assert(firstFile.path === expected_parent_path, "firstFile should have correct parent path");
+        client.assert(firstFile.name === "test_file1.txt", "firstFile name is test_file1.txt");
+        client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "firstFile size field should be > 0");
+        client.assert(firstFile.type === "FILE", "firstFile type is file");
+    });
+%}
+
+### Verifying the old folder (".../different/") has only 1 file after moving first file from it
+GET {{baseUrl}}/directory?path={{different_folder_path}}
+
+> {%
+    client.test("Successfully got a folder info", function () {
+        client.assert(response.status === 200, "Response status is 200");
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 1, "Folder should contain exactly 1 resources");
+
+        const expected_parent_path = client.global.get("different_folder_path")
+
+        const firstFile = body.find(item => item.name === "file2.txt");
+        client.assert(firstFile !== undefined, "WE have firstFile element in array");
+        client.assert(firstFile.path === expected_parent_path, "firstFile should have correct parent path");
+        client.assert(firstFile.name === "file2.txt", "firstFile name is file2.txt.txt");
+        client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "firstFile size field should be > 0");
+        client.assert(firstFile.type === "FILE", "firstFile type is file");
+    });
+%}
+
+### Rolling back file "test_file1.txt" as "file1.txt" from "unnamed_${active_user}" folder to OLD folder "different/" for sake of test repeating
+POST {{baseUrl}}/resource/move?from={{unnamed_folder_path}}test_file1.txt&to={{different_folder_path}}file1.txt
+
+> {%
+    client.test("Successfully moved 1 file (and renamed it) into old folder", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+        const expected_parent_path = client.global.get("different_folder_path")
+
+        client.assert(body.path === expected_parent_path, "file should have correct parent path");
+        client.assert(body.name === "file1.txt", "file name is file1.txt");
+        client.assert(typeof body.size === "number" && body.size > 0, "file size field should be > 0");
+        client.assert(body.type === "FILE", "file type is FILE");
+    });
+%}
+
+### 200 - Successfully moved file "file2.txt" (from "different/"r) AND renamed it as  "test_file2.txt" to a completely new path (folder9/folder10/)
+POST {{baseUrl}}/resource/move?from={{different_folder_path}}file2.txt&to={{test_folder_to}}test_file2.txt
+
+> {%
+    client.test("Successfully moved 1 file (and renamed it) into new folder", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+
+        const expected_parent_path = "folder9/folder10/";
+        client.global.set("completely_new_path", expected_parent_path);
+
+        client.assert(body.path === expected_parent_path, "file should have correct parent path");
+        client.assert(body.name === "test_file2.txt", "file name is test_file2.txt");
+        client.assert(typeof body.size === "number" && body.size > 0, "file size field should be > 0");
+        client.assert(body.type === "FILE", "file type is FILE");
+    });
+%}
+
+### Verifying the new folder ("folder9/folder10/") has only 1 file after moving first file from it
+GET {{baseUrl}}/directory?path={{test_folder_to}}
+
+> {%
+    client.test("Successfully got a folder info", function () {
+        client.assert(response.status === 200, "Response status is 200");
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 1, "Folder should contain exactly 1 resources");
+
+        const expected_parent_path = client.global.get("completely_new_path")
+
+        const firstFile = body.find(item => item.name === "test_file2.txt");
+        client.assert(firstFile !== undefined, "WE have firstFile element in array");
+        client.assert(firstFile.path === expected_parent_path, "firstFile should have correct parent path");
+        client.assert(firstFile.name === "test_file2.txt", "firstFile name is test_file2.txt");
+        client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "firstFile size field should be > 0");
+        client.assert(firstFile.type === "FILE", "firstFile type is file");
+    });
+%}
+
+### Rolling back file "test_file2.txt" as "file2.txt" from "folder9/folder10/" folder to OLD folder "...different/" for sake of test repeating
+POST {{baseUrl}}/resource/move?from={{completely_new_path}}test_file2.txt&to={{different_folder_path}}file2.txt
+
+> {%
+    client.test("Successfully moved 1 file (and renamed it) into old folder", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+        const expected_parent_path = client.global.get("different_folder_path")
+
+        client.assert(body.path === expected_parent_path, "file should have correct parent path");
+        client.assert(body.name === "file2.txt", "file name is file2.txt");
+        client.assert(typeof body.size === "number" && body.size > 0, "file size field should be > 0");
+        client.assert(body.type === "FILE", "file type is FILE");
+    });
+%}
+
+### 409 - Failed to move file since resource by destination path already exists
+POST {{baseUrl}}/resource/move?from={{different_folder_path}}file1.txt&to={{different_folder_path}}file2.txt
+
+> {%
+    client.test("Cannot move file since destination resource already exists", function () {
+        client.assert(response.status === 409, "Response status is 409 since destination resource already exists");
+    });
+%}
+
+### 200 - Successfully moved whole subdirectory from "gorgon_root/gorgon_archive/gorgon_files_${active_user}/" to a completely new path "folder9/folder10/gorgon_files_${active_user}/"
+POST {{baseUrl}}/resource/move?from={{path_for_upload}}&to={{completely_new_path}}gorgon_files_{{active_user}}/
+
+> {%
+    client.test("Successfully moved whole directory to new path", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+
+        const expected_parent_path = client.global.get("completely_new_path");
+        const expected_folder_name = "gorgon_files_" + client.global.get("active_user");
+
+        const moved_folder_path = expected_parent_path + expected_folder_name + "/";
+        client.global.set("moved_folder_path", moved_folder_path);
+
+        client.assert(body.path === expected_parent_path, "Directory should have correct parent path");
+        client.assert(body.name === expected_folder_name, "Directory should have correct name");
+        client.assert(body.type === "DIRECTORY", "Resource type should be DIRECTORY");
+        client.assert(!("size" in body), "size field should not exist in directory object");
+    });
+%}
+
+### Searched that all files (2) and subfoldiers (1) are properly moved to "foler9/folder10/gorgon_files_{active_user}/"
+GET {{baseUrl}}/directory?path={{moved_folder_path}}
+
+# So overall, such scheme after whole folder move
+#
+#folder9/
+#└── folder10/
+#    └── gorgon_files_{active_user}/ -> CHECKING THIS HERE
+#        ├── gorgon.jpg
+#        ├── description_gorgon.txt
+#        └── different/
+#            ├── file1.txt
+#            └── file2.txt
+
+> {%
+    client.test("Moved directory should contain 2 files and 1 subdirectory", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 3, "Directory should contain exactly 3 resources");
+
+        const expected_parent_path = client.global.get("moved_folder_path");
+
+        const firstFile = body.find(item => item.name === "gorgon.jpg");
+        client.assert(firstFile !== undefined, "gorgon.jpg should be found");
+        client.assert(firstFile.path === expected_parent_path, "gorgon.jpg should have correct parent path");
+        client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "gorgon.jpg size should be > 0");
+        client.assert(firstFile.type === "FILE", "gorgon.jpg type is FILE");
+
+        const secondFile = body.find(item => item.name === "description_gorgon.txt");
+        client.assert(secondFile !== undefined, "description_gorgon.txt should be found");
+        client.assert(secondFile.path === expected_parent_path, "description_gorgon.txt should have correct parent path");
+        client.assert(typeof secondFile.size === "number" && secondFile.size > 0, "description_gorgon.txt size should be > 0");
+        client.assert(secondFile.type === "FILE", "description_gorgon.txt type is FILE");
+
+        const differentFolder = body.find(item => item.name === "different");
+        client.assert(differentFolder !== undefined, "different folder should be found");
+        client.assert(differentFolder.path === expected_parent_path, "different folder should have correct parent path");
+        client.assert(differentFolder.type === "DIRECTORY", "different type is DIRECTORY");
+        client.assert(!("size" in differentFolder), "size field should not exist in directory object");
+    });
+%}
+
+### Searched that all files (2) and subfoldiers (0) are properly moved into last dirctory "...different/"
+GET {{baseUrl}}/directory?path={{moved_folder_path}}different/
+
+# So overall, such scheme after whole folder move
+#
+#folder9/
+#└── folder10/
+#    └── gorgon_files_{active_user}/
+#        ├── gorgon.jpg
+#        ├── description_gorgon.txt
+#        └── different/ -> CHECKING THIS HERE
+#            ├── file1.txt
+#            └── file2.txt
+
+> {%
+    client.test("Nested directory should contain both files", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 2, "Directory should contain exactly 2 resources");
+
+        const expected_parent_path = client.global.get("moved_folder_path") + "different/";
+
+        const firstFile = body.find(item => item.name === "file1.txt");
+        client.assert(firstFile !== undefined, "file1.txt should be found");
+        client.assert(firstFile.path === expected_parent_path, "file1.txt should have correct parent path");
+        client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "file1.txt size should be > 0");
+        client.assert(firstFile.type === "FILE", "file1.txt type is FILE");
+
+        const secondFile = body.find(item => item.name === "file2.txt");
+        client.assert(secondFile !== undefined, "file2.txt should be found");
+        client.assert(secondFile.path === expected_parent_path, "file2.txt should have correct parent path");
+        client.assert(typeof secondFile.size === "number" && secondFile.size > 0, "file2.txt size should be > 0");
+        client.assert(secondFile.type === "FILE", "file2.txt type is FILE");
+    });
+%}
+
+### 409 - Failed to move directory since resource by destination path already exists
+POST {{baseUrl}}/resource/move?from={{unnamed_folder_path}}&to={{moved_folder_path}}
+
+> {%
+    client.test("Cannot move directory since destination resource already exists", function () {
+        client.assert(response.status === 409, "Response status is 409 since destination resource already exists");
+    });
+%}
+
+### 200 - Successfully moved just moved subdirectory from "folder9/folder10/gorgon_files_${active_user}/" to "gorgon_root/gorgon_archive/gorgon_files_${active_user}/" to an old path for sake of test repeatability
+POST {{baseUrl}}/resource/move?from={{completely_new_path}}gorgon_files_{{active_user}}/&to={{path_for_upload}}
+
+# So overall, such scheme after moving back -> old scheme:
+#
+#gorgon_root/
+#└── gorgon_archive/
+#    ├── unnamed_${active_user}/
+#    └── gorgon_files_${active_user}/
+#        ├── gorgon.jpg
+#        ├── description_gorgon.txt
+#        └── different/
+#            ├── file1.txt
+#            └── file2.txt
+
+> {%
+    client.test("Successfully moved whole directory to new path", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+
+        const expected_parent_path = "gorgon_root/gorgon_archive/";
+        const expected_folder_name = "gorgon_files_" + client.global.get("active_user");
+
+        client.assert(body.path === expected_parent_path, "Directory should have correct parent path");
+        client.assert(body.name === expected_folder_name, "Directory should have correct name");
+        client.assert(body.type === "DIRECTORY", "Resource type should be DIRECTORY");
+        client.assert(!("size" in body), "size field should not exist in directory object");
+    });
+%}
+
+### 400 - Failed to move resources since 1 path is wrong (here = empty)
+POST {{baseUrl}}/resource/move?from=&to={{test_folder_to}}
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to move resources since 2 path is wrong (here = "    ")
+POST {{baseUrl}}/resource/move?from={{test_folder_from}}&to="     "
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+###  400 - Failed to move resources since path "to" is wrong (here = has invalid symbols)
+POST {{baseUrl}}/resource/move?from={{test_folder_from}}&to==№№№/
+Content-Type: multipart/form-data; boundary=boundary
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 -  Failed to move resources since user path "from" is wrong (here = has invalid symbols)
+POST {{baseUrl}}/resource/move?from=abc@/&to={{test_folder_to}}
+
+> {%
+    client.test("Cannot upload resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to move resources since "from" parameter is missing
+POST {{baseUrl}}/resource/move?to={{test_folder_to}}
+
+> {%
+    client.test("Cannot move resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since 'from' parameter is missing");
+    });
+%}
+
+### 400 - Failed to move resources since "to" parameter is missing
+POST {{baseUrl}}/resource/move?from={{test_folder_from}}
+
+> {%
+    client.test("Cannot move resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since 'to' parameter is missing");
+    });
+%}
+
+### 404 - Failed to move resources since path does not exist
+POST {{baseUrl}}/resource/move?from={{active_user}}_{{test_folder_from}}&to={{test_folder_to}}
+
+> {%
+    client.test("Cannot upload resources since path does not exist", function() {
+        client.assert(response.status === 404, "Response status is 404");
+    });
+%}
+
+### 409 - Failed to move resources since paths are same
+POST {{baseUrl}}/resource/move?from={{completely_new_path}}&to={{completely_new_path}}
+
+> {%
+    client.test("Cannot upload resources since path does not exist", function() {
+        client.assert(response.status === 409, "Response status is 409");
+    });
+%}
+
+### 400 - Failed to move resources since paths types are different (1 folder, another one is file and vice versa)
+POST {{baseUrl}}/resource/move?from={{different_folder_path}}file1.txt&to={{completely_new_path}}
+
+> {%
+    client.test("Cannot upload resources since types are different", function() {
+        client.assert(response.status === 400, "Response status is 400");
+    });
+%}
+
+### 409 - Failed to move directory into its own subdirectory
+POST {{baseUrl}}/resource/move?from={{path_for_upload}}&to={{path_for_upload}}different/new_place/
+
+> {%
+    client.test("Cannot move directory into its own subdirectory", function () {
+        client.assert(response.status === 409, "Response status is 409 since directory cannot be moved into its own subdirectory");
+    });
+%}
+
+###S
