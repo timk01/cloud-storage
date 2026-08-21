@@ -297,7 +297,6 @@ public class ResourcesService {
 
         validateDirectoryPaths(fromPath, toPath, fromType);
 
-        //toDo файлы и папочи-подумать про атомарность.
         return moveResource(toPath, fromType, fullPathFrom, fullPathTo);
     }
 
