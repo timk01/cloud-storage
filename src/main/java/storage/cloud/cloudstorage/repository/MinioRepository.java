@@ -68,19 +68,28 @@ public class MinioRepository {
         }
     }
 
-    public Iterable<Result<Item>> getFolderInfo(String fullPath) {
-        Iterable<Result<Item>> folderResults = minioClient.listObjects(
-                ListObjectsArgs
-                        .builder()
-                        .bucket(minioBucketName)
-                        .prefix(fullPath)
-                        .recursive(false)
-                        .build()
-        );
+    public List<Item> getFolderInfo(String fullPath) {
+        try {
+            Iterable<Result<Item>> folderResults = minioClient.listObjects(
+                    ListObjectsArgs
+                            .builder()
+                            .bucket(minioBucketName)
+                            .prefix(fullPath)
+                            .recursive(false)
+                            .build()
+            );
 
-        checkFolderExists(fullPath, folderResults);
+            checkFolderExists(fullPath, folderResults);
 
-        return folderResults;
+            List<Item> items = new ArrayList<>();
+            for (Result<Item> itemResult : folderResults) {
+                items.add(itemResult.get());
+            }
+
+            return items;
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
+        }
     }
 
     private void checkFolderExists(String fullPath, Iterable<Result<Item>> folderResults) {
@@ -149,15 +158,26 @@ public class MinioRepository {
         }
     }
 
-    public Iterable<Result<Item>> search(String preparedRoot) {
-        return minioClient.listObjects(
-                ListObjectsArgs
-                        .builder()
-                        .bucket(minioBucketName)
-                        .prefix(preparedRoot)
-                        .recursive(true)
-                        .build()
-        );
+    public List<Item> search(String preparedRoot) {
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs
+                            .builder()
+                            .bucket(minioBucketName)
+                            .prefix(preparedRoot)
+                            .recursive(true)
+                            .build()
+            );
+
+            List<Item> items = new ArrayList<>();
+            for (Result<Item> itemResult : results) {
+                items.add(itemResult.get());
+            }
+
+            return items;
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
+        }
     }
 
     public void moveFile(String fromPath, String toPath) {
@@ -205,7 +225,7 @@ public class MinioRepository {
             List<String> fullPathTillResourceOldLocations;
             List<String> fullPathTillResourceNewLocations;
             List<String> createdFoldersRecursively;
-            Iterable<Result<Item>> searchResultsFromOldPath = search(fromPath);
+            List<Item> searchResultsFromOldPath = search(fromPath);
 
             fullPathTillResourceOldLocations = new ArrayList<>();
             fullPathTillResourceNewLocations = new ArrayList<>();
@@ -237,14 +257,13 @@ public class MinioRepository {
     private void prepareLocations(
             String fromPath,
             String toPath,
-            Iterable<Result<Item>> searchResultsFromOldPath,
+            List<Item> searchResultsFromOldPath,
             List<String> fullPathTillResourceOldLocations,
             List<String> fullPathTillResourceNewLocations
     ) throws ErrorResponseException, InsufficientDataException, InternalException, InvalidKeyException,
             InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException, XmlParserException {
-        for (Result<Item> itemResult : searchResultsFromOldPath) {
-            Item item = itemResult.get();
-            String oldLocationObjectName = item.objectName();
+        for (Item itemResult : searchResultsFromOldPath) {
+            String oldLocationObjectName = itemResult.objectName();
             fullPathTillResourceOldLocations.add(oldLocationObjectName);
 
             String relativePathToOldLocation = oldLocationObjectName.substring(fromPath.length());

@@ -1,6 +1,5 @@
 package storage.cloud.cloudstorage.controller;
 
-import io.minio.errors.MinioException;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +13,6 @@ import storage.cloud.cloudstorage.exception.UnauthorizedActionException;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.ResourcesService;
 
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -42,7 +38,7 @@ public class ResourcesController {
                     message = WRONG_PATH
             )
             String path
-    ) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    ) {
         if (userId == null) {
             throw new UnauthorizedActionException("User is not authorized");
         }
@@ -65,7 +61,7 @@ public class ResourcesController {
                     message = WRONG_PATH
             )
             String path
-    ) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    ) {
         if (userId == null) {
             throw new UnauthorizedActionException("User is not authorized");
         }
@@ -97,7 +93,7 @@ public class ResourcesController {
                     message = WRONG_PATH
             )
             String path
-    ) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    ) {
         if (userId == null) {
             throw new UnauthorizedActionException("User is not authorized");
         }
@@ -116,7 +112,7 @@ public class ResourcesController {
             @RequestParam("query")
             @NotBlank
             String query
-    ) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    ) {
         if (userId == null) {
             throw new UnauthorizedActionException("User is not authorized");
         }
@@ -146,7 +142,7 @@ public class ResourcesController {
                     message = INVALID_SYMBOLS_IN_PATH
             )
             String toPath
-    ) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    ) {
         if (userId == null) {
             throw new UnauthorizedActionException("User is not authorized");
         }

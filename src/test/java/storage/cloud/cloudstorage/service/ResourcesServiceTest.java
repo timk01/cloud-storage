@@ -145,15 +145,12 @@ class ResourcesServiceTest {
 
         Item currentParent = mock(Item.class);
         when(currentParent.objectName()).thenReturn(fullPath);
-        Result<Item> parentFolder = new Result<>(currentParent);
 
         String child1 = "child1";
         Item firstFolder = new Contents("user-1-files/parent1/child1/");
-        Result<Item> firstFolderResult = new Result<>(firstFolder);
 
         String child2 = "child2";
         Item secondFolder = new Contents("user-1-files/parent1/child2/");
-        Result<Item> secondFolderResult = new Result<>(secondFolder);
 
         String file = "gorgon.jpg";
         String pathTillFile = "user-1-files/parent1/gorgon.jpg";
@@ -161,14 +158,13 @@ class ResourcesServiceTest {
         when(fileDownloaded.objectName()).thenReturn(pathTillFile);
         when(fileDownloaded.isDir()).thenReturn(false);
         when(fileDownloaded.size()).thenReturn(1500L);
-        Result<Item> fileResult = new Result<>(fileDownloaded);
 
         when(repository.getFolderInfo(fullPath)).thenReturn(
                 List.of(
-                        parentFolder,
-                        firstFolderResult,
-                        secondFolderResult,
-                        fileResult
+                        currentParent,
+                        firstFolder,
+                        secondFolder,
+                        fileDownloaded
                 )
         );
 
@@ -215,36 +211,31 @@ class ResourcesServiceTest {
         Long userId = 1L;
 
         Item firstDirectory = new Contents("user-1-files/gorgon_root/");
-        Result<Item> firstFodlerResult = new Result<>(firstDirectory);
 
         Item secondDirectory = new Contents("user-1-files/gorgon_root/gorgon_archive/");
-        Result<Item> secondFolderResult = new Result<>(secondDirectory);
 
         Item thirdDirectory = new Contents("user-1-files/gorgon_root/gorgon_archive/" +
                 "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/");
-        Result<Item> thirdFolderResult = new Result<>(thirdDirectory);
 
         String pathTillFirstFile = "user-1-files/gorgon_root/gorgon_archive/" +
                 "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/gorgon.jpg";
         Item firstFile = mock(Item.class);
         when(firstFile.objectName()).thenReturn(pathTillFirstFile);
         when(firstFile.size()).thenReturn(1500L);
-        Result<Item> firstFileResult = new Result<>(firstFile);
 
         String pathTillSecondFile = "user-1-files/gorgon_root/gorgon_archive/" +
                 "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/description_gorgon.txt";
         Item secondFile = mock(Item.class);
         when(secondFile.objectName()).thenReturn(pathTillSecondFile);
         when(secondFile.size()).thenReturn(123L);
-        Result<Item> secondFileResult = new Result<>(secondFile);
 
         when(repository.search(minioRootFolder)).thenReturn(
                 List.of(
-                        firstFodlerResult,
-                        secondFolderResult,
-                        thirdFolderResult,
-                        firstFileResult,
-                        secondFileResult
+                        firstDirectory,
+                        secondDirectory,
+                        thirdDirectory,
+                        firstFile,
+                        secondFile
                 )
         );
 
@@ -304,17 +295,15 @@ class ResourcesServiceTest {
         Long userId = 1L;
 
         Item firstDirectory = new Contents("user-1-files/gorgon_root/");
-        Result<Item> firstFodlerResult = new Result<>(firstDirectory);
 
         String pathTillSecondFile = "user-1-files/gorgon_root/description_gorgon.txt";
         Item secondFile = mock(Item.class);
         when(secondFile.objectName()).thenReturn(pathTillSecondFile);
-        Result<Item> secondFileResult = new Result<>(secondFile);
 
         when(repository.search(minioRootFolder)).thenReturn(
                 List.of(
-                        firstFodlerResult,
-                        secondFileResult
+                        firstDirectory,
+                        secondFile
                 )
         );
 

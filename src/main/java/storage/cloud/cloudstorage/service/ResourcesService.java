@@ -1,8 +1,6 @@
 package storage.cloud.cloudstorage.service;
 
-import io.minio.Result;
 import io.minio.StatObjectResponse;
-import io.minio.errors.*;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -14,9 +12,6 @@ import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,16 +74,15 @@ public class ResourcesService {
         return filePath.substring(0, lastFolderIndex + 1);
     }
 
-    public List<ResourceResponse> getFolderInfo(String path, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public List<ResourceResponse> getFolderInfo(String path, Long userId) {
         String preparedRoot = buildPreparedRoot(userId);
         initializer.initStorage(preparedRoot);
 
         String fullPath = buildPreparedPath(preparedRoot, path);
-        Iterable<Result<Item>> folderInfo = minioRepository.getFolderInfo(fullPath);
+        List<Item> items = minioRepository.getFolderInfo(fullPath);
 
         List<ResourceResponse> resources = new ArrayList<>();
-        for (Result<Item> itemResult : folderInfo) {
-            Item item = itemResult.get();
+        for (Item item : items) {
             if (fullPath.equals(item.objectName())) {
                 continue;
             }
@@ -231,14 +225,13 @@ public class ResourcesService {
 
     }
 
-    public List<ResourceResponse> search(String query, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public List<ResourceResponse> search(String query, Long userId) {
         String preparedRoot = buildPreparedRoot(userId);
         initializer.initStorage(preparedRoot);
 
-        Iterable<Result<Item>> searchResult = minioRepository.search(preparedRoot);
+        List<Item> searchResult = minioRepository.search(preparedRoot);
         List<ResourceResponse> resources = new ArrayList<>();
-        for (Result<Item> itemResult : searchResult) {
-            Item item = itemResult.get();
+        for (Item item : searchResult) {
             String fullPathTillItem = item.objectName();
             String itemFullPathWithoutRoot = fullPathTillItem.replace(preparedRoot, "");
 
