@@ -6,10 +6,7 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
-import storage.cloud.cloudstorage.exception.FileAlreadyExistsException;
-import storage.cloud.cloudstorage.exception.FolderAlreadyExistsException;
-import storage.cloud.cloudstorage.exception.FolderNotFoundException;
-import storage.cloud.cloudstorage.exception.ParentFolderHasNotFoundException;
+import storage.cloud.cloudstorage.exception.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -25,26 +22,29 @@ public class MinioRepository {
     private final MinioClient minioClient;
     private final String minioBucketName;
 
-    public void creaTeFolder(String minioParentPath, String fullPath)
-            throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public void creaTeFolder(String minioParentPath, String fullPath) {
         checkParentFolder(minioParentPath);
 
-        if (doesPathExist(fullPath)) {
-            throw new FolderAlreadyExistsException(
-                    String.format(
-                            "Folder already exists: %s", fullPath
-                    )
-            );
-        }
+        try {
+            if (doesPathExist(fullPath)) {
+                throw new FolderAlreadyExistsException(
+                        String.format(
+                                "Folder already exists: %s", fullPath
+                        )
+                );
+            }
 
-        minioClient.putObject(
-                PutObjectArgs
-                        .builder()
-                        .bucket(minioBucketName)
-                        .object(fullPath)
-                        .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
-                        .build()
-        );
+            minioClient.putObject(
+                    PutObjectArgs
+                            .builder()
+                            .bucket(minioBucketName)
+                            .object(fullPath)
+                            .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
+                            .build()
+            );
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
+        }
     }
 
     private void checkParentFolder(String parentFolder) {
@@ -98,58 +98,54 @@ public class MinioRepository {
      * если файл ЕСТЬ в батче (т.е. нашли что любой из файлов уже был загружен) - значит эксепшнион
      *
      * @param fullPaths
-     * @throws ServerException
-     * @throws InsufficientDataException
-     * @throws IOException
-     * @throws NoSuchAlgorithmException
-     * @throws InvalidKeyException
-     * @throws InvalidResponseException
-     * @throws XmlParserException
-     * @throws InternalException
      */
 
-    public void checkFiles(List<String> fullPaths) throws ServerException, InsufficientDataException, IOException,
-            NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException,
-            InternalException, ErrorResponseException {
-        for (String fullPath : fullPaths) {
-            try {
-                minioClient.statObject(
-                        StatObjectArgs
-                                .builder()
-                                .bucket(minioBucketName)
-                                .object(fullPath)
-                                .build()
-                );
+    public void checkFiles(List<String> fullPaths) {
+        try {
+            for (String fullPath : fullPaths) {
+                try {
+                    minioClient.statObject(
+                            StatObjectArgs
+                                    .builder()
+                                    .bucket(minioBucketName)
+                                    .object(fullPath)
+                                    .build()
+                    );
 
-                throw new FileAlreadyExistsException(
-                        String.format(
-                                "File already exists: %s ", fullPath
-                        )
-                );
-            } catch (ErrorResponseException ere) {
-                if ("NoSuchKey".equals(ere.errorResponse().code())) {
-                    continue;
+                    throw new FileAlreadyExistsException(
+                            String.format(
+                                    "File already exists: %s ", fullPath
+                            )
+                    );
+                } catch (ErrorResponseException ere) {
+                    if ("NoSuchKey".equals(ere.errorResponse().code())) {
+                        continue;
+                    }
+                    throw ere;
                 }
-                throw ere;
             }
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
         }
     }
 
-    public void upload(List<MultipartFile> files, List<String> fullPathTillFiles) throws ServerException,
-            InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException,
-            InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        createFoldersRecursively(fullPathTillFiles);
+    public void upload(List<MultipartFile> files, List<String> fullPathTillFiles) {
+        try {
+            createFoldersRecursively(fullPathTillFiles);
 
-        int index = 0;
-        for (MultipartFile file : files) {
-            minioClient.putObject(
-                    PutObjectArgs
-                            .builder()
-                            .bucket(minioBucketName)
-                            .object(fullPathTillFiles.get(index++))
-                            .stream(file.getInputStream(), file.getSize(), -1)
-                            .contentType(file.getContentType())
-                            .build());
+            int index = 0;
+            for (MultipartFile file : files) {
+                minioClient.putObject(
+                        PutObjectArgs
+                                .builder()
+                                .bucket(minioBucketName)
+                                .object(fullPathTillFiles.get(index++))
+                                .stream(file.getInputStream(), file.getSize(), -1)
+                                .contentType(file.getContentType())
+                                .build());
+            }
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
         }
     }
 
@@ -164,69 +160,78 @@ public class MinioRepository {
         );
     }
 
-    public void moveFile(String fromPath, String toPath) throws ServerException, InsufficientDataException,
-            ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException,
-            InvalidResponseException, XmlParserException, InternalException {
-        createFoldersRecursively(List.of(toPath));
-
-        List<String> copiedResources = new ArrayList<>();
-        copyResource(List.of(fromPath), List.of(toPath), copiedResources);
-
+    public void moveFile(String fromPath, String toPath) {
         try {
-            removeResources(List.of(fromPath));
-        } catch (IOException deletionException) {
+            createFoldersRecursively(List.of(toPath));
+
+            List<String> copiedResources = new ArrayList<>();
+            copyResource(List.of(fromPath), List.of(toPath), copiedResources);
+
             try {
-                removeResource(toPath);
-            } catch (IOException rollbackException) {
-                throw new RuntimeException(
-                        "Cannot rollback file move",
-                        rollbackException
-                );
+                removeResources(List.of(fromPath));
+            } catch (IOException deletionException) {
+                try {
+                    removeResource(toPath);
+                } catch (IOException rollbackException) {
+                    throw new StorageException(
+                            "Cannot rollback file move",
+                            rollbackException
+                    );
+                }
+
+                throw deletionException;
+            }
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
+        }
+    }
+
+    public StatObjectResponse getObjectResponse(String pathTillObject) {
+        try {
+            return minioClient.statObject(
+                    StatObjectArgs
+                            .builder()
+                            .bucket(minioBucketName)
+                            .object(pathTillObject)
+                            .build()
+            );
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
+        }
+    }
+
+    public void moveDirectory(String fromPath, String toPath) {
+        try {
+            List<String> fullPathTillResourceOldLocations;
+            List<String> fullPathTillResourceNewLocations;
+            List<String> createdFoldersRecursively;
+            Iterable<Result<Item>> searchResultsFromOldPath = search(fromPath);
+
+            fullPathTillResourceOldLocations = new ArrayList<>();
+            fullPathTillResourceNewLocations = new ArrayList<>();
+            prepareLocations(
+                    fromPath,
+                    toPath,
+                    searchResultsFromOldPath,
+                    fullPathTillResourceOldLocations,
+                    fullPathTillResourceNewLocations
+            );
+
+            createdFoldersRecursively = createFoldersRecursively(fullPathTillResourceNewLocations);
+
+            List<String> copiedResources = new ArrayList<>();
+            try {
+                copyResource(fullPathTillResourceOldLocations, fullPathTillResourceNewLocations, copiedResources);
+            } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+                rollBackCopiedResources(copiedResources, createdFoldersRecursively);
+
+                throw e;
             }
 
-            throw deletionException;
+            removeResources(fullPathTillResourceOldLocations);
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
         }
-    }
-
-    public StatObjectResponse getObjectResponse(String pathTillObject) throws ServerException,
-            InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException,
-            InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        return minioClient.statObject(
-                StatObjectArgs
-                        .builder()
-                        .bucket(minioBucketName)
-                        .object(pathTillObject)
-                        .build()
-        );
-    }
-
-    public void moveDirectory(String fromPath, String toPath) throws ServerException, InsufficientDataException,
-            ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException,
-            InvalidResponseException, XmlParserException, InternalException {
-        Iterable<Result<Item>> searchResultsFromOldPath = search(fromPath);
-
-        List<String> fullPathTillResourceOldLocations = new ArrayList<>();
-        List<String> fullPathTillResourceNewLocations = new ArrayList<>();
-        prepareLocations(
-                fromPath,
-                toPath,
-                searchResultsFromOldPath,
-                fullPathTillResourceOldLocations,
-                fullPathTillResourceNewLocations
-        );
-
-        List<String> createdFoldersRecursively = createFoldersRecursively(fullPathTillResourceNewLocations);
-
-        List<String> copiedResources = new ArrayList<>();
-        try {
-            copyResource(fullPathTillResourceOldLocations, fullPathTillResourceNewLocations, copiedResources);
-        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
-            rollBackCopiedResources(copiedResources, createdFoldersRecursively);
-
-            throw e;
-        }
-
-        removeResources(fullPathTillResourceOldLocations);
     }
 
     private void prepareLocations(
@@ -367,10 +372,7 @@ public class MinioRepository {
         }
     }
 
-    public boolean doesPathExist(String fullPath)
-            throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException,
-            InvalidKeyException, InvalidResponseException, XmlParserException, InternalException,
-            ErrorResponseException {
+    public boolean doesPathExist(String fullPath) {
         try {
             minioClient.statObject(
                     StatObjectArgs
@@ -386,7 +388,10 @@ public class MinioRepository {
             if ("NoSuchKey".equals(ere.errorResponse().code())) {
                 return false;
             }
-            throw ere;
+            throw new StorageException("Storage operation failed", ere);
+
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
         }
     }
 }

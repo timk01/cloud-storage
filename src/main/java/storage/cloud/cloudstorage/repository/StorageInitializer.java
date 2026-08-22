@@ -5,6 +5,7 @@ import io.minio.errors.*;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import storage.cloud.cloudstorage.exception.StorageException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -18,12 +19,18 @@ public class StorageInitializer {
     private final MinioClient minioClient;
     private final String minioBucketName;
 
-    public void initStorage(String fullPath) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        initBucket();
-        initRoot(fullPath);
+    public void initStorage(String fullPath) {
+        try {
+            initBucket();
+            initRoot(fullPath);
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
+        }
     }
 
-    private void initBucket() throws ErrorResponseException, InsufficientDataException, InternalException, InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException, XmlParserException {
+    private void initBucket() throws ErrorResponseException, InsufficientDataException, InternalException,
+            InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException,
+            XmlParserException {
         boolean doesBucketExist = minioClient.bucketExists(
                 BucketExistsArgs
                         .builder()
@@ -40,7 +47,9 @@ public class StorageInitializer {
         }
     }
 
-    private void initRoot(String root) throws ErrorResponseException, InsufficientDataException, InternalException, InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException, XmlParserException {
+    private void initRoot(String root) throws ErrorResponseException, InsufficientDataException, InternalException,
+            InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException,
+            XmlParserException {
         Iterable<Result<Item>> rootResults = minioClient.listObjects(
                 ListObjectsArgs
                         .builder()

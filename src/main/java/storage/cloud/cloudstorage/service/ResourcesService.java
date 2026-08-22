@@ -28,7 +28,7 @@ public class ResourcesService {
     private final String minioBucketName;
     private final StorageInitializer initializer;
 
-    public ResourceResponse createFolder(String path, Long userId) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public ResourceResponse createFolder(String path, Long userId) {
         String preparedRoot = buildPreparedRoot(userId);
         initializer.initStorage(preparedRoot);
 
@@ -151,7 +151,7 @@ public class ResourcesService {
         return preparedRoot + path;
     }
 
-    public List<ResourceResponse> upload(String path, MultipartFile[] files, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public List<ResourceResponse> upload(String path, MultipartFile[] files, Long userId) {
         String preparedRoot = buildPreparedRoot(userId);
         initializer.initStorage(preparedRoot);
 
@@ -278,7 +278,7 @@ public class ResourcesService {
         return resources;
     }
 
-    public ResourceResponse move(String fromPath, String toPath, Long userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public ResourceResponse move(String fromPath, String toPath, Long userId) {
         String preparedRoot = buildPreparedRoot(userId);
         initializer.initStorage(preparedRoot);
 
@@ -300,7 +300,7 @@ public class ResourcesService {
         return moveResource(toPath, fromType, fullPathFrom, fullPathTo);
     }
 
-    private void validateSource(String fullPathFrom) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
+    private void validateSource(String fullPathFrom) {
         if (!minioRepository.doesPathExist(fullPathFrom)) {
             throw new SourceResourceNotFoundException(
                     String.format(
@@ -326,7 +326,7 @@ public class ResourcesService {
         }
     }
 
-    private void validateDestination(String fullPathTo) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
+    private void validateDestination(String fullPathTo) {
         if (minioRepository.doesPathExist(fullPathTo)) {
             throw new DestinationResourceAlreadyExistsException(
                     String.format(
@@ -347,7 +347,7 @@ public class ResourcesService {
         }
     }
 
-    private ResourceResponse moveResource(String toPath, String fromType, String fullPathFrom, String fullPathTo) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    private ResourceResponse moveResource(String toPath, String fromType, String fullPathFrom, String fullPathTo) {
         if ("FILE".equals(fromType)) {
             StatObjectResponse objectResponse = minioRepository.getObjectResponse(fullPathFrom);
 
