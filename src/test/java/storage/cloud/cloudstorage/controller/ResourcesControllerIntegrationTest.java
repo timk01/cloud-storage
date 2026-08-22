@@ -596,6 +596,11 @@ public class ResourcesControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].path").value("folder9/"))
                 .andExpect(jsonPath("$[0].name").value("folder10"))
                 .andExpect(jsonPath("$[0].type").value(Type.DIRECTORY.name()));
+
+        mockMvc.perform(get("/directory")
+                        .cookie(sessionCookie)
+                        .param("path", path))
+                .andExpect(status().isNotFound());
     }
 
     @Test
