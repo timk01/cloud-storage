@@ -3,18 +3,22 @@ package storage.cloud.cloudstorage.controller;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import storage.cloud.cloudstorage.exception.UnauthorizedActionException;
 import storage.cloud.cloudstorage.response.ResourceResponse;
+import storage.cloud.cloudstorage.service.resource.ResourceDownloadService;
 import storage.cloud.cloudstorage.service.resource.ResourceMoveService;
 import storage.cloud.cloudstorage.service.resource.ResourceSearchService;
 import storage.cloud.cloudstorage.service.resource.ResourceUploadService;
 
+import java.io.InputStream;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -30,6 +34,7 @@ public class ResourcesController {
     private final ResourceUploadService uploadService;
     private final ResourceSearchService searchService;
     private final ResourceMoveService moveService;
+    private final ResourceDownloadService downloadService;
 
     /**
      * Upload contract:
@@ -109,6 +114,34 @@ public class ResourcesController {
         return new ResponseEntity<>(
                 folderInfo,
                 HttpStatus.OK
+        );
+    }
+
+    @GetMapping(value = "/resource/download", produces = "application/zip")
+    public ResponseEntity<StreamingResponseBody> download(
+            @SessionAttribute(name = "userId", required = false) Long userId,
+            @RequestParam("path")
+            @NotBlank
+            @Pattern(
+                    regexp = PATH_COMMON_VALIDATOR_REGEXP,
+                    message = INVALID_SYMBOLS_IN_PATH
+            )
+            String path
+    ) {
+        if (userId == null) {
+            throw new UnauthorizedActionException("User is not authorized");
+        }
+
+        InputStream downloaded = downloadService.download(path, userId); //autoclosable
+
+        StreamingResponseBody responseBody = outputStream -> {
+            //читаем downloaded (как поток байт), пишем в аутпутстрим
+        };
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/zip"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment, filename=\"arhchive.zip\"")
+                .body(responseBody);
         );
     }
 }

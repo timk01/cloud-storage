@@ -10,6 +10,8 @@ import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
 
+import java.io.InputStream;
+
 import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 
 @RequiredArgsConstructor
