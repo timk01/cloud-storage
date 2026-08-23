@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import storage.cloud.cloudstorage.exception.UnauthorizedActionException;
 import storage.cloud.cloudstorage.response.ResourceResponse;
-import storage.cloud.cloudstorage.service.ResourcesService;
+import storage.cloud.cloudstorage.service.resource.ResourceMoveService;
+import storage.cloud.cloudstorage.service.resource.ResourceSearchService;
+import storage.cloud.cloudstorage.service.resource.ResourceUploadService;
 
 import java.util.List;
 
@@ -25,54 +27,9 @@ public class ResourcesController {
     private static final String WRONG_PATH = "Wrong path is provided";
     private static final String INVALID_SYMBOLS_IN_PATH = "Invalid symbols in path are detected";
 
-    private final ResourcesService service;
-
-
-    @PostMapping("/directory")
-    public ResponseEntity<ResourceResponse> createFolder(
-            @SessionAttribute(name = "userId", required = false) Long userId,
-            @RequestParam("path")
-            @NotBlank
-            @Pattern(
-                    regexp = PATH_STRICT_VALIDATOR_REGEXP,
-                    message = WRONG_PATH
-            )
-            String path
-    ) {
-        if (userId == null) {
-            throw new UnauthorizedActionException("User is not authorized");
-        }
-
-        ResourceResponse folder = service.createFolder(path, userId);
-
-        return new ResponseEntity<>(
-                folder,
-                HttpStatus.CREATED
-        );
-    }
-
-    @GetMapping("/directory")
-    public ResponseEntity<List<ResourceResponse>> getFolderInfo(
-            @SessionAttribute(name = "userId", required = false) Long userId,
-            @RequestParam("path")
-            @NotBlank
-            @Pattern(
-                    regexp = PATH_STRICT_VALIDATOR_REGEXP,
-                    message = WRONG_PATH
-            )
-            String path
-    ) {
-        if (userId == null) {
-            throw new UnauthorizedActionException("User is not authorized");
-        }
-
-        List<ResourceResponse> folderInfo = service.getFolderInfo(path, userId);
-
-        return new ResponseEntity<>(
-                folderInfo,
-                HttpStatus.OK
-        );
-    }
+    private final ResourceUploadService uploadService;
+    private final ResourceSearchService searchService;
+    private final ResourceMoveService moveService;
 
     /**
      * Upload contract:
@@ -98,7 +55,7 @@ public class ResourcesController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        List<ResourceResponse> folderInfo = service.upload(path, files, userId);
+        List<ResourceResponse> folderInfo = uploadService.upload(path, files, userId);
 
         return new ResponseEntity<>(
                 folderInfo,
@@ -117,7 +74,7 @@ public class ResourcesController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        List<ResourceResponse> folderInfo = service.search(query, userId);
+        List<ResourceResponse> folderInfo = searchService.search(query, userId);
 
         return new ResponseEntity<>(
                 folderInfo,
@@ -147,7 +104,7 @@ public class ResourcesController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        ResourceResponse folderInfo = service.move(fromPath, toPath, userId);
+        ResourceResponse folderInfo = moveService.move(fromPath, toPath, userId);
 
         return new ResponseEntity<>(
                 folderInfo,
