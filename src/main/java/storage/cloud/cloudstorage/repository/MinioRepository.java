@@ -10,6 +10,7 @@ import storage.cloud.cloudstorage.exception.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -408,6 +409,21 @@ public class MinioRepository {
                 return false;
             }
             throw new StorageException("Storage operation failed", ere);
+
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
+        }
+    }
+
+    public InputStream readData(String fullPathTillResource) {
+        try {
+            return minioClient.getObject(
+                    GetObjectArgs
+                            .builder()
+                            .bucket(minioBucketName)
+                            .object(fullPathTillResource)
+                            .build()
+            );
 
         } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
             throw new StorageException("Storage operation failed", exception);

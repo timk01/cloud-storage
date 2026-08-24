@@ -3,6 +3,7 @@ package storage.cloud.cloudstorage.controller;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,8 +19,12 @@ import storage.cloud.cloudstorage.service.resource.ResourceMoveService;
 import storage.cloud.cloudstorage.service.resource.ResourceSearchService;
 import storage.cloud.cloudstorage.service.resource.ResourceUploadService;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @RequiredArgsConstructor
 @RestController
@@ -117,7 +122,7 @@ public class ResourcesController {
         );
     }
 
-    @GetMapping(value = "/resource/download", produces = "application/zip")
+    @GetMapping(value = "/resource/download")
     public ResponseEntity<StreamingResponseBody> download(
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("path")
@@ -132,16 +137,19 @@ public class ResourcesController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        InputStream downloaded = downloadService.download(path, userId); //autoclosable
+        List<ResourceDownloadService.PreparedFileRecord> preparedResources
+                = downloadService.prepareResource(path, userId);
 
-        StreamingResponseBody responseBody = outputStream -> {
-            //читаем downloaded (как поток байт), пишем в аутпутстрим
+        StreamingResponseBody responseBody = new StreamingResponseBody() {
+            @Override
+            public void writeTo(OutputStream outputStream) throws IOException {
+                downloadService.download(preparedResources, outputStream);
+            }
         };
 
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("application/zip"))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment, filename=\"arhchive.zip\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"archive.zip\"")
                 .body(responseBody);
-        );
     }
 }
