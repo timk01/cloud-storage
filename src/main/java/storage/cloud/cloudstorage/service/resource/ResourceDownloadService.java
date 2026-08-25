@@ -54,54 +54,54 @@ public class ResourceDownloadService {
         }
     }
 
-        public List<PreparedFileRecord> prepareResource (String path, Long userId){
-            String preparedRoot = buildPreparedRoot(userId, minioBucketName);
-            initializer.initStorage(preparedRoot);
+    public List<PreparedFileRecord> prepareResource(String path, Long userId) {
+        String preparedRoot = buildPreparedRoot(userId, minioBucketName);
+        initializer.initStorage(preparedRoot);
 
-            String fullPathTo = buildPreparedPath(preparedRoot, path);
+        String fullPathTo = buildPreparedPath(preparedRoot, path);
 
-            String type = path.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
+        String type = path.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
 
-            boolean doesPathExist = minioRepository.doesPathExist(fullPathTo);
-            checkResource(doesPathExist, fullPathTo);
-            if ("FILE".equals(type)) {
-                return Collections.singletonList(
-                        new PreparedFileRecord(
-                                extractName(path),
-                                fullPathTo)
-                );
-            }
-
-            List<Item> items = minioRepository.search(fullPathTo);
-
-            List<PreparedFileRecord> paths = new ArrayList<>();
-            for (Item item : items) {
-                String fullObjectName = item.objectName();
-                String relativePath = fullObjectName.substring(fullPathTo.length());
-
-                if (!relativePath.isEmpty()) {
-                    PreparedFileRecord record = new PreparedFileRecord(relativePath, fullObjectName);
-                    paths.add(record);
-                }
-            }
-
-            return paths;
+        boolean doesPathExist = minioRepository.doesPathExist(fullPathTo);
+        checkResource(doesPathExist, fullPathTo);
+        if ("FILE".equals(type)) {
+            return Collections.singletonList(
+                    new PreparedFileRecord(
+                            extractName(path),
+                            fullPathTo)
+            );
         }
 
-        private void checkResource ( boolean doesPathExist, String path){
-            if (!doesPathExist) {
-                throw new SourceResourceNotFoundException(
-                        String.format(
-                                "Resource is not found by path: %s ", path
-                        )
-                );
+        List<Item> items = minioRepository.search(fullPathTo);
+
+        List<PreparedFileRecord> paths = new ArrayList<>();
+        for (Item item : items) {
+            String fullObjectName = item.objectName();
+            String relativePath = fullObjectName.substring(fullPathTo.length());
+
+            if (!relativePath.isEmpty()) {
+                PreparedFileRecord record = new PreparedFileRecord(relativePath, fullObjectName);
+                paths.add(record);
             }
         }
 
-        public record PreparedFileRecord(
-                String pathForArchive,
+        return paths;
+    }
 
-                String fullPathTillResource
-        ) {
+    private void checkResource(boolean doesPathExist, String path) {
+        if (!doesPathExist) {
+            throw new SourceResourceNotFoundException(
+                    String.format(
+                            "Resource is not found by path: %s ", path
+                    )
+            );
         }
     }
+
+    public record PreparedFileRecord(
+            String pathForArchive,
+
+            String fullPathTillResource
+    ) {
+    }
+}

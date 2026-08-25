@@ -211,7 +211,7 @@ POST {{baseUrl}}/directory?path=gorgon_root/gorgon_archive/gorgon_files_{{active
 #└── gorgon_archive/
 #    ├── unnamed_${active_user}/
 #    └── gorgon_files_${active_user}/ ---------> here to download WHOLE folder (inlucing empty folders)
-#        ├──empty_folder_${active_user}/ --> real empty folder from user's POV
+#        ├──empty_folder_${active_user}/ ------> here to download EMPTY folder (real empty folder from user's POV)
 #        ├── gorgon.jpg
 #        ├── description_gorgon.txt
 #        └── different/ -----------------------> here to download a FILE
@@ -237,14 +237,163 @@ POST {{baseUrl}}/directory?path=gorgon_root/gorgon_archive/gorgon_files_{{active
         "path_for_file_download",
         "gorgon_root/gorgon_archive/gorgon_files_" +
         client.global.get("active_user") +
-        "/different/file1.txt"
+        "/different/file2.txt"
     );
+
+    client.global.set(
+        "path_for_empty_folder_download",
+        "gorgon_root/gorgon_archive/gorgon_files_" +
+        client.global.get("active_user") +
+        "/empty_folder_" +
+        client.global.get("active_user") +
+        "/"
+    );
+
     client.global.set(
     "path_for_folder_download",
     "gorgon_root/gorgon_archive/gorgon_files_" +
     client.global.get("active_user") +
     "/"
     );
+%}
+
+### 200 - Successfully downloaded file (file2.txt)
+# actual structure and size(s) are checked in java tests, but you still can check them manually in downloads folder (in http tests)
+
+GET {{baseUrl}}/resource/download?path={{path_for_file_download}}
+
+# should dowload this file (file2.txt)
+#ЗАПУСКАЕМ
+#░ГУСЯ░▄▀▀▀▄░РАБОТЯГИ░░
+#▄███▀░◐░░░▌░░░░░░░
+#░░░░▌░░░░░▐░░░░░░░
+#░░░░▐░░░░░▐░░░░░░░
+#░░░░▌░░░░░▐▄▄░░░░░
+#░░░░▌░░░░▄▀▒▒▀▀▀▀▄
+#░░░▐░░░░▐▒▒▒▒▒▒▒▒▀▀▄
+#░░░▐░░░░▐▄▒▒▒▒▒▒▒▒▒▒▀▄
+#░░░░▀▄░░░░▀▄▒▒▒▒▒▒▒▒▒▒▀▄
+#░░░░░░▀▄▄▄▄▄█▄▄▄▄▄▄▄▄▄▄▄▀▄
+#░░░░░░░░░░░▌▌░▌▌░░░░░
+#░░░░░░░░░░░▌▌░▌▌░░░░░
+#░░░░░░░░░▄▄▌▌▄▌▌░░░░░
+
+> {%
+    client.test("Successfully downloaded a resource", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const mime_type = response.contentType.mimeType;
+        client.assert(mime_type === "application/octet-stream", "mimeType should be proper type")
+
+        const content_disposition = response.headers.valueOf("Content-Disposition");
+        client.assert(content_disposition.includes("attachment"), "content should include attachment");
+        client.assert(content_disposition.includes('filename="archive.zip"'), "attachment should have name archive.zip");
+    });
+%}
+
+>>! ./downloads/file-archive.zip
+
+### 200 - Successfully downloaded an empty folder (.../empty_folder_...)
+# actual structure and size(s) are checked in java tests, but you still can check them manually in downloads folder (in http tests)
+
+GET {{baseUrl}}/resource/download?path={{path_for_empty_folder_download}}
+
+> {%
+    client.test("Successfully downloaded a resource", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const mime_type = response.contentType.mimeType;
+        client.assert(mime_type === "application/octet-stream", "mimeType should be proper type")
+
+        const content_disposition = response.headers.valueOf("Content-Disposition");
+        client.assert(content_disposition.includes("attachment"), "content should include attachment");
+        client.assert(content_disposition.includes('filename="archive.zip"'), "attachment should have name archive.zip");
+    });
+%}
+
+>>! ./downloads/empty-folder-archive.zip
+
+### 200 - Successfully downloaded an full folder (.../gorgon_files_...)
+# actual structure and size(s) are checked in java tests, but you still can check them manually in downloads folder (in http tests)
+
+GET {{baseUrl}}/resource/download?path={{path_for_folder_download}}
+
+> {%
+    client.test("Successfully downloaded a resource", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const mime_type = response.contentType.mimeType;
+        client.assert(mime_type === "application/octet-stream", "mimeType should be proper type")
+
+        const content_disposition = response.headers.valueOf("Content-Disposition");
+        client.assert(content_disposition.includes("attachment"), "content should include attachment");
+        client.assert(content_disposition.includes('filename="archive.zip"'), "attachment should have name archive.zip");
+    });
+%}
+
+>>! ./downloads/folder-archive.zip
+
+### 400 - Failed to download resource(s) since path is wrong (here = empty)
+GET {{baseUrl}}/resource/download?path=
+
+> {%
+    client.test("Cannot download resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to download resource(s) since path is wrong  (here = %20%20%20%20)
+GET {{baseUrl}}/resource/download?path=%20%20%20%20
+
+> {%
+    client.test("Cannot download resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+###  400 - Failed to download resource(s) since path is wrong (here = has invalid symbols)
+GET {{baseUrl}}/resource/download?path==№№№/
+
+> {%
+    client.test("Cannot download resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 -  Failed to download resource(s) since path is wrong (here = has invalid symbols)
+GET {{baseUrl}}/resource/download?path=abc@
+
+> {%
+    client.test("Cannot download resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    });
+%}
+
+### 400 - Failed to download resource(s) since path is missing
+GET {{baseUrl}}/resource/download
+
+> {%
+    client.test("Cannot download resources", function() {
+        client.assert(response.status === 400, "Response status is 400 since 'path' parameter is missing");
+    });
+%}
+
+### 404 - Failed to download resource(s) since resource is not found (here - file)
+GET {{baseUrl}}/resource/download?path={{path_for_file_download}}_test_missed_file
+
+> {%
+    client.test("Cannot download resources since resource is not found", function() {
+        client.assert(response.status === 404, "Response status is 404");
+    });
+%}
+
+### 404 - Failed to download resource(s) since resource is not found (here - folder)
+GET {{baseUrl}}/resource/download?path={{path_for_folder_download}}_test_missed_folder/
+
+> {%
+    client.test("Cannot download resources since resource is not found", function() {
+        client.assert(response.status === 404, "Response status is 404");
+    });
 %}
 
 ###
