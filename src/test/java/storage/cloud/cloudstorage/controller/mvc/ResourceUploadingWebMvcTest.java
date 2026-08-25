@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import storage.cloud.cloudstorage.controller.ResourcesController;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
+import storage.cloud.cloudstorage.service.resource.ResourceDownloadService;
 import storage.cloud.cloudstorage.service.resource.ResourceMoveService;
 import storage.cloud.cloudstorage.service.resource.ResourceSearchService;
 import storage.cloud.cloudstorage.service.resource.ResourceUploadService;
@@ -39,10 +40,13 @@ public class ResourceUploadingWebMvcTest {
     ResourceUploadService uploadService;
 
     @MockBean
+    ResourceMoveService moveService;
+
+    @MockBean
     ResourceSearchService searchService;
 
     @MockBean
-    ResourceMoveService moveService;
+    ResourceDownloadService downloadService;
 
     @Test
     public void uploadingResourceThinOkWithSession() throws Exception {

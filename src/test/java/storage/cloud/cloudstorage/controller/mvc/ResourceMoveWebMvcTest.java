@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import storage.cloud.cloudstorage.controller.ResourcesController;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
+import storage.cloud.cloudstorage.service.resource.ResourceDownloadService;
 import storage.cloud.cloudstorage.service.resource.ResourceMoveService;
 import storage.cloud.cloudstorage.service.resource.ResourceSearchService;
 import storage.cloud.cloudstorage.service.resource.ResourceUploadService;
@@ -32,17 +33,19 @@ public class ResourceMoveWebMvcTest {
     ResourceUploadService uploadService;
 
     @MockBean
+    ResourceMoveService moveService;
+
+    @MockBean
     ResourceSearchService searchService;
 
     @MockBean
-    ResourceMoveService moveService;
+    ResourceDownloadService downloadService;
 
     @Test
     public void movingFileOkWithSession() throws Exception {
         String pathFrom = "folder1/folder2/folder3/file1.txt";
         String pathTo = "folder9/folder10/test_file1.txt";
         Long userId = 1L;
-
 
         ResourceResponse resourceResponse =
                 ResourceResponse.builder()

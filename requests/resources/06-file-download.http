@@ -7,12 +7,12 @@
 @test_folder_from = folder1/folder2/folder3/
 @test_folder_to = folder9/folder10/
 
-### 401 - Failed to upload a directory since user wasn't authorized (no cookies provided!)
+### 401 - Failed to download a directory since user wasn't authorized (no cookies provided!)
 # @no-cookie-jar
 GET {{baseUrl}}/resource/download?path={{test_folder_from}}
 
 > {%
-    client.test("Cannot upload resource", function() {
+    client.test("Cannot download resource", function() {
         client.assert(response.status === 401, "Response status is 401 since user is not authorized");
     });
 %}
