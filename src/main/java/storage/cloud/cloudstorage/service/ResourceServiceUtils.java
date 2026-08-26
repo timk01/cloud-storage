@@ -1,5 +1,7 @@
 package storage.cloud.cloudstorage.service;
 
+import storage.cloud.cloudstorage.exception.SourceResourceNotFoundException;
+
 public final class ResourceServiceUtils {
 
     private ResourceServiceUtils() {
@@ -47,9 +49,18 @@ public final class ResourceServiceUtils {
         return preparedRoot + path;
     }
 
-
     public static String buildPreparedRoot(Long userId, String minioBucketName) {
         String[] splitBucket = minioBucketName.split("-");
         return splitBucket[0] + "-" + userId + "-" + splitBucket[1] + "/";
+    }
+
+    public static void validateResourceExists(boolean doesResourceExist, String pathTillResource) {
+        if (!doesResourceExist) {
+            throw new SourceResourceNotFoundException(
+                    String.format(
+                            "Resource is not found by path: %s ", pathTillResource
+                    )
+            );
+        }
     }
 }

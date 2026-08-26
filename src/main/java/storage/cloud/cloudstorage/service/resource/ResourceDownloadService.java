@@ -3,7 +3,6 @@ package storage.cloud.cloudstorage.service.resource;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import storage.cloud.cloudstorage.exception.SourceResourceNotFoundException;
 import storage.cloud.cloudstorage.exception.StorageException;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
@@ -62,8 +61,10 @@ public class ResourceDownloadService {
 
         String type = path.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
 
-        boolean doesPathExist = minioRepository.doesPathExist(fullPathTo);
-        checkResource(doesPathExist, fullPathTo);
+        validateResourceExists(
+                minioRepository.doesPathExist(fullPathTo), fullPathTo
+        );
+
         if ("FILE".equals(type)) {
             return Collections.singletonList(
                     new PreparedFileRecord(
@@ -86,16 +87,6 @@ public class ResourceDownloadService {
         }
 
         return paths;
-    }
-
-    private void checkResource(boolean doesPathExist, String path) {
-        if (!doesPathExist) {
-            throw new SourceResourceNotFoundException(
-                    String.format(
-                            "Resource is not found by path: %s ", path
-                    )
-            );
-        }
     }
 
     public record PreparedFileRecord(

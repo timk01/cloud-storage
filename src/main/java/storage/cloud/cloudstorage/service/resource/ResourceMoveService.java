@@ -2,15 +2,15 @@ package storage.cloud.cloudstorage.service.resource;
 
 import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
-import storage.cloud.cloudstorage.exception.*;
+import storage.cloud.cloudstorage.exception.DestinationResourceAlreadyExistsException;
+import storage.cloud.cloudstorage.exception.ResourceMoveConflictException;
+import storage.cloud.cloudstorage.exception.ResourceTypeMismatchException;
+import storage.cloud.cloudstorage.exception.SourceAndDestinationAreEqualException;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
-
-import java.io.InputStream;
 
 import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 
@@ -20,6 +20,7 @@ public class ResourceMoveService {
     private final MinioRepository minioRepository;
     private final String minioBucketName;
     private final StorageInitializer initializer;
+
     public ResourceResponse move(String fromPath, String toPath, Long userId) {
         String preparedRoot = buildPreparedRoot(userId, minioBucketName);
         initializer.initStorage(preparedRoot);
@@ -29,7 +30,9 @@ public class ResourceMoveService {
         String fromType = fromPath.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
         String toType = toPath.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
 
-        validateSource(fullPathFrom);
+        validateResourceExists(
+                minioRepository.doesPathExist(fullPathFrom), fullPathFrom
+        );
 
         validateSourceAndDestinationAreDistinct(fullPathFrom, fullPathTo);
 
@@ -40,16 +43,6 @@ public class ResourceMoveService {
         validateDirectoryPaths(fromPath, toPath, fromType);
 
         return moveResource(toPath, fromType, fullPathFrom, fullPathTo);
-    }
-
-    private void validateSource(String fullPathFrom) {
-        if (!minioRepository.doesPathExist(fullPathFrom)) {
-            throw new SourceResourceNotFoundException(
-                    String.format(
-                            "Resource is not found by path: %s", fullPathFrom
-                    )
-            );
-        }
     }
 
     private void validateSourceAndDestinationAreDistinct(String fullPathFrom, String fullPathTo) {
