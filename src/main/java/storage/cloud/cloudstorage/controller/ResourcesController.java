@@ -151,7 +151,7 @@ public class ResourcesController {
                 .body(responseBody);
     }
 
-    @GetMapping(value = "/resource")
+    @DeleteMapping(value = "/resource")
     public ResponseEntity<Void> delete(
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("path")
