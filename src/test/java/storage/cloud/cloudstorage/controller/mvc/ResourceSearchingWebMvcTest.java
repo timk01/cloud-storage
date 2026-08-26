@@ -8,10 +8,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import storage.cloud.cloudstorage.controller.ResourcesController;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
-import storage.cloud.cloudstorage.service.resource.ResourceDownloadService;
-import storage.cloud.cloudstorage.service.resource.ResourceMoveService;
-import storage.cloud.cloudstorage.service.resource.ResourceSearchService;
-import storage.cloud.cloudstorage.service.resource.ResourceUploadService;
+import storage.cloud.cloudstorage.service.resource.*;
 
 import java.util.List;
 
@@ -38,6 +35,9 @@ class ResourceSearchingWebMvcTest {
 
     @MockBean
     ResourceDownloadService downloadService;
+
+    @MockBean
+    ResourceDeleteService deleteService;
 
     @Test
     public void searchingResourceByMaskOkWithSession() throws Exception {

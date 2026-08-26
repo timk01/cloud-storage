@@ -2,6 +2,9 @@ package storage.cloud.cloudstorage.repository;
 
 import io.minio.*;
 import io.minio.errors.*;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
+import io.minio.messages.ErrorResponse;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -14,6 +17,7 @@ import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -428,5 +432,65 @@ public class MinioRepository {
         } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
             throw new StorageException("Storage operation failed", exception);
         }
+    }
+
+    public void deleteFile(String fullPathTo) {
+        deleteResources(Collections.singletonList(fullPathTo), new ArrayList<>());
+    }
+
+    public void deleteResources(List<String> filesPath, List<String> directoriesPath) {
+        if (!filesPath.isEmpty()) {
+            deleteResources(filesPath);
+        }
+
+        if (!directoriesPath.isEmpty()) {
+            deleteResources(directoriesPath);
+        }
+    }
+
+    private void deleteResources(List<String> resourcesPath) {
+        List<DeleteObject> resources = resourcesPath.stream()
+                .map(DeleteObject::new)
+                .toList();
+
+        try {
+            List<DeleteError> initialErrorList = tryToRemove(resources);
+
+            if (!initialErrorList.isEmpty()) {
+                List<DeleteError> errorListAfterRepeat = tryToRemove(resources);
+
+                if (!errorListAfterRepeat.isEmpty()) {
+                    throw new StorageException(
+                            String.format(
+                                    "Cannot delete resources after retry, the resource is: %s, the error is: %s",
+                                    errorListAfterRepeat.stream().map(ErrorResponse::objectName).toList(),
+                                    errorListAfterRepeat.stream().map(ErrorResponse::message).toList()
+                            )
+                    );
+                }
+            }
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
+        }
+    }
+
+    private List<DeleteError> tryToRemove(List<DeleteObject> resources) throws ErrorResponseException, InsufficientDataException,
+            InternalException, InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException,
+            ServerException, XmlParserException {
+        Iterable<Result<DeleteError>> results = minioClient.removeObjects(
+                RemoveObjectsArgs
+                        .builder()
+                        .bucket(minioBucketName)
+                        .objects(resources)
+                        .build()
+        );
+
+        List<DeleteError> errors = new ArrayList<>();
+
+        for (Result<DeleteError> result : results) {
+            errors.add(result.get());
+        }
+
+        return errors;
     }
 }

@@ -13,10 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import storage.cloud.cloudstorage.controller.ResourcesController;
-import storage.cloud.cloudstorage.service.resource.ResourceDownloadService;
-import storage.cloud.cloudstorage.service.resource.ResourceMoveService;
-import storage.cloud.cloudstorage.service.resource.ResourceSearchService;
-import storage.cloud.cloudstorage.service.resource.ResourceUploadService;
+import storage.cloud.cloudstorage.service.resource.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -44,6 +41,9 @@ public class ResourceDownloadWebMvcTest {
 
     @MockBean
     ResourceDownloadService downloadService;
+
+    @MockBean
+    ResourceDeleteService deleteService;
 
     @Test
     public void downloadFileOkWithSession() throws Exception {
