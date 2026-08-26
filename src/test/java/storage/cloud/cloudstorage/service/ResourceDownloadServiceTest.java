@@ -281,6 +281,4 @@ public class ResourceDownloadServiceTest {
 
         assertThat(outputStream.size()).isGreaterThan(0);
     }
-
-
 }
