@@ -26,7 +26,6 @@ public final class ResourceServiceUtils {
     ) {
     }
 
-
     public static String extractParentPathForFolder(String folderPath) {
         String trimmedOriginalPath = removeTrailingSlash(folderPath);
         return extractParentPathForFile(trimmedOriginalPath);
