@@ -43,7 +43,7 @@ public class ResourceSearchIntegrationTest extends AbstractIntegrationTest {
                 gorgonTxtSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgonJpg)
                         .file(gorgonTxt)
                         .cookie(sessionCookie)
@@ -62,7 +62,7 @@ public class ResourceSearchIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[1].type").value(gorgonTxtType));
 
         String query = "GoRgOn";
-        MvcResult result = mockMvc.perform(get("/resource/search")
+        MvcResult result = mockMvc.perform(get("/api/resource/search")
                         .cookie(sessionCookie)
                         .param("query", query))
                 .andExpect(status().isOk())
@@ -132,7 +132,7 @@ public class ResourceSearchIntegrationTest extends AbstractIntegrationTest {
                 gorgonTxtSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgonJpg)
                         .file(gorgonTxt)
                         .cookie(sessionCookie)
@@ -141,7 +141,7 @@ public class ResourceSearchIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$", hasSize(2)));
 
         String query = "cat";
-        mockMvc.perform(get("/resource/search")
+        mockMvc.perform(get("/api/resource/search")
                         .cookie(sessionCookie)
                         .param("query", query))
                 .andExpect(status().isOk())

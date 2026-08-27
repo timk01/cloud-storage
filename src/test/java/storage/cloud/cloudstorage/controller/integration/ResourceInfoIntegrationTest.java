@@ -27,7 +27,7 @@ public class ResourceInfoIntegrationTest extends AbstractIntegrationTest {
                 gorgonSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgonJpg)
                         .cookie(sessionCookie)
                         .param("path", path))
@@ -42,7 +42,7 @@ public class ResourceInfoIntegrationTest extends AbstractIntegrationTest {
         String pathToFile = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/"
                 + gorgonFilename;
 
-        mockMvc.perform(get("/resource")
+        mockMvc.perform(get("/api/resource")
                         .cookie(sessionCookie)
                         .param("path", pathToFile))
                 .andExpect(status().isOk())
@@ -70,7 +70,7 @@ public class ResourceInfoIntegrationTest extends AbstractIntegrationTest {
                 gorgonSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgonJpg)
                         .cookie(sessionCookie)
                         .param("path", path))
@@ -85,7 +85,7 @@ public class ResourceInfoIntegrationTest extends AbstractIntegrationTest {
         String pathToDirectory
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
 
-        mockMvc.perform(get("/resource")
+        mockMvc.perform(get("/api/resource")
                         .cookie(sessionCookie)
                         .param("path", pathToDirectory))
                 .andExpect(status().isOk())

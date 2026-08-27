@@ -80,7 +80,7 @@ public class ResourceUploadingWebMvcTest {
         ).thenReturn(resourceResponses);
 
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgon)
                         .sessionAttr("userId", 1L)
                         .param("path", path))
@@ -142,7 +142,7 @@ public class ResourceUploadingWebMvcTest {
                 eq(userId))
         ).thenReturn(resourceResponses);
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgonJpg)
                         .file(gorgonTxt)
                         .sessionAttr("userId", userId)
@@ -171,7 +171,7 @@ public class ResourceUploadingWebMvcTest {
                 new byte[1500]
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgon)
                         .sessionAttr("userId", 1L)
                         .param("path", path))
@@ -198,7 +198,7 @@ public class ResourceUploadingWebMvcTest {
                 new byte[1500]
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgon)
                         .sessionAttr("userId", 1L)
                         .param("path", path))
@@ -220,7 +220,7 @@ public class ResourceUploadingWebMvcTest {
                 new byte[1500]
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgon)
                         .sessionAttr("userId", 1L))
                 .andExpect(status().isBadRequest())
@@ -236,7 +236,7 @@ public class ResourceUploadingWebMvcTest {
                 new byte[1500]
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgon)
                         .param("path", "folder1/"))
                 .andExpect(status().isUnauthorized())

@@ -47,7 +47,7 @@ public class ResourceDeleteWebMvcTest {
         String path = "folder1/folder2/folder3/file2.txt";
         Long userId = 1L;
 
-        mockMvc.perform(delete("/resource")
+        mockMvc.perform(delete("/api/resource")
                         .sessionAttr("userId", userId)
                         .param("path", path))
                 .andExpect(status().isNoContent());
@@ -60,7 +60,7 @@ public class ResourceDeleteWebMvcTest {
         String path = "folder1/folder2/folder3/";
         Long userId = 1L;
 
-        mockMvc.perform(delete("/resource")
+        mockMvc.perform(delete("/api/resource")
                         .sessionAttr("userId", userId)
                         .param("path", path))
                 .andExpect(status().isNoContent());
@@ -71,7 +71,7 @@ public class ResourceDeleteWebMvcTest {
     @ParameterizedTest
     @MethodSource("invalidPathForDeletedResource")
     public void deleteResourceFailedDueToInvalidPath(String path) throws Exception {
-        mockMvc.perform(delete("/resource")
+        mockMvc.perform(delete("/api/resource")
                         .sessionAttr("userId", 1L)
                         .param("path", path))
                 .andExpect(status().isBadRequest())
@@ -89,7 +89,7 @@ public class ResourceDeleteWebMvcTest {
 
     @Test
     public void deleteResourceFailedDueToNoPath() throws Exception {
-        mockMvc.perform(delete("/resource")
+        mockMvc.perform(delete("/api/resource")
                         .sessionAttr("userId", 1L))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
@@ -97,7 +97,7 @@ public class ResourceDeleteWebMvcTest {
 
     @Test
     public void deleteResourceFailedSinceUserIsUnauthorized() throws Exception {
-        mockMvc.perform(delete("/resource")
+        mockMvc.perform(delete("/api/resource")
                         .param("path", "folder1/"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").exists());

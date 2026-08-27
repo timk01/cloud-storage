@@ -37,7 +37,7 @@ public class ResourceDeleteIntegrationTest extends AbstractIntegrationTest {
                 gorgonTxtSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgonJpg)
                         .file(gorgonTxt)
                         .cookie(sessionCookie)
@@ -59,7 +59,7 @@ public class ResourceDeleteIntegrationTest extends AbstractIntegrationTest {
         String type = Type.DIRECTORY.name();
         String requestPath = path + newFolderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", requestPath))
                 .andExpect(status().isCreated())
@@ -73,12 +73,12 @@ public class ResourceDeleteIntegrationTest extends AbstractIntegrationTest {
         String pathToFile = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/"
                 + gorgonFilename;
 
-        mockMvc.perform(delete("/resource")
+        mockMvc.perform(delete("/api/resource")
                         .cookie(sessionCookie)
                         .param("path", pathToFile))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isOk())
@@ -117,7 +117,7 @@ public class ResourceDeleteIntegrationTest extends AbstractIntegrationTest {
                 gorgonTxtSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgonJpg)
                         .file(gorgonTxt)
                         .cookie(sessionCookie)
@@ -139,7 +139,7 @@ public class ResourceDeleteIntegrationTest extends AbstractIntegrationTest {
         String type = Type.DIRECTORY.name();
         String requestPath = path + newFolderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", requestPath))
                 .andExpect(status().isCreated())
@@ -151,13 +151,13 @@ public class ResourceDeleteIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.type").value(type));
 
         String pathToDirectory = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
-        mockMvc.perform(delete("/resource")
+        mockMvc.perform(delete("/api/resource")
                         .cookie(sessionCookie)
                         .param("path", pathToDirectory))
                 .andExpect(status().isNoContent());
 
         String pathToDirectoryParent = "gorgon_root/gorgon_archive/";
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", pathToDirectoryParent))
                 .andExpect(status().isOk())
@@ -171,7 +171,7 @@ public class ResourceDeleteIntegrationTest extends AbstractIntegrationTest {
         String type = Type.DIRECTORY.name();
         String path = folderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isCreated())
@@ -182,12 +182,12 @@ public class ResourceDeleteIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.type").exists())
                 .andExpect(jsonPath("$.type").value(type));
 
-        mockMvc.perform(delete("/resource")
+        mockMvc.perform(delete("/api/resource")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isNotFound())

@@ -22,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @Validated
-@RequestMapping()
+@RequestMapping("/api")
 public class ResourcesController {
     private static final String PATH_STRICT_VALIDATOR_REGEXP = "^([\\p{L}\\p{N}_\\s-]+/)+$";
     private static final String PATH_COMMON_VALIDATOR_REGEXP = "^[\\p{L}\\p{N}_\\s./-]+$";

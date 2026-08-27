@@ -66,7 +66,7 @@ public class ResourceDownloadWebMvcTest {
                 userId
         )).thenReturn(preparedFileRecords);
 
-        MvcResult result = mockMvc.perform(get("/resource/download")
+        MvcResult result = mockMvc.perform(get("/api/resource/download")
                         .sessionAttr("userId", userId)
                         .param("path", path))
                 .andExpect(request().asyncStarted())
@@ -123,7 +123,7 @@ public class ResourceDownloadWebMvcTest {
                 userId
         )).thenReturn(preparedFileRecords);
 
-        MvcResult result = mockMvc.perform(get("/resource/download")
+        MvcResult result = mockMvc.perform(get("/api/resource/download")
                         .sessionAttr("userId", userId)
                         .param("path", path))
                 .andExpect(request().asyncStarted())
@@ -154,7 +154,7 @@ public class ResourceDownloadWebMvcTest {
     @ParameterizedTest
     @MethodSource("invalidPathForDownloadResource")
     public void downloadResourceFailedDueToInvalidPath(String path) throws Exception {
-        mockMvc.perform(get("/resource/download")
+        mockMvc.perform(get("/api/resource/download")
                         .sessionAttr("userId", 1L)
                         .param("path", path))
                 .andExpect(status().isBadRequest())
@@ -172,7 +172,7 @@ public class ResourceDownloadWebMvcTest {
 
     @Test
     public void downloadResourceFailedDueToNoPath() throws Exception {
-        mockMvc.perform(get("/resource/download")
+        mockMvc.perform(get("/api/resource/download")
                         .sessionAttr("userId", 1L))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
@@ -180,7 +180,7 @@ public class ResourceDownloadWebMvcTest {
 
     @Test
     public void downloadResourceFailedSinceUserIsUnauthorized() throws Exception {
-        mockMvc.perform(get("/resource/download")
+        mockMvc.perform(get("/api/resource/download")
                         .param("path", "folder1/folder2/folder3/file2.txt"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").exists());

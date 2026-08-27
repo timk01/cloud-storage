@@ -53,7 +53,7 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
 
         when(createService.createFolder(path, userId)).thenReturn(resourceResponse);
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .sessionAttr("userId", 1L)
                         .param("path", path))
                 .andExpect(status().isCreated())
@@ -92,7 +92,7 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
                 userId
         )).thenReturn(resourceResponses);
 
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .sessionAttr("userId", userId)
                         .param("path", path))
                 .andExpect(status().isOk())
@@ -109,7 +109,7 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
     @ParameterizedTest
     @MethodSource("invalidPath")
     public void folderCreationFailedDueToInvalidPath(String path) throws Exception {
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .sessionAttr("userId", 1L)
                         .param("path", path))
                 .andExpect(status().isBadRequest())
@@ -119,7 +119,7 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
     @ParameterizedTest
     @MethodSource("invalidPath")
     public void gettingFolderFailedDueToInvalidPath(String path) throws Exception {
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .sessionAttr("userId", 1L)
                         .param("path", path))
                 .andExpect(status().isBadRequest())
@@ -136,7 +136,7 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
 
     @Test
     public void folderCreationFailedDueToNoPath() throws Exception {
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .sessionAttr("userId", 1L))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
@@ -144,7 +144,7 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
 
     @Test
     public void gettingFolderFailedDueToInvalidPath() throws Exception {
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .sessionAttr("userId", 1L))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
@@ -152,7 +152,7 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
 
     @Test
     public void folderCreationFailedSinceUserIsUnauthorized() throws Exception {
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .param("path", "folder1/"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").exists());
@@ -160,7 +160,7 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
 
     @Test
     public void gettingFolderFailedSinceUserIsUnauthorized() throws Exception {
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .param("path", "folder1/"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").exists());

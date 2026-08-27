@@ -91,7 +91,7 @@ class ResourceSearchingWebMvcTest {
         when(searchService.search(query, userId))
                 .thenReturn(searchResponses);
 
-        mockMvc.perform(get("/resource/search")
+        mockMvc.perform(get("/api/resource/search")
                         .sessionAttr("userId", userId)
                         .param("query", query))
                 .andExpect(status().isOk())
@@ -125,7 +125,7 @@ class ResourceSearchingWebMvcTest {
 
     @Test
     public void searchingResourceFailedDueToEmptyQuery() throws Exception {
-        mockMvc.perform(get("/resource/search")
+        mockMvc.perform(get("/api/resource/search")
                         .sessionAttr("userId", 1L)
                         .param("query", ""))
                 .andExpect(status().isBadRequest())
@@ -134,7 +134,7 @@ class ResourceSearchingWebMvcTest {
 
     @Test
     public void searchingResourceFailedDueToNoQuery() throws Exception {
-        mockMvc.perform(get("/resource/search")
+        mockMvc.perform(get("/api/resource/search")
                         .sessionAttr("userId", 1L))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
@@ -142,7 +142,7 @@ class ResourceSearchingWebMvcTest {
 
     @Test
     public void searchingResourceFailedSinceUserIsUnauthorized() throws Exception {
-        mockMvc.perform(get("/resource/search")
+        mockMvc.perform(get("/api/resource/search")
                         .param("query", "query"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").exists());

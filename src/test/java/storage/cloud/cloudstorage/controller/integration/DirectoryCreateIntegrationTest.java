@@ -16,7 +16,7 @@ public class DirectoryCreateIntegrationTest extends AbstractIntegrationTest {
         String type = Type.DIRECTORY.name();
         String path = folderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isCreated())
@@ -32,7 +32,7 @@ public class DirectoryCreateIntegrationTest extends AbstractIntegrationTest {
     public void createFolderFailsDueToNotAuthorizedUser() throws Exception {
         String path = "folder1/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .param("path", path))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").exists());
@@ -42,7 +42,7 @@ public class DirectoryCreateIntegrationTest extends AbstractIntegrationTest {
     public void createFolderFailsDueToNonExistedParenFolder() throws Exception {
         String path = "folder1/folder2/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isNotFound())
@@ -53,13 +53,13 @@ public class DirectoryCreateIntegrationTest extends AbstractIntegrationTest {
     public void createFolderFailsSinceFolderAlreadyExists() throws Exception {
         String path = "folder1/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").exists());
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isConflict())

@@ -36,7 +36,7 @@ public class ResourceMoveIntegrationTest extends AbstractIntegrationTest {
                 gorgonTxtSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgonJpg)
                         .file(gorgonTxt)
                         .cookie(sessionCookie)
@@ -57,7 +57,7 @@ public class ResourceMoveIntegrationTest extends AbstractIntegrationTest {
         String pathFrom = path + "description_gorgon.txt";
         String pathTo = "folder9/folder10/new_gorgon_description.txt";
 
-        mockMvc.perform(post("/resource/move")
+        mockMvc.perform(post("/api/resource/move")
                         .cookie(sessionCookie)
                         .param("from", pathFrom)
                         .param("to", pathTo))
@@ -72,7 +72,7 @@ public class ResourceMoveIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.type").exists())
                 .andExpect(jsonPath("$.type").value(Type.FILE.name()));
 
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isOk())
@@ -84,7 +84,7 @@ public class ResourceMoveIntegrationTest extends AbstractIntegrationTest {
 
         String newDirectoryPath = "folder9/folder10/";
 
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", newDirectoryPath))
                 .andExpect(status().isOk())
@@ -119,7 +119,7 @@ public class ResourceMoveIntegrationTest extends AbstractIntegrationTest {
                 gorgonTxtSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgonJpg)
                         .file(gorgonTxt)
                         .cookie(sessionCookie)
@@ -141,7 +141,7 @@ public class ResourceMoveIntegrationTest extends AbstractIntegrationTest {
         String type = Type.DIRECTORY.name();
         String requestPath = path + newFolderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", requestPath))
                 .andExpect(status().isCreated())
@@ -155,7 +155,7 @@ public class ResourceMoveIntegrationTest extends AbstractIntegrationTest {
         String pathFrom = path;
         String pathTo = "folder9/folder10/";
 
-        mockMvc.perform(post("/resource/move")
+        mockMvc.perform(post("/api/resource/move")
                         .cookie(sessionCookie)
                         .param("from", pathFrom)
                         .param("to", pathTo))
@@ -170,7 +170,7 @@ public class ResourceMoveIntegrationTest extends AbstractIntegrationTest {
 
         String newDirectoryPath = "folder9/folder10/";
 
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", newDirectoryPath))
                 .andExpect(status().isOk())
@@ -189,7 +189,7 @@ public class ResourceMoveIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[2].name").value("test_folder"))
                 .andExpect(jsonPath("$[2].type").value(Type.DIRECTORY.name()));
 
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", "folder9/"))
                 .andExpect(status().isOk())
@@ -198,7 +198,7 @@ public class ResourceMoveIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[0].name").value("folder10"))
                 .andExpect(jsonPath("$[0].type").value(Type.DIRECTORY.name()));
 
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isNotFound());

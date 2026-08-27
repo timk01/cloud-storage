@@ -64,7 +64,7 @@ public class ResourceMoveWebMvcTest {
                 userId
         )).thenReturn(resourceResponse);
 
-        mockMvc.perform(post("/resource/move")
+        mockMvc.perform(post("/api/resource/move")
                         .sessionAttr("userId", userId)
                         .param("from", pathFrom)
                         .param("to", pathTo))
@@ -99,7 +99,7 @@ public class ResourceMoveWebMvcTest {
                 userId
         )).thenReturn(resourceResponse);
 
-        mockMvc.perform(post("/resource/move")
+        mockMvc.perform(post("/api/resource/move")
                         .sessionAttr("userId", userId)
                         .param("from", pathFrom)
                         .param("to", pathTo))
@@ -115,7 +115,7 @@ public class ResourceMoveWebMvcTest {
     @ParameterizedTest
     @MethodSource("invalidPathForMovingResource")
     public void movingResourceFailedDueToInvalidPath(String pathFrom, String pathTo) throws Exception {
-        mockMvc.perform(post("/resource/move")
+        mockMvc.perform(post("/api/resource/move")
                         .sessionAttr("userId", 1L)
                         .param("from", pathFrom)
                         .param("to", pathTo))
@@ -141,7 +141,7 @@ public class ResourceMoveWebMvcTest {
 
     @Test
     public void movingResourceFailedDueToNoFromPath() throws Exception {
-        mockMvc.perform(post("/resource/move")
+        mockMvc.perform(post("/api/resource/move")
                         .sessionAttr("userId", 1L)
                         .param("to", "abc/"))
                 .andExpect(status().isBadRequest())
@@ -150,7 +150,7 @@ public class ResourceMoveWebMvcTest {
 
     @Test
     public void movingResourceFailedDueToNoToPath() throws Exception {
-        mockMvc.perform(post("/resource/move")
+        mockMvc.perform(post("/api/resource/move")
                         .sessionAttr("userId", 1L)
                         .param("from", "abc/"))
                 .andExpect(status().isBadRequest())
@@ -159,7 +159,7 @@ public class ResourceMoveWebMvcTest {
 
     @Test
     public void movingResourceFailedSinceUserIsUnauthorized() throws Exception {
-        mockMvc.perform(post("/resource/move")
+        mockMvc.perform(post("/api/resource/move")
                         .param("from", "abc/")
                         .param("to", "abc2/"))
                 .andExpect(status().isUnauthorized())

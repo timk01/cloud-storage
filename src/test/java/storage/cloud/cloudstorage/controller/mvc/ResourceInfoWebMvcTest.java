@@ -62,7 +62,7 @@ public class ResourceInfoWebMvcTest {
                 userId
         )).thenReturn(resourceResponse);
 
-        mockMvc.perform(get("/resource")
+        mockMvc.perform(get("/api/resource")
                         .sessionAttr("userId", userId)
                         .param("path", path))
                 .andExpect(status().isOk())
@@ -93,7 +93,7 @@ public class ResourceInfoWebMvcTest {
                 userId
         )).thenReturn(resourceResponse);
 
-        mockMvc.perform(get("/resource")
+        mockMvc.perform(get("/api/resource")
                         .sessionAttr("userId", userId)
                         .param("path", path))
                 .andExpect(status().isOk())
@@ -108,7 +108,7 @@ public class ResourceInfoWebMvcTest {
     @ParameterizedTest
     @MethodSource("invalidResourceGettingPath")
     public void gettingResourceFailedDueToInvalidPath(String path) throws Exception {
-        mockMvc.perform(get("/resource")
+        mockMvc.perform(get("/api/resource")
                         .sessionAttr("userId", 1L)
                         .param("path", path))
                 .andExpect(status().isBadRequest())
@@ -126,7 +126,7 @@ public class ResourceInfoWebMvcTest {
 
     @Test
     public void gettingResourceFailedDueToNoPath() throws Exception {
-        mockMvc.perform(get("/resource")
+        mockMvc.perform(get("/api/resource")
                         .sessionAttr("userId", 1L))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
@@ -134,7 +134,7 @@ public class ResourceInfoWebMvcTest {
 
     @Test
     public void gettingResourceFailedSinceUserIsUnauthorized() throws Exception {
-        mockMvc.perform(get("/resource")
+        mockMvc.perform(get("/api/resource")
                         .param("path", "folder1/"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").exists());

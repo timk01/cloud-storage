@@ -1,5 +1,5 @@
 @baseUrlApi = http://localhost:8080/api
-@baseUrl = http://localhost:8080
+@baseUrl = http://localhost:8080/api
 
 @regUser = timur_auto
 @regPass = superPassword123

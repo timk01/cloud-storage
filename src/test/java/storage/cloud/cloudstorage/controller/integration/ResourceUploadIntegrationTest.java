@@ -18,7 +18,7 @@ public class ResourceUploadIntegrationTest extends AbstractIntegrationTest {
         String folderName = "folder1";
         String path = folderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isCreated())
@@ -34,7 +34,7 @@ public class ResourceUploadIntegrationTest extends AbstractIntegrationTest {
                 gorgonSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgon)
                         .cookie(sessionCookie)
                         .param("path", path))
@@ -51,7 +51,7 @@ public class ResourceUploadIntegrationTest extends AbstractIntegrationTest {
         String folderName = "folder1";
         String path = folderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isCreated())
@@ -67,7 +67,7 @@ public class ResourceUploadIntegrationTest extends AbstractIntegrationTest {
                 gorgonSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgon)
                         .cookie(sessionCookie)
                         .param("path", path))
@@ -84,7 +84,7 @@ public class ResourceUploadIntegrationTest extends AbstractIntegrationTest {
         String folderName = "folder1";
         String path = folderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isCreated())
@@ -98,13 +98,13 @@ public class ResourceUploadIntegrationTest extends AbstractIntegrationTest {
                 gorgonSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgon)
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgon)
                         .cookie(sessionCookie)
                         .param("path", path))

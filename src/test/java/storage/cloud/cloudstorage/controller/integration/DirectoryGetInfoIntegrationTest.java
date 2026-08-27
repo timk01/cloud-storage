@@ -25,7 +25,7 @@ public class DirectoryGetInfoIntegrationTest extends AbstractIntegrationTest {
         String type = Type.DIRECTORY.name();
         String path = folderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isCreated())
@@ -41,7 +41,7 @@ public class DirectoryGetInfoIntegrationTest extends AbstractIntegrationTest {
                 gorgonSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgon)
                         .cookie(sessionCookie)
                         .param("path", path))
@@ -56,7 +56,7 @@ public class DirectoryGetInfoIntegrationTest extends AbstractIntegrationTest {
         folderName = "child1";
         path = parentFolder + folderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isCreated())
@@ -69,7 +69,7 @@ public class DirectoryGetInfoIntegrationTest extends AbstractIntegrationTest {
 
         folderName = "child2";
         path = parentFolder + folderName + "/";
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isCreated())
@@ -81,7 +81,7 @@ public class DirectoryGetInfoIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.type").value(type));
 
         path = "folder1/";
-        MvcResult result = mockMvc.perform(get("/directory")
+        MvcResult result = mockMvc.perform(get("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isOk())
@@ -120,7 +120,7 @@ public class DirectoryGetInfoIntegrationTest extends AbstractIntegrationTest {
     public void getFolderInfoFailsDueToNotAuthorizedUser() throws Exception {
         String path = "folder1/";
 
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .param("path", path))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").exists());
@@ -130,7 +130,7 @@ public class DirectoryGetInfoIntegrationTest extends AbstractIntegrationTest {
     public void getFolderInfoFailsSinceFolderDoesNotExists() throws Exception {
         String path = "folder1/";
 
-        mockMvc.perform(get("/directory")
+        mockMvc.perform(get("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isNotFound())

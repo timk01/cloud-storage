@@ -46,7 +46,7 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
                 gorgonTxtSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgonJpg)
                         .file(gorgonTxt)
                         .cookie(sessionCookie)
@@ -68,7 +68,7 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
         String type = Type.DIRECTORY.name();
         String requestPath = path + newFolderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", requestPath))
                 .andExpect(status().isCreated())
@@ -81,7 +81,7 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
 
         String pathToFile = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/"
                 + gorgonFilename;
-        MvcResult result = mockMvc.perform(get("/resource/download")
+        MvcResult result = mockMvc.perform(get("/api/resource/download")
                         .cookie(sessionCookie)
                         .param("path", pathToFile))
                 .andExpect(request().asyncStarted())
@@ -132,7 +132,7 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
                 gorgonTxtSize
         );
 
-        mockMvc.perform(multipart("/resource")
+        mockMvc.perform(multipart("/api/resource")
                         .file(gorgonJpg)
                         .file(gorgonTxt)
                         .cookie(sessionCookie)
@@ -154,7 +154,7 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
         String type = Type.DIRECTORY.name();
         String requestPath = path + newFolderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", requestPath))
                 .andExpect(status().isCreated())
@@ -166,7 +166,7 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.type").value(type));
 
         String pathToDirectory = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
-        MvcResult result = mockMvc.perform(get("/resource/download")
+        MvcResult result = mockMvc.perform(get("/api/resource/download")
                         .cookie(sessionCookie)
                         .param("path", pathToDirectory))
                 .andExpect(request().asyncStarted())
@@ -216,7 +216,7 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
         String type = Type.DIRECTORY.name();
         String path = folderName + "/";
 
-        mockMvc.perform(post("/directory")
+        mockMvc.perform(post("/api/directory")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(status().isCreated())
@@ -227,7 +227,7 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.type").exists())
                 .andExpect(jsonPath("$.type").value(type));
 
-        MvcResult result = mockMvc.perform(get("/resource/download")
+        MvcResult result = mockMvc.perform(get("/api/resource/download")
                         .cookie(sessionCookie)
                         .param("path", path))
                 .andExpect(request().asyncStarted())
