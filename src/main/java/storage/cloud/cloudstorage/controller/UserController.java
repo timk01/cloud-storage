@@ -28,10 +28,10 @@ public class UserController {
         UserResponse register = service.register(userRegisterDto);
         session.setAttribute("userId", register.id());
         session.setAttribute("username", register.username());
-        return new ResponseEntity<>(
-                new UsernameResponse(register.username()),
-                HttpStatus.CREATED
-        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new UsernameResponse(register.username()));
     }
 
     @PostMapping("/auth/sign-out")
@@ -43,7 +43,10 @@ public class UserController {
         }
 
         session.invalidate();
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 
     @PostMapping("/auth/sign-in")
@@ -51,10 +54,10 @@ public class UserController {
         UserResponse login = service.login(userLoginDto);
         session.setAttribute("userId", login.id());
         session.setAttribute("username", login.username());
-        return new ResponseEntity<>(
-                new UsernameResponse(login.username()),
-                HttpStatus.OK
-        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(new UsernameResponse(login.username()));
     }
 
     @GetMapping("/user/me")
@@ -66,6 +69,8 @@ public class UserController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        return new ResponseEntity<>(new UsernameResponse(username), HttpStatus.OK);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(new UsernameResponse(username));
     }
 }

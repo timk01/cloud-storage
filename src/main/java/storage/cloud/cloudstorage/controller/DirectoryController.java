@@ -40,12 +40,11 @@ public class DirectoryController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        ResourceResponse folder = createFolderService.createFolder(path, userId);
+        ResourceResponse resourceResponse = createFolderService.createFolder(path, userId);
 
-        return new ResponseEntity<>(
-                folder,
-                HttpStatus.CREATED
-        );
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(resourceResponse);
     }
 
     @GetMapping("/directory")
@@ -63,11 +62,10 @@ public class DirectoryController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        List<ResourceResponse> folderInfo = getFolderInfoService.getFolderInfo(path, userId);
+        List<ResourceResponse> resourceResponse = getFolderInfoService.getFolderInfo(path, userId);
 
-        return new ResponseEntity<>(
-                folderInfo,
-                HttpStatus.OK
-        );
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(resourceResponse);
     }
 }

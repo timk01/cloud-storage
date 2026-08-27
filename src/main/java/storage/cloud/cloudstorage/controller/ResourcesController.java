@@ -3,7 +3,6 @@ package storage.cloud.cloudstorage.controller;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,11 +16,8 @@ import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.resource.*;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @RequiredArgsConstructor
 @RestController
@@ -38,6 +34,7 @@ public class ResourcesController {
     private final ResourceMoveService moveService;
     private final ResourceDownloadService downloadService;
     private final ResourceDeleteService deleteService;
+    private final ResourceInfoService infoService;
 
     /**
      * Upload contract:
@@ -63,12 +60,11 @@ public class ResourcesController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        List<ResourceResponse> folderInfo = uploadService.upload(path, files, userId);
+        List<ResourceResponse> resourcesResponse = uploadService.upload(path, files, userId);
 
-        return new ResponseEntity<>(
-                folderInfo,
-                HttpStatus.CREATED
-        );
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(resourcesResponse);
     }
 
     @GetMapping(value = "/resource/search")
@@ -82,12 +78,11 @@ public class ResourcesController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        List<ResourceResponse> folderInfo = searchService.search(query, userId);
+        List<ResourceResponse> resourcesResponse = searchService.search(query, userId);
 
-        return new ResponseEntity<>(
-                folderInfo,
-                HttpStatus.OK
-        );
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(resourcesResponse);
     }
 
     @PostMapping(value = "/resource/move")
@@ -112,12 +107,11 @@ public class ResourcesController {
             throw new UnauthorizedActionException("User is not authorized");
         }
 
-        ResourceResponse folderInfo = moveService.move(fromPath, toPath, userId);
+        ResourceResponse resourceResponse = moveService.move(fromPath, toPath, userId);
 
-        return new ResponseEntity<>(
-                folderInfo,
-                HttpStatus.OK
-        );
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(resourceResponse);
     }
 
     @GetMapping(value = "/resource/download")
@@ -168,6 +162,30 @@ public class ResourcesController {
 
         deleteService.delete(path, userId);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @GetMapping(value = "/resource")
+    public ResponseEntity<ResourceResponse> info(
+            @SessionAttribute(name = "userId", required = false) Long userId,
+            @RequestParam("path")
+            @NotBlank
+            @Pattern(
+                    regexp = PATH_COMMON_VALIDATOR_REGEXP,
+                    message = INVALID_SYMBOLS_IN_PATH
+            )
+            String path
+    ) {
+        if (userId == null) {
+            throw new UnauthorizedActionException("User is not authorized");
+        }
+
+        ResourceResponse resourceResponse = infoService.resourceInfo(path, userId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(resourceResponse);
     }
 }
