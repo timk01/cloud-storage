@@ -48,6 +48,9 @@ public class ResourceUploadingWebMvcTest {
     @MockBean
     ResourceDeleteService deleteService;
 
+    @MockBean
+    ResourceInfoService infoService;
+
     @Test
     public void uploadingResourceThinOkWithSession() throws Exception {
         String path = "folder1/";

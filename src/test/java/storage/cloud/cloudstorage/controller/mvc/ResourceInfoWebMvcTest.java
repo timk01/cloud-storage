@@ -16,12 +16,12 @@ import storage.cloud.cloudstorage.service.resource.*;
 import java.util.stream.Stream;
 
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ResourcesController.class)
-public class ResourceMoveWebMvcTest {
+public class ResourceInfoWebMvcTest {
 
     @Autowired
     MockMvc mockMvc;
@@ -45,9 +45,8 @@ public class ResourceMoveWebMvcTest {
     ResourceInfoService infoService;
 
     @Test
-    public void movingFileOkWithSession() throws Exception {
-        String pathFrom = "folder1/folder2/folder3/file1.txt";
-        String pathTo = "folder9/folder10/test_file1.txt";
+    public void gettingResourceInfoOkWithSessionForFile() throws Exception {
+        String path = "folder9/folder10/test_file1.txt";
         Long userId = 1L;
 
         ResourceResponse resourceResponse =
@@ -58,16 +57,14 @@ public class ResourceMoveWebMvcTest {
                         .type(Type.FILE.name())
                         .build();
 
-        when(moveService.move(
-                pathFrom,
-                pathTo,
+        when(infoService.resourceInfo(
+                path,
                 userId
         )).thenReturn(resourceResponse);
 
-        mockMvc.perform(post("/resource/move")
+        mockMvc.perform(get("/resource")
                         .sessionAttr("userId", userId)
-                        .param("from", pathFrom)
-                        .param("to", pathTo))
+                        .param("path", path))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").exists())
                 .andExpect(jsonPath("$.path").value("folder9/folder10/"))
@@ -80,11 +77,9 @@ public class ResourceMoveWebMvcTest {
     }
 
     @Test
-    public void movingFolderOkWithSession() throws Exception {
-        String pathFrom = "folder1/folder2/folder3/";
-        String pathTo = "folder9/folder10/folder3/";
+    public void gettingResourceInfoOkWithSessionForDirectory() throws Exception {
+        String path = "folder9/folder10/folder3/";
         Long userId = 1L;
-
 
         ResourceResponse resourceResponse =
                 ResourceResponse.builder()
@@ -93,16 +88,14 @@ public class ResourceMoveWebMvcTest {
                         .type(Type.DIRECTORY.name())
                         .build();
 
-        when(moveService.move(
-                pathFrom,
-                pathTo,
+        when(infoService.resourceInfo(
+                path,
                 userId
         )).thenReturn(resourceResponse);
 
-        mockMvc.perform(post("/resource/move")
+        mockMvc.perform(get("/resource")
                         .sessionAttr("userId", userId)
-                        .param("from", pathFrom)
-                        .param("to", pathTo))
+                        .param("path", path))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").exists())
                 .andExpect(jsonPath("$.path").value("folder9/folder10/"))
@@ -113,55 +106,36 @@ public class ResourceMoveWebMvcTest {
     }
 
     @ParameterizedTest
-    @MethodSource("invalidPathForMovingResource")
-    public void movingResourceFailedDueToInvalidPath(String pathFrom, String pathTo) throws Exception {
-        mockMvc.perform(post("/resource/move")
+    @MethodSource("invalidResourceGettingPath")
+    public void gettingResourceFailedDueToInvalidPath(String path) throws Exception {
+        mockMvc.perform(get("/resource")
                         .sessionAttr("userId", 1L)
-                        .param("from", pathFrom)
-                        .param("to", pathTo))
+                        .param("path", path))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
     }
 
-    private static Stream<Arguments> invalidPathForMovingResource() {
+    private static Stream<Arguments> invalidResourceGettingPath() {
         return Stream.of(
-                Arguments.of("folder1/", ""),
-                Arguments.of("", "folder1/"),
-
-                Arguments.of("folder1/", "  "),
-                Arguments.of("  ", "folder1/"),
-
-                Arguments.of("folder1/", "№№№/"),
-                Arguments.of("№№№/", "folder1/"),
-
-                Arguments.of("folder1/", "abc@/"),
-                Arguments.of("abc@/", "folder1/")
+                Arguments.of(""),
+                Arguments.of("  "),
+                Arguments.of("№№№/"),
+                Arguments.of("abc@/")
         );
     }
 
     @Test
-    public void movingResourceFailedDueToNoFromPath() throws Exception {
-        mockMvc.perform(post("/resource/move")
-                        .sessionAttr("userId", 1L)
-                        .param("to", "abc/"))
+    public void gettingResourceFailedDueToNoPath() throws Exception {
+        mockMvc.perform(get("/resource")
+                        .sessionAttr("userId", 1L))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
-    public void movingResourceFailedDueToNoToPath() throws Exception {
-        mockMvc.perform(post("/resource/move")
-                        .sessionAttr("userId", 1L)
-                        .param("from", "abc/"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
-    }
-
-    @Test
-    public void movingResourceFailedSinceUserIsUnauthorized() throws Exception {
-        mockMvc.perform(post("/resource/move")
-                        .param("from", "abc/")
-                        .param("to", "abc2/"))
+    public void gettingResourceFailedSinceUserIsUnauthorized() throws Exception {
+        mockMvc.perform(get("/resource")
+                        .param("path", "folder1/"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").exists());
     }

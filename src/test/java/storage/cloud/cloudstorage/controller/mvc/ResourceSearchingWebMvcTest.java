@@ -39,6 +39,9 @@ class ResourceSearchingWebMvcTest {
     @MockBean
     ResourceDeleteService deleteService;
 
+    @MockBean
+    ResourceInfoService infoService;
+
     @Test
     public void searchingResourceByMaskOkWithSession() throws Exception {
         String path = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";

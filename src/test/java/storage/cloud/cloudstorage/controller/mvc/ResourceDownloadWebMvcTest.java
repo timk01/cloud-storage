@@ -45,6 +45,9 @@ public class ResourceDownloadWebMvcTest {
     @MockBean
     ResourceDeleteService deleteService;
 
+    @MockBean
+    ResourceInfoService infoService;
+
     @Test
     public void downloadFileOkWithSession() throws Exception {
         String path = "folder1/folder2/folder3/file2.txt";

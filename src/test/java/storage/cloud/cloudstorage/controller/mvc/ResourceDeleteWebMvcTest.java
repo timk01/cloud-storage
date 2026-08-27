@@ -39,6 +39,9 @@ public class ResourceDeleteWebMvcTest {
     @MockBean
     ResourceDeleteService deleteService;
 
+    @MockBean
+    ResourceInfoService infoService;
+
     @Test
     public void deleteFileNoContentWithSession() throws Exception {
         String path = "folder1/folder2/folder3/file2.txt";
