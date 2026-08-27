@@ -2,6 +2,7 @@ package storage.cloud.cloudstorage.service.directory;
 
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class DirectoryGetInfoService {
@@ -53,6 +55,14 @@ public class DirectoryGetInfoService {
                 );
             }
         }
+
+        log.info(
+                "Folder info is received for user: userId={}, path={};" +
+                        " with resourcesCount={}",
+                userId,
+                path,
+                resources.size()
+        );
 
         return resources;
     }

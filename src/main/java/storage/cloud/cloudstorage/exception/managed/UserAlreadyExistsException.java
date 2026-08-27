@@ -1,4 +1,4 @@
-package storage.cloud.cloudstorage.exception;
+package storage.cloud.cloudstorage.exception.managed;
 
 public class UserAlreadyExistsException extends BaseAppException {
     public UserAlreadyExistsException(String message) {

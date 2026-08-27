@@ -1,6 +1,7 @@
 package storage.cloud.cloudstorage.exception.handler;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -10,12 +11,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
-import storage.cloud.cloudstorage.exception.*;
+import storage.cloud.cloudstorage.exception.managed.*;
 import storage.cloud.cloudstorage.response.ErrorResponse;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -35,14 +37,12 @@ public class GlobalExceptionHandler {
 
         KNOWN_EXCEPTIONS_STATUS_MAP.put(FolderNotFoundException.class, HttpStatus.NOT_FOUND);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(SourceResourceNotFoundException.class, HttpStatus.NOT_FOUND);
-        //toDo а не замена ли соурса первых 2 (тут пока нет файла... но похоже будет) ?
 
         KNOWN_EXCEPTIONS_STATUS_MAP.put(UserAlreadyExistsException.class, HttpStatus.CONFLICT);
 
         KNOWN_EXCEPTIONS_STATUS_MAP.put(FolderAlreadyExistsException.class, HttpStatus.CONFLICT);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(FileAlreadyExistsException.class, HttpStatus.CONFLICT);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(DestinationResourceAlreadyExistsException.class, HttpStatus.CONFLICT);
-        //toDo а не замена ли 3-его первых 2 ?
 
         KNOWN_EXCEPTIONS_STATUS_MAP.put(SourceAndDestinationAreEqualException.class, HttpStatus.CONFLICT);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(ResourceMoveConflictException.class, HttpStatus.CONFLICT);
@@ -56,6 +56,12 @@ public class GlobalExceptionHandler {
         );
 
         ErrorResponse errorResponse = new ErrorResponse(exception.getMessage());
+
+        log.warn(
+                "Handled application exception happened during program work with status: {}; Exception stack:",
+                status,
+                exception
+        );
 
         return new ResponseEntity<>(
                 errorResponse,
@@ -89,6 +95,12 @@ public class GlobalExceptionHandler {
     ) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
 
+        log.warn(
+                "Invalid request happened during program work with status: {}; Exception stack:",
+                status,
+                exception
+        );
+
         return new ResponseEntity<>(
                 new ErrorResponse("Validation failed"),
                 status
@@ -98,6 +110,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnknownException(Exception exception) {
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+
+        log.error(
+                "Unknown exception happened during program work with status: {}; Exception stack:",
+                status,
+                exception
+        );
 
         return new ResponseEntity<>(
                 new ErrorResponse("Unknown exception"),

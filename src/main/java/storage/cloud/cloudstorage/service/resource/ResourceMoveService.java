@@ -2,11 +2,12 @@ package storage.cloud.cloudstorage.service.resource;
 
 import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import storage.cloud.cloudstorage.exception.DestinationResourceAlreadyExistsException;
-import storage.cloud.cloudstorage.exception.ResourceMoveConflictException;
-import storage.cloud.cloudstorage.exception.ResourceTypeMismatchException;
-import storage.cloud.cloudstorage.exception.SourceAndDestinationAreEqualException;
+import storage.cloud.cloudstorage.exception.managed.DestinationResourceAlreadyExistsException;
+import storage.cloud.cloudstorage.exception.managed.ResourceMoveConflictException;
+import storage.cloud.cloudstorage.exception.managed.ResourceTypeMismatchException;
+import storage.cloud.cloudstorage.exception.managed.SourceAndDestinationAreEqualException;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
@@ -14,6 +15,7 @@ import storage.cloud.cloudstorage.service.Type;
 
 import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ResourceMoveService {
@@ -42,7 +44,17 @@ public class ResourceMoveService {
 
         validateDirectoryPaths(fromPath, toPath, fromType);
 
-        return moveResource(toPath, fromType, fullPathFrom, fullPathTo);
+        ResourceResponse response = moveResource(toPath, fromType, fullPathFrom, fullPathTo);
+
+        log.info(
+                "Resource is moved for user: userId={}, fromPath={}, toPath={}; with type={}",
+                userId,
+                fromPath,
+                toPath,
+                fromType
+        );
+
+        return response;
     }
 
     private void validateSourceAndDestinationAreDistinct(String fullPathFrom, String fullPathTo) {

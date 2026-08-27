@@ -2,6 +2,7 @@ package storage.cloud.cloudstorage.service.resource;
 
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.repository.MinioRepository;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ResourceSearchService {
@@ -63,6 +65,13 @@ public class ResourceSearchService {
                 }
             }
         }
+
+        log.info(
+                "Resource search is completed for user: userId={}, query={}; with resourcesCount={}",
+                userId,
+                query,
+                resources.size()
+        );
 
         return resources;
     }

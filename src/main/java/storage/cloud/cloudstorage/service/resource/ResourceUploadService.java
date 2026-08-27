@@ -1,11 +1,12 @@
 package storage.cloud.cloudstorage.service.resource;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import storage.cloud.cloudstorage.exception.InvalidFileNameException;
+import storage.cloud.cloudstorage.exception.managed.InvalidFileNameException;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
@@ -17,6 +18,7 @@ import java.util.List;
 import static storage.cloud.cloudstorage.service.ResourceServiceUtils.buildPreparedPath;
 import static storage.cloud.cloudstorage.service.ResourceServiceUtils.buildPreparedRoot;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ResourceUploadService {
@@ -54,6 +56,14 @@ public class ResourceUploadService {
                             .build()
             );
         }
+
+        log.info(
+                "Resource upload is completed for user: userId={}, path={}; with filesQuantity={}",
+                userId,
+                path,
+                preparedFiles.size()
+        );
+
 
         return resources;
     }

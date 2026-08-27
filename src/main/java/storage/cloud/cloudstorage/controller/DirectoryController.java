@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import storage.cloud.cloudstorage.exception.UnauthorizedActionException;
+import storage.cloud.cloudstorage.exception.managed.UnauthorizedActionException;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.directory.DirectoryCreateService;
 import storage.cloud.cloudstorage.service.directory.DirectoryGetInfoService;

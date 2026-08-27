@@ -3,17 +3,19 @@ package storage.cloud.cloudstorage.controller;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import storage.cloud.cloudstorage.exception.UnauthorizedActionException;
-import storage.cloud.cloudstorage.exception.UserNotAuthenticatedException;
+import storage.cloud.cloudstorage.exception.managed.UnauthorizedActionException;
+import storage.cloud.cloudstorage.exception.managed.UserNotAuthenticatedException;
 import storage.cloud.cloudstorage.request.UserLoginRequest;
 import storage.cloud.cloudstorage.request.UserRegisterRequest;
 import storage.cloud.cloudstorage.response.UserResponse;
 import storage.cloud.cloudstorage.response.UsernameResponse;
 import storage.cloud.cloudstorage.service.UserService;
 
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api")
@@ -23,7 +25,7 @@ public class UserController {
 
     @PostMapping("/auth/sign-up")
     public ResponseEntity<UsernameResponse> registerUser(@Valid @RequestBody UserRegisterRequest userRegisterDto,
-            HttpSession session
+                                                         HttpSession session
     ) {
         UserResponse register = service.register(userRegisterDto);
         session.setAttribute("userId", register.id());
@@ -43,6 +45,11 @@ public class UserController {
         }
 
         session.invalidate();
+
+        log.info(
+                "User is logged out: userId={}",
+                userId
+        );
 
         return ResponseEntity
                 .noContent()
@@ -68,6 +75,12 @@ public class UserController {
         if (userId == null || username == null) {
             throw new UnauthorizedActionException("User is not authorized");
         }
+
+        log.debug(
+                "Got current user: userId={}, username={}",
+                userId,
+                username
+        );
 
         return ResponseEntity
                 .status(HttpStatus.OK)

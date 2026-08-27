@@ -9,7 +9,12 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
-import storage.cloud.cloudstorage.exception.*;
+import storage.cloud.cloudstorage.exception.managed.FileAlreadyExistsException;
+import storage.cloud.cloudstorage.exception.managed.FolderAlreadyExistsException;
+import storage.cloud.cloudstorage.exception.managed.FolderNotFoundException;
+import storage.cloud.cloudstorage.exception.managed.ParentFolderHasNotFoundException;
+import storage.cloud.cloudstorage.exception.technical.ResourceDeletionException;
+import storage.cloud.cloudstorage.exception.technical.StorageException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -460,7 +465,7 @@ public class MinioRepository {
                 List<DeleteError> errorListAfterRepeat = tryToRemove(resources);
 
                 if (!errorListAfterRepeat.isEmpty()) {
-                    throw new StorageException(
+                    throw new ResourceDeletionException(
                             String.format(
                                     "Cannot delete resources after retry, the resource is: %s, the error is: %s",
                                     errorListAfterRepeat.stream().map(ErrorResponse::objectName).toList(),

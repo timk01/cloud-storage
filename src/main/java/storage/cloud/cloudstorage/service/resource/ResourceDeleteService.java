@@ -2,6 +2,7 @@ package storage.cloud.cloudstorage.service.resource;
 
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ResourceDeleteService {
@@ -33,6 +35,13 @@ public class ResourceDeleteService {
         String type = path.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
 
         deleteResources(type, fullPathTo);
+
+        log.info(
+                "Resource is deleted for user: userId={}, path={}; with type={}",
+                userId,
+                path,
+                type
+        );
     }
 
     private void deleteResources(String type, String fullPathTo) {

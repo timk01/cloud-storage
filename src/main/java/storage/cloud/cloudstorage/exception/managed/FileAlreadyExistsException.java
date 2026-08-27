@@ -1,4 +1,4 @@
-package storage.cloud.cloudstorage.exception;
+package storage.cloud.cloudstorage.exception.managed;
 
 public class FileAlreadyExistsException extends BaseAppException {
     public FileAlreadyExistsException(String message) {

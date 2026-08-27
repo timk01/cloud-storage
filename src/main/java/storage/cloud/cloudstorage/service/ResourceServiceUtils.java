@@ -1,6 +1,6 @@
 package storage.cloud.cloudstorage.service;
 
-import storage.cloud.cloudstorage.exception.SourceResourceNotFoundException;
+import storage.cloud.cloudstorage.exception.managed.SourceResourceNotFoundException;
 
 public final class ResourceServiceUtils {
 

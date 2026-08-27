@@ -2,6 +2,7 @@ package storage.cloud.cloudstorage.service.resource;
 
 import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
@@ -10,6 +11,7 @@ import storage.cloud.cloudstorage.service.Type;
 
 import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ResourceInfoService {
@@ -34,6 +36,14 @@ public class ResourceInfoService {
 
             String name = extractName(path);
             String parentPath = extractParentPathForFile(path);
+
+            log.info(
+                    "Resource info is received for user: userId={}, path={}; with type={}",
+                    userId,
+                    path,
+                    type
+            );
+
             return ResourceResponse.builder()
                     .path(parentPath)
                     .name(name)
@@ -42,6 +52,13 @@ public class ResourceInfoService {
                     .build();
         } else {
             FolderPathParts result = getResult(path, fullPath);
+
+            log.info(
+                    "Resource info is received for user: userId={}, path={}; with type={}",
+                    userId,
+                    path,
+                    type
+            );
 
             return ResourceResponse.builder()
                     .path(result.resourceParentPath())

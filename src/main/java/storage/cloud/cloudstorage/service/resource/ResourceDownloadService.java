@@ -2,8 +2,9 @@ package storage.cloud.cloudstorage.service.resource;
 
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import storage.cloud.cloudstorage.exception.StorageException;
+import storage.cloud.cloudstorage.exception.technical.ResourceDownloadException;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.service.Type;
@@ -19,6 +20,7 @@ import java.util.zip.ZipOutputStream;
 
 import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ResourceDownloadService {
@@ -49,8 +51,12 @@ public class ResourceDownloadService {
 
             zos.finish();
         } catch (IOException ioException) {
-            throw new StorageException("Failed to download resource", ioException);
+            throw new ResourceDownloadException("Failed to download resource", ioException);
         }
+
+        log.info(
+                "Download stream is completed"
+        );
     }
 
     public List<PreparedFileRecord> prepareResource(String path, Long userId) {
@@ -63,6 +69,13 @@ public class ResourceDownloadService {
 
         validateResourceExists(
                 minioRepository.doesPathExist(fullPathTo), fullPathTo
+        );
+
+        log.info(
+                "Resource is validated for download: userId={}, path={}; with type={}",
+                userId,
+                path,
+                type
         );
 
         if ("FILE".equals(type)) {

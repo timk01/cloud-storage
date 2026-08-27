@@ -4,14 +4,17 @@ import io.minio.*;
 import io.minio.errors.*;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import storage.cloud.cloudstorage.exception.StorageException;
+import storage.cloud.cloudstorage.exception.technical.StorageException;
+import storage.cloud.cloudstorage.service.Type;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class StorageInitializer {
@@ -44,6 +47,11 @@ public class StorageInitializer {
                             .bucket(minioBucketName)
                             .build()
             );
+
+            log.info(
+                    "MinIO bucket is created: bucketName={}",
+                    minioBucketName
+            );
         }
     }
 
@@ -69,6 +77,11 @@ public class StorageInitializer {
                             .object(root)
                             .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
                             .build()
+            );
+
+            log.info(
+                    "MinIO bucket is created: bucketName={}",
+                    minioBucketName
             );
         }
     }

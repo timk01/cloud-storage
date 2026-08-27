@@ -1,16 +1,18 @@
 package storage.cloud.cloudstorage.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import storage.cloud.cloudstorage.exception.InvalidLoginDataException;
-import storage.cloud.cloudstorage.exception.UserAlreadyExistsException;
+import storage.cloud.cloudstorage.exception.managed.InvalidLoginDataException;
+import storage.cloud.cloudstorage.exception.managed.UserAlreadyExistsException;
 import storage.cloud.cloudstorage.request.UserLoginRequest;
 import storage.cloud.cloudstorage.request.UserRegisterRequest;
 import storage.cloud.cloudstorage.entity.User;
 import storage.cloud.cloudstorage.repository.UserRepository;
 import storage.cloud.cloudstorage.response.UserResponse;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -25,6 +27,13 @@ public class UserService {
 
         String encodedPass = encoder.encode(userRegisterDto.password());
         User user = repository.save(new User(userRegisterDto.username(), encodedPass));
+
+        log.info(
+                "User is registered: userId={}, name={}",
+                user.getId(),
+                user.getUsername()
+        );
+
         return new UserResponse(user.getId(), user.getUsername());
     }
 
@@ -35,6 +44,12 @@ public class UserService {
         if (!encoder.matches(userLoginDto.password(), user.getPassword())) {
             throw new InvalidLoginDataException("Invalid credentials");
         }
+
+        log.info(
+                "User is logged in: userId={}, name={}",
+                user.getId(),
+                user.getUsername()
+        );
 
         return new UserResponse(user.getId(), user.getUsername());
     }
