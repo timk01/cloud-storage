@@ -96,16 +96,16 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
                 )
                 .andExpect(header().string(
                                 HttpHeaders.CONTENT_DISPOSITION,
-                                "attachment; filename=\"archive.zip\""
+                                "attachment; filename=\"gorgon.jpg\""
                         )
                 )
                 .andReturn();
 
         byte[] contentAsByteArray = realResult.getResponse().getContentAsByteArray();
 
-        assertThat(contentAsByteArray).isNotEmpty();
-        assertThat(contentAsByteArray[0]).isEqualTo((byte) 'P');
-        assertThat(contentAsByteArray[1]).isEqualTo((byte) 'K');
+        assertThat(contentAsByteArray)
+                .hasSize(1500)
+                .containsExactly(gorgonSize);
     }
 
     @Test
@@ -249,8 +249,13 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
 
         byte[] contentAsByteArray = realResult.getResponse().getContentAsByteArray();
 
-
         try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(contentAsByteArray))) {
+            ZipEntry entry = zis.getNextEntry();
+
+            assertThat(entry).isNotNull();
+            assertThat(entry.getName()).isEqualTo("folder1/");
+            assertThat(entry.isDirectory()).isTrue();
+
             assertThat(zis.getNextEntry()).isNull();
         }
 

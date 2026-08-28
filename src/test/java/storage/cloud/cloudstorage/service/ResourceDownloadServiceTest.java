@@ -58,7 +58,8 @@ public class ResourceDownloadServiceTest {
                 new ResourceDownloadService.PreparedFileRecord(
                         "file2.txt",
                         "user-1-files/gorgon_root/gorgon_archive/" +
-                                "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file2.txt"
+                                "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file2.txt",
+                        "FILE"
                 )
         );
 
@@ -117,19 +118,23 @@ public class ResourceDownloadServiceTest {
                 = List.of(
                 new ResourceDownloadService.PreparedFileRecord(
                         "gorgon.jpg",
-                        "user-1-files/folder1/folder2/folder3/gorgon.jpg"
+                        "user-1-files/folder1/folder2/folder3/gorgon.jpg",
+                        "DIRECTORY"
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "newFolder/",
-                        "user-1-files/folder1/folder2/folder3/newFolder/"
+                        "user-1-files/folder1/folder2/folder3/newFolder/",
+                        "DIRECTORY"
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "newFolder/file2.txt",
-                        "user-1-files/folder1/folder2/folder3/newFolder/file2.txt"
+                        "user-1-files/folder1/folder2/folder3/newFolder/file2.txt",
+                        "DIRECTORY"
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "folder4/folder5/b.txt",
-                        "user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt"
+                        "user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt",
+                        "DIRECTORY"
                 )
         );
 
@@ -212,7 +217,8 @@ public class ResourceDownloadServiceTest {
                 new ResourceDownloadService.PreparedFileRecord(
                         "file2.txt",
                         "user-1-files/gorgon_root/gorgon_archive/" +
-                                "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file2.txt"
+                                "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file2.txt",
+                        "FILE"
                 )
         );
 
@@ -224,7 +230,7 @@ public class ResourceDownloadServiceTest {
         when(repository.readData(preparedFileRecords.get(0).fullPathTillResource())).thenReturn(inputStream);
 
 
-        service.download(preparedFileRecords, outputStream);
+        service.download(preparedFileRecords, outputStream, fake_data);
 
 
         verify(repository, times(1)).readData(preparedFileRecords.get(0).fullPathTillResource());
@@ -240,19 +246,23 @@ public class ResourceDownloadServiceTest {
                 = List.of(
                 new ResourceDownloadService.PreparedFileRecord(
                         "gorgon.jpg",
-                        "user-1-files/folder1/folder2/folder3/gorgon.jpg"
+                        "user-1-files/folder1/folder2/folder3/gorgon.jpg",
+                        "DIRECTORY"
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "newFolder/",
-                        "user-1-files/folder1/folder2/folder3/newFolder/"
+                        "user-1-files/folder1/folder2/folder3/newFolder/",
+                        "DIRECTORY"
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "newFolder/file2.txt",
-                        "user-1-files/folder1/folder2/folder3/newFolder/file2.txt"
+                        "user-1-files/folder1/folder2/folder3/newFolder/file2.txt",
+                        "DIRECTORY"
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "folder4/folder5/b.txt",
-                        "user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt"
+                        "user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt",
+                        "DIRECTORY"
                 )
         );
 
@@ -272,7 +282,7 @@ public class ResourceDownloadServiceTest {
             when(repository.readData(preparedRecord.fullPathTillResource())).thenReturn(inputStream);
         }
 
-        service.download(preparedRecords, outputStream);
+        service.download(preparedRecords, outputStream, "folder1/folder2/folder3/");
 
         for (ResourceDownloadService.PreparedFileRecord preparedRecord : preparedRecords) {
             verify(repository, times(1)).readData(preparedRecord.fullPathTillResource());

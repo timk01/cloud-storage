@@ -29,27 +29,17 @@ public class ResourceDownloadService {
     private final String minioBucketName;
     private final StorageInitializer initializer;
 
-    public void download(List<PreparedFileRecord> preparedFileRecords, OutputStream outputStream) {
-        ZipOutputStream zos = new ZipOutputStream(outputStream);
-
+    public void download(List<PreparedFileRecord> preparedFileRecords, OutputStream outputStream, String path) {
         try {
-            for (PreparedFileRecord fileRecord : preparedFileRecords) {
-                try (InputStream inputStream = minioRepository.readData(fileRecord.fullPathTillResource())) {
+            if (preparedFileRecords.isEmpty()) {
+                String folder = extractName(removeTrailingSlash(path)) + "/";
 
-                    ZipEntry entry = new ZipEntry(fileRecord.pathForArchive());
-                    zos.putNextEntry(entry);
-
-                    byte[] buffer = new byte[1024];
-                    int length;
-                    while ((length = inputStream.read(buffer)) != -1) {
-                        zos.write(buffer, 0, length);
-                    }
-
-                    zos.closeEntry();
-                }
+                processEmptyFolder(folder, outputStream);
+            } else if ("FILE".equals(preparedFileRecords.getFirst().type())) {
+                processFile(preparedFileRecords, outputStream);
+            } else {
+                processFolder(preparedFileRecords, outputStream);
             }
-
-            zos.finish();
         } catch (IOException ioException) {
             throw new ResourceDownloadException("Failed to download resource", ioException);
         }
@@ -57,6 +47,50 @@ public class ResourceDownloadService {
         log.info(
                 "Download stream is completed"
         );
+    }
+
+    private void processEmptyFolder(String archiveName, OutputStream outputStream)
+            throws IOException {
+        ZipOutputStream zos = new ZipOutputStream(outputStream);
+        zos.putNextEntry(new ZipEntry(archiveName));
+
+        zos.closeEntry();
+
+        zos.finish();
+    }
+
+    private void processFile(List<PreparedFileRecord> preparedFileRecords, OutputStream outputStream)
+            throws IOException {
+        PreparedFileRecord file = preparedFileRecords.getFirst();
+        try (InputStream inputStream = minioRepository.readData(file.fullPathTillResource())) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, length);
+            }
+        }
+    }
+
+    private void processFolder(List<PreparedFileRecord> preparedFileRecords, OutputStream outputStream)
+            throws IOException {
+        ZipOutputStream zos = new ZipOutputStream(outputStream);
+        for (PreparedFileRecord fileRecord : preparedFileRecords) {
+            try (InputStream inputStream = minioRepository.readData(fileRecord.fullPathTillResource())) {
+
+                ZipEntry entry = new ZipEntry(fileRecord.pathForArchive());
+                zos.putNextEntry(entry);
+
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) != -1) {
+                    zos.write(buffer, 0, length);
+                }
+
+                zos.closeEntry();
+            }
+        }
+
+        zos.finish();
     }
 
     public List<PreparedFileRecord> prepareResource(String path, Long userId) {
@@ -82,7 +116,9 @@ public class ResourceDownloadService {
             return Collections.singletonList(
                     new PreparedFileRecord(
                             extractName(path),
-                            fullPathTo)
+                            fullPathTo,
+                            type
+                    )
             );
         }
 
@@ -94,7 +130,7 @@ public class ResourceDownloadService {
             String relativePath = fullObjectName.substring(fullPathTo.length());
 
             if (!relativePath.isEmpty()) {
-                PreparedFileRecord record = new PreparedFileRecord(relativePath, fullObjectName);
+                PreparedFileRecord record = new PreparedFileRecord(relativePath, fullObjectName, type);
                 paths.add(record);
             }
         }
@@ -105,7 +141,9 @@ public class ResourceDownloadService {
     public record PreparedFileRecord(
             String pathForArchive,
 
-            String fullPathTillResource
+            String fullPathTillResource,
+
+            String type
     ) {
     }
 }

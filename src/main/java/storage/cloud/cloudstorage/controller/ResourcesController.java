@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 
+import static storage.cloud.cloudstorage.service.ResourceServiceUtils.extractName;
+
 @RequiredArgsConstructor
 @RestController
 @Validated
@@ -136,13 +138,17 @@ public class ResourcesController {
         StreamingResponseBody responseBody = new StreamingResponseBody() {
             @Override
             public void writeTo(OutputStream outputStream) throws IOException {
-                downloadService.download(preparedResources, outputStream);
+                downloadService.download(preparedResources, outputStream, path);
             }
         };
 
+        String filename = path.endsWith("/")
+                ? "archive.zip"
+                : extractName(path);
+
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"archive.zip\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(responseBody);
     }
 

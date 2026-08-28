@@ -57,7 +57,8 @@ public class ResourceDownloadWebMvcTest {
                 = List.of(
                 new ResourceDownloadService.PreparedFileRecord(
                         "file2.txt",
-                        "user-1-files/folder1/folder2/folder3/file2.txt"
+                        "user-1-files/folder1/folder2/folder3/file2.txt",
+                        "FILE"
                 )
         );
 
@@ -81,7 +82,7 @@ public class ResourceDownloadWebMvcTest {
                 )
                 .andExpect(header().string(
                                 HttpHeaders.CONTENT_DISPOSITION,
-                                "attachment; filename=\"archive.zip\""
+                                "attachment; filename=\"file2.txt\""
                         )
                 );
 
@@ -89,7 +90,8 @@ public class ResourceDownloadWebMvcTest {
         verify(downloadService, times(1))
                 .download(
                         eq(preparedFileRecords),
-                        any(OutputStream.class)
+                        any(OutputStream.class),
+                        eq(path)
                 );
     }
 
@@ -102,19 +104,23 @@ public class ResourceDownloadWebMvcTest {
                 = List.of(
                 new ResourceDownloadService.PreparedFileRecord(
                         "gorgon.jpg",
-                        "user-1-files/folder1/folder2/folder3/gorgon.jpg"
+                        "user-1-files/folder1/folder2/folder3/gorgon.jpg",
+                        "FILE"
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "newFolder/",
-                        "user-1-files/folder1/folder2/folder3/newFolder/"
+                        "user-1-files/folder1/folder2/folder3/newFolder/",
+                        "DIRECTORY"
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "newFolder/file2.txt",
-                        "user-1-files/folder1/folder2/folder3/newFolder/file2.txt"
+                        "user-1-files/folder1/folder2/folder3/newFolder/file2.txt",
+                        "FILE"
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "folder4/folder5/b.txt",
-                        "user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt"
+                        "user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt",
+                        "FILE"
                 )
         );
 
@@ -147,7 +153,8 @@ public class ResourceDownloadWebMvcTest {
         verify(downloadService, times(1))
                 .download(
                         eq(preparedFileRecords),
-                        any(OutputStream.class)
+                        any(OutputStream.class),
+                        eq(path)
                 );
     }
 

@@ -287,11 +287,11 @@ GET {{baseUrl}}/resource/download?path={{path_for_file_download}}
 
         const content_disposition = response.headers.valueOf("Content-Disposition");
         client.assert(content_disposition.includes("attachment"), "content should include attachment");
-        client.assert(content_disposition.includes('filename="archive.zip"'), "attachment should have name archive.zip");
+        client.assert(content_disposition.includes('filename="file2.txt"'), "attachment should have name file2.txt");
     });
 %}
 
->>! ./downloads/file-archive.zip
+>>! ./downloads/file2.txt
 
 ### 200 - Successfully downloaded an empty folder (.../empty_folder_...)
 # actual structure and size(s) are checked in java tests, but you still can check them manually in downloads folder (in http tests)
