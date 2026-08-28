@@ -7,7 +7,7 @@
 
 ### 401 - Failed to get a folder info since user wasn't authorized (no cookies provided!)
 # @no-cookie-jar
-GET {{baseUrl}}/directory?path={{test_folder}}/
+GET {{baseUrl}}/directory?path=folder/
 
 > {%
     client.test("Cannot get a folder info", function() {
@@ -190,12 +190,12 @@ GET {{baseUrl}}/directory?path={{created_folder}}/
     });
 %}
 
-### 400 - Failed to get a folder info since path is wrong (here = empty)
+### 200 - Successfully got root folder response (no path = root path)
 GET {{baseUrl}}/directory?path=
 
 > {%
-    client.test("Cannot get a folder info", function() {
-        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    client.test("Successfully got root folder response", function() {
+        client.assert(response.status === 200, "Response status is 200 since root path is legal");
     });
 %}
 

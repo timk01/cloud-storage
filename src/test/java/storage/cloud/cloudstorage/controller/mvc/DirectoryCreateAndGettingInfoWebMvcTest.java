@@ -116,6 +116,47 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
                 .andExpect(jsonPath("$.message").exists());
     }
 
+    @Test
+    public void gettingFolderInfoOkWithSessionAndEmptyPath() throws Exception {
+        String path = "";
+        Long userId = 1L;
+
+        String gorgonFilename = "gorgon.jpg";
+        String gorgonType = Type.FILE.name();
+
+        List<ResourceResponse> resourceResponses = List.of(
+                ResourceResponse.builder()
+                        .path(path)
+                        .name("child1")
+                        .type(Type.DIRECTORY.name())
+                        .build(),
+
+                ResourceResponse.builder()
+                        .path(path)
+                        .name(gorgonFilename)
+                        .size(1500L)
+                        .type(Type.FILE.name())
+                        .build());
+
+        when(getInfoService.getFolderInfo(
+                path,
+                userId
+        )).thenReturn(resourceResponses);
+
+        mockMvc.perform(get("/api/directory")
+                        .sessionAttr("userId", userId)
+                        .param("path", path))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].path").value(path))
+                .andExpect(jsonPath("$[0].name").value("child1"))
+                .andExpect(jsonPath("$[0].type").value(Type.DIRECTORY.name()))
+                .andExpect(jsonPath("$[1].path").value(path))
+                .andExpect(jsonPath("$[1].name").value(gorgonFilename))
+                .andExpect(jsonPath("$[1].size").value(1500L))
+                .andExpect(jsonPath("$[1].type").value(gorgonType));
+    }
+
     @ParameterizedTest
     @MethodSource("invalidPath")
     public void gettingFolderFailedDueToInvalidPath(String path) throws Exception {
@@ -128,10 +169,19 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
 
     private static Stream<Arguments> invalidPath() {
         return Stream.of(
-                Arguments.of(""),
+                //Arguments.of(""),
                 Arguments.of("№№№/"),
                 Arguments.of("abc")
         );
+    }
+
+    @Test
+    public void folderCreationFailedDueToNoEmptyPath() throws Exception {
+        mockMvc.perform(post("/api/directory")
+                        .sessionAttr("userId", 1L)
+                        .param("path", ""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -143,7 +193,7 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
     }
 
     @Test
-    public void gettingFolderFailedDueToInvalidPath() throws Exception {
+    public void gettingFolderFailedDueToNoPath() throws Exception {
         mockMvc.perform(get("/api/directory")
                         .sessionAttr("userId", 1L))
                 .andExpect(status().isBadRequest())
