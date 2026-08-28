@@ -30,7 +30,7 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
         String gorgonFilename = "gorgon.jpg";
         String gorgonType = Type.FILE.name();
         MockMultipartFile gorgonJpg = new MockMultipartFile(
-                "file",
+                "object",
                 "gorgon.jpg",
                 MediaType.IMAGE_JPEG_VALUE,
                 gorgonSize
@@ -40,7 +40,7 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
         String gorgonTxtFilename = "description_gorgon.txt";
         String gorgonTxtType = Type.FILE.name();
         MockMultipartFile gorgonTxt = new MockMultipartFile(
-                "file",
+                "object",
                 "description_gorgon.txt",
                 MediaType.TEXT_PLAIN_VALUE,
                 gorgonTxtSize
@@ -116,7 +116,7 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
         String gorgonFilename = "gorgon.jpg";
         String gorgonType = Type.FILE.name();
         MockMultipartFile gorgonJpg = new MockMultipartFile(
-                "file",
+                "object",
                 "gorgon.jpg",
                 MediaType.IMAGE_JPEG_VALUE,
                 gorgonSize
@@ -126,7 +126,7 @@ public class ResourceDownloadIntegrationTest extends AbstractIntegrationTest {
         String gorgonTxtFilename = "description_gorgon.txt";
         String gorgonTxtType = Type.FILE.name();
         MockMultipartFile gorgonTxt = new MockMultipartFile(
-                "file",
+                "object",
                 "description_gorgon.txt",
                 MediaType.TEXT_PLAIN_VALUE,
                 gorgonTxtSize

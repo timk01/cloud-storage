@@ -60,7 +60,7 @@ public class ResourceUploadingWebMvcTest {
         String gorgonFilename = "gorgon.jpg";
         String gorgonType = Type.FILE.name();
         MockMultipartFile gorgon = new MockMultipartFile(
-                "file",
+                "object",
                 "gorgon.jpg",
                 MediaType.IMAGE_JPEG_VALUE,
                 gorgonSize
@@ -104,7 +104,7 @@ public class ResourceUploadingWebMvcTest {
         String gorgonFilename = "gorgon.jpg";
         String gorgonType = Type.FILE.name();
         MockMultipartFile gorgonJpg = new MockMultipartFile(
-                "file",
+                "object",
                 "gorgon.jpg",
                 MediaType.IMAGE_JPEG_VALUE,
                 gorgonSize
@@ -114,7 +114,7 @@ public class ResourceUploadingWebMvcTest {
         String gorgonTxtFilename = "description_gorgon.txt";
         String gorgonTxtType = Type.FILE.name();
         MockMultipartFile gorgonTxt = new MockMultipartFile(
-                "file",
+                "object",
                 "description_gorgon.txt",
                 MediaType.TEXT_PLAIN_VALUE,
                 gorgonTxtSize
@@ -161,11 +161,48 @@ public class ResourceUploadingWebMvcTest {
                 .andExpect(jsonPath("$[1].type").value(gorgonTxtType));
     }
 
+    @Test
+    public void uploadingResourceOkWithSessionAndEmptyPath() throws Exception {
+        String path = "";
+        Long userId = 1L;
+
+        MockMultipartFile gorgon = new MockMultipartFile(
+                "object",
+                "gorgon.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                new byte[1500]
+        );
+
+        List<ResourceResponse> resourceResponses = List.of(
+                ResourceResponse.builder()
+                        .path(path)
+                        .name("gorgon.jpg")
+                        .size(1500L)
+                        .type(Type.FILE.name())
+                        .build()
+        );
+
+        when(uploadService.upload(
+                eq(path),
+                any(MultipartFile[].class),
+                eq(userId))
+        ).thenReturn(resourceResponses);
+
+        mockMvc.perform(multipart("/api/resource")
+                        .file(gorgon)
+                        .sessionAttr("userId", userId)
+                        .param("path", path))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].path").value(""));
+
+    }
+
     @ParameterizedTest
     @MethodSource("invalidPath")
     public void uploadingResourceFailedDueToInvalidPath(String path) throws Exception {
         MockMultipartFile gorgon = new MockMultipartFile(
-                "file",
+                "object",
                 "gorgon.jpg",
                 MediaType.IMAGE_JPEG_VALUE,
                 new byte[1500]
@@ -181,7 +218,6 @@ public class ResourceUploadingWebMvcTest {
 
     private static Stream<Arguments> invalidPath() {
         return Stream.of(
-                Arguments.of(""),
                 Arguments.of("№№№/"),
                 Arguments.of("abc")
         );
@@ -214,7 +250,7 @@ public class ResourceUploadingWebMvcTest {
     @Test
     public void uploadingResourceFailedDueToInvalidPath() throws Exception {
         MockMultipartFile gorgon = new MockMultipartFile(
-                "file",
+                "object",
                 "gorgon.jpg",
                 MediaType.IMAGE_JPEG_VALUE,
                 new byte[1500]
@@ -230,7 +266,7 @@ public class ResourceUploadingWebMvcTest {
     @Test
     public void uploadingResourceFailedSinceUserIsUnauthorized() throws Exception {
         MockMultipartFile gorgon = new MockMultipartFile(
-                "file",
+                "object",
                 "gorgon.jpg",
                 MediaType.IMAGE_JPEG_VALUE,
                 new byte[1500]

@@ -12,7 +12,7 @@ Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1 of multipart-File (picture): several file will be converted into files
 --boundary
-Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Disposition: form-data; name="object"; filename="gorgon.jpg"
 Content-Type: image/jpeg
 
 < ./docs/gorgon.jpg
@@ -29,7 +29,7 @@ POST {{baseUrlApi}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "timur_auto_{{$uuid}}",
+  "username": "timur_{{$timestamp}}",
   "password": "{{regPass}}"
 }
 
@@ -78,13 +78,13 @@ Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1 of multipart-File (picture): several file will be converted into files
 --boundary
-Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Disposition: form-data; name="object"; filename="gorgon.jpg"
 Content-Type: image/jpeg
 
 < ./docs/gorgon.jpg
 --boundary
 # Part №2 of multipart-File (text file)
-Content-Disposition: form-data; name="file"; filename="description.txt"
+Content-Disposition: form-data; name="object"; filename="description.txt"
 Content-Type: text/plain
 
 < ./docs/description.txt
@@ -136,21 +136,21 @@ Content-Type: text/plain
     });
 %}
 
-### 400 - Failed to upload resources since path is wrong (here = empty)
+### 201 - Successfully uploaded resource to user root
 POST {{baseUrl}}/resource?path=
 Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1 of multipart-File (picture): several file will be converted into files
 --boundary
-Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Disposition: form-data; name="object"; filename="gorgon.jpg"
 Content-Type: image/jpeg
 
 < ./docs/gorgon.jpg
 --boundary
 
 > {%
-    client.test("Cannot upload resources", function() {
-        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    client.test("Can upload resources to root", function() {
+        client.assert(response.status === 201, "Response status is 201 since uploading to root is OK");
     });
 %}
 
@@ -160,7 +160,7 @@ Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1 of multipart-File (picture): several file will be converted into files
 --boundary
-Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Disposition: form-data; name="object"; filename="gorgon.jpg"
 Content-Type: image/jpeg
 
 < ./docs/gorgon.jpg
@@ -178,7 +178,7 @@ Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1 of multipart-File (picture): several file will be converted into files
 --boundary
-Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Disposition: form-data; name="object"; filename="gorgon.jpg"
 Content-Type: image/jpeg
 
 < ./docs/gorgon.jpg
@@ -190,14 +190,14 @@ Content-Type: image/jpeg
     });
 %}
 
-### 400 - Failed to to upload resources since required multipart part "file" is not present -- MissingServletRequestPartException
+### 400 - Failed to to upload resources since required multipart part "object" is not present -- MissingServletRequestPartException
 # (MissingServletRequestPartException is a spring exception)
 POST {{baseUrl}}/resource?path={{created_folder}}/
 Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1 of multipart-File (picture): several file will be converted into files
 --boundary
-Content-Disposition: form-data; name="file22"; filename="gorgon.jpg"
+Content-Disposition: form-data; name="object22"; filename="gorgon.jpg"
 Content-Type: image/jpeg
 
 < ./docs/gorgon.jpg
@@ -215,7 +215,7 @@ Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1 of multipart-File (picture): several file will be converted into files
 --boundary
-Content-Disposition: form-data; name="file"; filename=".."
+Content-Disposition: form-data; name="object"; filename=".."
 Content-Type: image/jpeg
 
 < ./docs/gorgon.jpg
@@ -233,7 +233,7 @@ Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1 of multipart-File (picture): several file will be converted into files
 --boundary
-Content-Disposition: form-data; name="file"; filename="Obektno_orientirovanny_podkhod.rar"
+Content-Disposition: form-data; name="object"; filename="Obektno_orientirovanny_podkhod.rar"
 Content-Type: application/vnd.rar
 
 < ./docs/Obektno_orientirovanny_podkhod.rar
@@ -253,7 +253,7 @@ Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1 of multipart-File (picture): several file will be converted into files
 --boundary
-Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Disposition: form-data; name="object"; filename="gorgon.jpg"
 Content-Type: image/jpeg
 
 # missed file here: - but see above
@@ -272,7 +272,7 @@ Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1 of multipart-File (picture): several file will be converted into files
 --boundary
-Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Disposition: form-data; name="object"; filename="gorgon.jpg"
 Content-Type: image/jpeg
 
 < ./docs/gorgon.jpg

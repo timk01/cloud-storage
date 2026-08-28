@@ -35,7 +35,7 @@ public class DirectoryGetInfoIntegrationTest extends AbstractIntegrationTest {
         String gorgonFilename = "gorgon.jpg";
         String gorgonType = Type.FILE.name();
         MockMultipartFile gorgon = new MockMultipartFile(
-                "file",
+                "object",
                 "gorgon.jpg",
                 MediaType.IMAGE_JPEG_VALUE,
                 gorgonSize

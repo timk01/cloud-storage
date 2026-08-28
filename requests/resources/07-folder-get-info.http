@@ -3,14 +3,18 @@
 
 @regUser = timur_auto
 @regPass = superPassword123
-@test_folder = folder_{{$uuid}}
+@test_file_for_search_mask = gorgon
+@test_file_for_search_full_file_name = gorgon.jpg
+@test_file_for_search_full_folder_name = gorgon_archive
+@test_file_for_search = oh_well_no_found
+@test_folder_for_search = folder3/
 
-### 401 - Failed to get a folder info since user wasn't authorized (no cookies provided!)
+### 401 - Failed to search a file since user wasn't authorized (no cookies provided!)
 # @no-cookie-jar
-GET {{baseUrl}}/directory?path=folder/
+GET {{baseUrl}}/resource/search?query={{test_file_for_search_mask}}
 
 > {%
-    client.test("Cannot get a folder info", function() {
+    client.test("Cannot find resource", function() {
         client.assert(response.status === 401, "Response status is 401 since user is not authorized");
     });
 %}
@@ -20,7 +24,7 @@ POST {{baseUrlApi}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "timur_auto_{{$uuid}}",
+  "username": "timur_{{$timestamp}}",
   "password": "{{regPass}}"
 }
 
@@ -29,7 +33,7 @@ Content-Type: application/json
     client.global.set("active_pass", "superPassword123");
 %}
 
-### Prelog (user authorization) -  method is needed for success test of prelog (2 pre-phase)
+### Prelog (user authorization) -  method is needed for success test of prelog (2 pre-phase) -> with preparation path for search!
 POST {{baseUrlApi}}/auth/sign-in
 Content-Type: application/json
 
@@ -45,98 +49,59 @@ Content-Type: application/json
         const expected_user = client.global.get("active_user")
         client.assert(body.username === expected_user, "Server should return name of user");
     });
+    client.global.set(
+        "path_for_upload",
+        "gorgon_root/gorgon_archive/gorgon_files_" +
+        client.global.get("active_user") +
+        "/"
+    );
 %}
 
-### Preadded initial info into folder part1 - created a base folder
-POST {{baseUrl}}/directory?path={{test_folder}}/
-
-> {%
-    client.test("Successfully created a folder", function () {
-        client.assert(response.status === 201, "Response status is 201");
-        const body = response.body;
-        const expected_parent_path = ""; //no parent = no "/"
-        client.assert(body.path === expected_parent_path, "Server should return parent path (no parent now");
-        client.assert(body.name.startsWith("folder_"), "Server should return name");
-        client.assert(body.type === "DIRECTORY", "Server should return type (directory)");
-    });
-    client.global.set("created_folder", response.body.name);
-%}
-
-### 200 - Successcully got a folder with info: 0 folders inside (empty array, [])
-GET {{baseUrl}}/directory?path={{created_folder}}/
-
-> {%
-    client.test("Successfully got a folder info", function () {
-        client.assert(response.status === 200, "Response status is 200");
-        const body = response.body;
-        client.assert(Array.isArray(body), "Server should return an array");
-        client.assert(body.length === 0, "Folder should be empty, hence array length is zero");
-    });
-%}
-
-### 201 - Preadded initial info into folder part2 - created a first folder
-POST {{baseUrl}}/directory?path={{created_folder}}/the_child1/
-
-> {%
-    client.test("Successfully created a folder", function () {
-        client.assert(response.status === 201, "Response status is 201");
-        const body = response.body;
-        const expected_parent_path = client.global.get("created_folder") + "/";
-        const expected_folder_name = "the_child1";
-        client.assert(body.path === expected_parent_path, "Server should return parent path");
-        client.assert(body.name === expected_folder_name, "Server should return name");
-        client.assert(body.type === "DIRECTORY", "Server should return type (directory)");
-    });
-%}
-
-### 201 - Preadded initial info into folder part3 - created a second folder
-POST {{baseUrl}}/directory?path={{created_folder}}/the_child2/
-
-> {%
-    client.test("Successfully created a folder", function () {
-        client.assert(response.status === 201, "Response status is 201");
-        const body = response.body;
-        const expected_parent_path = client.global.get("created_folder") + "/";
-        const expected_folder_name = "the_child2";
-        client.assert(body.path === expected_parent_path, "Server should return parent path");
-        client.assert(body.name === expected_folder_name, "Server should return name");
-        client.assert(body.type === "DIRECTORY", "Server should return type (directory)");
-    });
-%}
-
-### 201 - Successfully uploaded TWO files (picture and text file) to a previosly created parent folder
+### Successfully uploaded TWO files (picture and text file) to a previosly created folder (3 pre-phase)
 # Path to files (passed in query, say, POST {{baseUrl}}/resource?path=folder1/)
-POST {{baseUrl}}/resource?path={{created_folder}}/
+POST {{baseUrl}}/resource?path={{path_for_upload}}
 Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1 of multipart-File (picture): several file will be converted into files
 --boundary
-Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Disposition: form-data; name="object"; filename="gorgon.jpg"
 Content-Type: image/jpeg
 
 < ./docs/gorgon.jpg
 --boundary
+# Part №2 of multipart-File (text file)
+Content-Disposition: form-data; name="object"; filename="description_gorgon.txt"
+Content-Type: text/plain
+
+< ./docs/description_gorgon.txt
+--boundary--
 
 #
 #        example:
 #        [
 #            {
-#                "path": "folder1/",
+#                "path": "gorgon_root/gorgon_archive/gorgon_files_timur_auto_550e8400-e29b-41d4-a716-446655440000/",
 #                "name": "gorgon.jpg",
 #                "size": 1500,
+#                "type": "FILE"
+#            },
+#            {
+#                "path": "gorgon_root/gorgon_archive/gorgon_files_timur_auto_550e8400-e29b-41d4-a716-446655440000/",
+#                "name": "description_gorgon.txt",
+#                "size": 123,
 #                "type": "FILE"
 #            }
 #        ]
 
 > {%
-    client.test("Successfully uploaded one file into folder", function () {
+    client.test("Successfully uploaded two files into folder", function () {
 
         client.assert(response.status === 201, "Response status is 201");
         const body = response.body;
         client.assert(Array.isArray(body), "Server should return an array");
-        client.assert(body.length === 1, "Folder should contain exactly 1 resource");
+        client.assert(body.length === 2, "Folder should contain exactly 2 resources");
 
-        const expected_parent_path = client.global.get("created_folder") + "/";
+        const expected_parent_path = client.global.get("path_for_upload");
 
         const firstFile = body.find(item => item.name === "gorgon.jpg");
         //and it's not empty
@@ -146,83 +111,142 @@ Content-Type: image/jpeg
         client.assert(firstFile.name === "gorgon.jpg", "firstFile name is gorgon.jpg");
         client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "firstFile size field should be > 0");
         client.assert(firstFile.type === "FILE", "firstFile type is file");
+
+        const secondFile = body.find(item => item.name === "description_gorgon.txt");
+        client.assert(secondFile !== undefined, "WE have secondFile element in array");
+        //hence, we can get some info from this array element (say, array[0]): such as path, name, size and type
+        client.assert(secondFile.path === expected_parent_path, "secondFile should have correct parent path");
+        client.assert(secondFile.name === "description_gorgon.txt", "secondFile name is description_gorgon.txt");
+        client.assert(typeof secondFile.size === "number" && secondFile.size > 0, "secondFile size field should be > 0");
+        client.assert(secondFile.type === "FILE", "secondFile type is file");
     });
 %}
 
-### 200 - Successcully got a folder with info: 2 folders inside + 1 file inside
-GET {{baseUrl}}/directory?path={{created_folder}}/
+### 200 - Success#1 - searched all files (2) and foldiers (3) by mask (gorgon)
+GET {{baseUrl}}/resource/search?query={{test_file_for_search_mask}}
 
 > {%
-    client.test("Successfully got a folder info", function () {
+    client.test("Successfully searched for two files and three folders", function () {
         client.assert(response.status === 200, "Response status is 200");
-        const body = response.body; //array
+
+        const body = response.body;
         client.assert(Array.isArray(body), "Server should return an array");
-        //is's three NOW (we have 2 folders + 1 file)
-        client.assert(body.length === 3, "Folder should contain exactly 3 resources");
+        client.assert(body.length === 5, "Search should return exactly 5 resources");
 
-        const expected_parent_path = client.global.get("created_folder") + "/";
+        const active_user = client.global.get("active_user");
+        const path_for_upload = client.global.get("path_for_upload");
 
-        //search for element in array named the_child1
-        const child_folder1 = body.find(item => item.name === "the_child1");
-        //and it's not empty
-        client.assert(child_folder1 !== undefined, "WE have folder1 element in array");
-        //hence, we can get some info from this array element (say, array[0]): such as name and type
-        client.assert(child_folder1.name === "the_child1", "Folder name is the_child1");
-        client.assert(child_folder1.type === "DIRECTORY", "the_child1 type is directory");
-        client.assert(child_folder1.path === expected_parent_path, "Folder1 should have correct parent path");
-        //but since it's directory, we have NO such field at all in this class
-        client.assert(!("size" in child_folder1), "size field should not exist in directory object");
+        // gorgon_root/
+        const root_folder = body.find(item => item.name === "gorgon_root");
+        client.assert(root_folder !== undefined, "gorgon_root should be found");
+        client.assert(root_folder.path === "", "gorgon_root should have empty parent path");
+        client.assert(root_folder.type === "DIRECTORY", "gorgon_root type is directory");
+        client.assert(!("size" in root_folder), "size field should not exist in directory object");
 
-        const child_folder2 = body.find(item => item.name === "the_child2");
-        client.assert(child_folder2 !== undefined, "WE have folder2 element in array");
-        client.assert(child_folder2.name === "the_child2", "Folder name is the_child2");
-        client.assert(child_folder2.type === "DIRECTORY", "the_child2 type is directory");
-        client.assert(child_folder2.path === expected_parent_path, "Folder2 should have correct parent path");
-        client.assert(!("size" in child_folder2), "size field should not exist in directory object");
+        // gorgon_root/gorgon_archive/
+        const archive_folder = body.find(item => item.name === "gorgon_archive");
+        client.assert(archive_folder !== undefined, "gorgon_archive should be found");
+        client.assert(archive_folder.path === "gorgon_root/", "gorgon_archive should have correct parent path");
+        client.assert(archive_folder.type === "DIRECTORY", "gorgon_archive type is directory");
+        client.assert(!("size" in archive_folder), "size field should not exist in directory object");
 
-        //added third resource: file
+        // gorgon_root/gorgon_archive/gorgon_files_<active_user>/
+        const files_folder_name = "gorgon_files_" + active_user;
+        const files_folder = body.find(item => item.name === files_folder_name);
+        client.assert(files_folder !== undefined, "gorgon_files folder should be found");
+        client.assert(
+            files_folder.path === "gorgon_root/gorgon_archive/",
+            "gorgon_files folder should have correct parent path"
+        );
+        client.assert(files_folder.type === "DIRECTORY", "gorgon_files type is directory");
+        client.assert(!("size" in files_folder), "size field should not exist in directory object");
+
+        // gorgon.jpg
         const firstFile = body.find(item => item.name === "gorgon.jpg");
-        client.assert(firstFile !== undefined, "WE have firstFile element in array");
-        client.assert(firstFile.path === expected_parent_path, "firstFile should have correct parent path");
-        client.assert(firstFile.name === "gorgon.jpg", "firstFile name is gorgon.jpg");
-        client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "firstFile size field should be > 0");
-        client.assert(firstFile.type === "FILE", "firstFile type is file");
+        client.assert(firstFile !== undefined, "gorgon.jpg should be found");
+        client.assert(firstFile.path === path_for_upload, "gorgon.jpg should have correct parent path");
+        client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "gorgon.jpg size should be > 0");
+        client.assert(firstFile.type === "FILE", "gorgon.jpg type is file");
+
+        // description_gorgon.txt
+        const secondFile = body.find(item => item.name === "description_gorgon.txt");
+        client.assert(secondFile !== undefined, "description_gorgon.txt should be found");
+        client.assert(secondFile.path === path_for_upload, "description_gorgon.txt should have correct parent path");
+        client.assert(typeof secondFile.size === "number" && secondFile.size > 0, "description_gorgon.txt size should be > 0");
+        client.assert(secondFile.type === "FILE", "description_gorgon.txt type is file");
     });
 %}
 
-### 200 - Successfully got root folder response (no path = root path)
-GET {{baseUrl}}/directory?path=
+### 200 - Success#2 - searched files (1) and folders (0) by 1-to-1 matching (gorgon.jpg)
+GET {{baseUrl}}/resource/search?query={{test_file_for_search_full_file_name}}
 
 > {%
-    client.test("Successfully got root folder response", function() {
-        client.assert(response.status === 200, "Response status is 200 since root path is legal");
+    client.test("Successfully searched for one files and zero folders", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 1, "Search should return exactly 1 resources");
+
+        const path_for_upload = client.global.get("path_for_upload");
+
+        // gorgon.jpg
+        const firstFile = body.find(item => item.name === "gorgon.jpg");
+        client.assert(firstFile !== undefined, "gorgon.jpg should be found");
+        client.assert(firstFile.path === path_for_upload, "gorgon.jpg should have correct parent path");
+        client.assert(typeof firstFile.size === "number" && firstFile.size > 0, "gorgon.jpg size should be > 0");
+        client.assert(firstFile.type === "FILE", "gorgon.jpg type is file");
     });
 %}
 
-### 400 - Failed to get a folder info since path is wrong (here = has invalid symbol, with /)
-GET {{baseUrl}}/directory?path=№№№/
+### 200 - Success#3 - searched files (0) and folders (1) by 1-to-1 matching (gorgon_archive)
+GET {{baseUrl}}/resource/search?query={{test_file_for_search_full_folder_name}}
 
 > {%
-    client.test("Cannot get a folder info", function() {
-        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    client.test("Successfully searched for zero files and one folders", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 1, "Search should return exactly 1 resources");
+
+        // gorgon_root/gorgon_archive/
+        const archive_folder = body.find(item => item.name === "gorgon_archive");
+        client.assert(archive_folder !== undefined, "gorgon_archive should be found");
+        client.assert(archive_folder.path === "gorgon_root/", "gorgon_archive should have correct parent path");
+        client.assert(archive_folder.type === "DIRECTORY", "gorgon_archive type is directory");
+        client.assert(!("size" in archive_folder), "size field should not exist in directory object");
     });
 %}
 
-### 400 - Failed to get a folder info since user path is wrong (here = has rights symbols, but without /)
-GET {{baseUrl}}/directory?path=abc
+### 200 - Success#4 - searched files (0) and folders (0) by 1-to-1 matching (nothing to match)
+GET {{baseUrl}}/resource/search?query={{test_file_for_search}}
 
 > {%
-    client.test("Cannot get a folder infor", function() {
-        client.assert(response.status === 400, "Response status is 400 since path is wrong");
+    client.test("Successfully searched for zero files and zero folders (nothing to be found)", function () {
+        client.assert(response.status === 200, "Response status is 200");
+
+        const body = response.body;
+        client.assert(Array.isArray(body), "Server should return an array");
+        client.assert(body.length === 0, "Search should return exactly 0 resources, since nothing is found");
     });
 %}
 
-### 404 - Failed to get a folder info since the folder does not exist
-GET {{baseUrl}}/directory?path={{created_folder}}/non-existed/child/
+### 400 - Failed to search files (0) and folders (0) by 1-to-1 matching due to empty query
+GET {{baseUrl}}/resource/search?query=
 
 > {%
-    client.test("Cannot get a folder info", function() {
-        client.assert(response.status === 404, "Response status is 404 since no such directory was found");
+    client.test("Failed to search fany resource", function () {
+        client.assert(response.status === 400, "Response status is 400");
+    });
+%}
+
+### 400 - Failed to search files (0) and folders (0) by 1-to-1 matching due to no query at all
+GET {{baseUrl}}/resource/search
+
+> {%
+    client.test("Failed to search fany resource", function () {
+        client.assert(response.status === 400, "Response status is 400");
     });
 %}
 

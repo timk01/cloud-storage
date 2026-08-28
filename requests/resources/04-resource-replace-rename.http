@@ -22,7 +22,7 @@ POST {{baseUrlApi}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "timur_auto_{{$uuid}}",
+  "username": "timur_{{$timestamp}}",
   "password": "{{regPass}}"
 }
 
@@ -62,13 +62,13 @@ Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1 of multipart-File (picture): several file will be converted into files
 --boundary
-Content-Disposition: form-data; name="file"; filename="gorgon.jpg"
+Content-Disposition: form-data; name="object"; filename="gorgon.jpg"
 Content-Type: image/jpeg
 
 < ./docs/gorgon.jpg
 --boundary
 # Part №2 of multipart-File (text file)
-Content-Disposition: form-data; name="file"; filename="description_gorgon.txt"
+Content-Disposition: form-data; name="object"; filename="description_gorgon.txt"
 Content-Type: text/plain
 
 < ./docs/description_gorgon.txt
@@ -148,7 +148,7 @@ Content-Type: multipart/form-data; boundary=boundary
 
 # Part №1
 --boundary
-Content-Disposition: form-data; name="file"; filename="file1.txt"
+Content-Disposition: form-data; name="object"; filename="file1.txt"
 Content-Type: text/plain
 
 < ./docs/file1.txt
@@ -156,7 +156,7 @@ Content-Type: text/plain
 
 # Part №2
 --boundary
-Content-Disposition: form-data; name="file"; filename="file2.txt"
+Content-Disposition: form-data; name="object"; filename="file2.txt"
 Content-Type: text/plain
 
 < ./docs/file2.txt

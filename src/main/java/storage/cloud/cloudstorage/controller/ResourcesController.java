@@ -24,7 +24,9 @@ import java.util.List;
 @Validated
 @RequestMapping("/api")
 public class ResourcesController {
-    private static final String PATH_STRICT_VALIDATOR_REGEXP = "^([\\p{L}\\p{N}_\\s.-]+/)+$";;
+    private static final String PATH_STRICT_VALIDATOR_REGEXP = "^([\\p{L}\\p{N}_\\s.-]+/)+$";
+
+    private static final String PATH_UPLOAD_VALIDATOR_REGEXP = "^$|^([\\p{L}\\p{N}_\\s.-]+/)+$";
     private static final String PATH_COMMON_VALIDATOR_REGEXP = "^[\\p{L}\\p{N}_\\s./-]+$";
     private static final String WRONG_PATH = "Wrong path is provided";
     private static final String INVALID_SYMBOLS_IN_PATH = "Invalid symbols in path are detected";
@@ -40,18 +42,17 @@ public class ResourcesController {
      * Upload contract:
      * - max file size: 5 MB, while max request size (all files): 30 MB;
      * - zero-byte files are allowed;
-     * - all files are uploaded to the same directory specified by path;s;
+     * - all files are uploaded to the same directory specified by path;s (root upload = OK);
      * - existing file -> 409;
      * - multi-file upload is not atomic.
      */
     @PostMapping(value = "/resource", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<ResourceResponse>> upload(
             @SessionAttribute(name = "userId", required = false) Long userId,
-            @RequestParam("file") MultipartFile[] files,
+            @RequestParam("object") MultipartFile[] files,
             @RequestParam("path")
-            @NotBlank
             @Pattern(
-                    regexp = PATH_STRICT_VALIDATOR_REGEXP,
+                    regexp = PATH_UPLOAD_VALIDATOR_REGEXP,
                     message = WRONG_PATH
             )
             String path
