@@ -39,7 +39,7 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
     @Test
     public void creatingFolderOkWithSession() throws Exception {
         String parent = "";
-        String folderName = "folder1";
+        String folderName = "folder1.test";
         String type = Type.DIRECTORY.name();
         String path = folderName + "/";
         Long userId = 1L;
@@ -67,7 +67,7 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
 
     @Test
     public void gettingFolderInfoOkWithSession() throws Exception {
-        String path = "folder1/";
+        String path = "folder.test/";
         Long userId = 1L;
 
         String gorgonFilename = "gorgon.jpg";
@@ -169,7 +169,7 @@ public class DirectoryCreateAndGettingInfoWebMvcTest {
 
     private static Stream<Arguments> invalidPath() {
         return Stream.of(
-                //Arguments.of(""),
+                Arguments.of("folder*bad/"),
                 Arguments.of("№№№/"),
                 Arguments.of("abc")
         );

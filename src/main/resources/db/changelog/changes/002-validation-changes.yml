@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: tim
+      changes:
+        - sql:
+            sql: "ALTER TABLE users DROP CONSTRAINT chk_username_min_length;"
+
+        - sql:
+            sql: "ALTER TABLE users ADD CONSTRAINT chk_username_length CHECK (LENGTH(username) BETWEEN 5 AND 20);"
+
+        - sql:
+            sql: "ALTER TABLE users DROP CONSTRAINT chk_password_min_length;"

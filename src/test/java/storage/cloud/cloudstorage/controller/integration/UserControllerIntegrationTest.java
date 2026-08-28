@@ -25,7 +25,7 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void registerUser() throws Exception {
-        String username = "tim1";
+        String username = "tim111";
         String passwordOriginal = "sadfasfkljkjl22##";
         UserRegisterRequest dto = new UserRegisterRequest(username, passwordOriginal);
 
@@ -53,7 +53,7 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void loginUserWithPrereg() throws Exception {
-        String username = "tim1";
+        String username = "tim111";
         String passwordOriginal = "sadfasfkljkjl22##";
         UserRegisterRequest regDto = new UserRegisterRequest(username, passwordOriginal);
 
@@ -95,7 +95,7 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void loginUserWithAlreadyRegisteredUser() throws Exception {
-        String username = "tim1";
+        String username = "tim111";
         String passwordOriginal = "sadfasfkljkjl22##";
         String encoded = encoder.encode(passwordOriginal);
         User user = userRepository.save(new User(username, encoded));
@@ -125,7 +125,7 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void registerUserFailsSinceUserExists() throws Exception {
-        String username = "tim1";
+        String username = "tim111";
         String passwordOriginal = "sadfasfkljkjl22##";
         String encoded = encoder.encode(passwordOriginal);
         userRepository.save(new User(username, encoded));
@@ -141,7 +141,7 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void loginUserWithAlreadyRegisteredUserFailsSinceUseNameIsNotFound() throws Exception {
-        String username = "tim1";
+        String username = "tim111";
         String passwordOriginal = "sadfasfkljkjl22##";
 
         UserLoginRequest logDto = new UserLoginRequest(username, passwordOriginal);
@@ -154,12 +154,12 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void loginUserWithAlreadyRegisteredUserFailsSincePasswordIsWrong() throws Exception {
-        String username = "tim1";
+        String username = "tim111";
         String passwordOriginal = "sadfasfkljkjl22##";
         String encoded = encoder.encode(passwordOriginal);
         User user = userRepository.save(new User(username, encoded));
 
-        String wrongPassword = "sadfasfkljkjl22##WRONG_PASS";
+        String wrongPassword = "sadfasfkljkjl22##WRG";
         UserLoginRequest logDto = new UserLoginRequest(username, wrongPassword);
         mockMvc.perform(post("/api/auth/sign-in")
                         .contentType(MediaType.APPLICATION_JSON)

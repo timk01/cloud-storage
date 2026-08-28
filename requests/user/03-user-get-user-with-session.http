@@ -8,7 +8,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "timur_auto_{{$uuid}}",
+  "username": "timur_{{$timestamp}}",
   "password": "{{regPass}}"
 }
 

@@ -58,9 +58,9 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(exception.getMessage());
 
         log.warn(
-                "Handled application exception happened during program work with status: {}; Exception stack:",
+                "Handled application exception with status: {}, message: {}",
                 status,
-                exception
+                exception.getMessage()
         );
 
         return new ResponseEntity<>(
@@ -75,8 +75,14 @@ public class GlobalExceptionHandler {
     ) {
         HttpStatus status = HttpStatus.PAYLOAD_TOO_LARGE;
 
+        log.warn(
+                "Upload size exceeded with status: {}, message: {}",
+                status,
+                exception.getMessage()
+        );
+
         return new ResponseEntity<>(
-                new ErrorResponse("Maximum ulpoad size exceeded"),
+                new ErrorResponse("Maximum upload size exceeded"),
                 status
         );
     }
@@ -96,9 +102,9 @@ public class GlobalExceptionHandler {
         HttpStatus status = HttpStatus.BAD_REQUEST;
 
         log.warn(
-                "Invalid request happened during program work with status: {}; Exception stack:",
+                "Invalid request with status: {}, message: {}",
                 status,
-                exception
+                exception.getMessage()
         );
 
         return new ResponseEntity<>(

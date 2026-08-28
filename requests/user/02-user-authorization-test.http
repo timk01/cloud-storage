@@ -8,7 +8,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "timur_auto_{{$uuid}}",
+  "username": "timur_{{$timestamp}}",
   "password": "{{regPass}}"
 }
 
@@ -71,7 +71,7 @@ POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
-  "username": "a",
+  "username": "aaaa",
   "password": "{{active_pass}}"
 }
 
@@ -81,18 +81,33 @@ Content-Type: application/json
     });
 %}
 
-### 400 - Username is too long (over 100 characters)
+### 400 - Username is too long (over 20 characters)
 POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
-  "username": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1",
+  "username": "aaaaaaaaaaaaaaaaaaaaa",
   "password": "{{active_pass}}"
 }
 
 > {%
     client.test("Cannot log-in since username is too long", function() {
         client.assert(response.status === 400, "Response status is 400 since username is too long");
+    });
+%}
+
+### 400 - Username contains invalid character
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "username": "tim-1",
+  "password": "{{active_pass}}"
+}
+
+> {%
+    client.test("Cannot log-in since username contains invalid character", function() {
+        client.assert(response.status === 400, "Response status is 400 since username does not match pattern");
     });
 %}
 
@@ -132,7 +147,7 @@ Content-Type: application/json
 
 {
   "username": "{{active_user}}",
-  "password": "aa"
+  "password": "aaaa"
 }
 
 > {%
@@ -141,18 +156,33 @@ Content-Type: application/json
     });
 %}
 
-### 400 - Password is too long (over 50 characters)
+### 400 - Password is too long (over 20 characters)
 POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
   "username": "{{active_user}}",
-  "password": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1"
+  "password": "aaaaaaaaaaaaaaaaaaaaa"
 }
 
 > {%
     client.test("Cannot create a user since password is too long", function() {
         client.assert(response.status === 400, "esponse status is 400 since password is too long");
+    });
+%}
+
+### 400 - Password contains invalid character
+POST {{baseUrl}}/auth/sign-in
+Content-Type: application/json
+
+{
+  "username": "{{active_user}}",
+  "password": "abc 12"
+}
+
+> {%
+    client.test("Cannot log-in since password contains invalid character", function() {
+        client.assert(response.status === 400, "Response status is 400 since password does not match pattern");
     });
 %}
 

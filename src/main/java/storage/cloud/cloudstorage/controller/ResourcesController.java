@@ -24,7 +24,7 @@ import java.util.List;
 @Validated
 @RequestMapping("/api")
 public class ResourcesController {
-    private static final String PATH_STRICT_VALIDATOR_REGEXP = "^([\\p{L}\\p{N}_\\s-]+/)+$";
+    private static final String PATH_STRICT_VALIDATOR_REGEXP = "^([\\p{L}\\p{N}_\\s.-]+/)+$";;
     private static final String PATH_COMMON_VALIDATOR_REGEXP = "^[\\p{L}\\p{N}_\\s./-]+$";
     private static final String WRONG_PATH = "Wrong path is provided";
     private static final String INVALID_SYMBOLS_IN_PATH = "Invalid symbols in path are detected";

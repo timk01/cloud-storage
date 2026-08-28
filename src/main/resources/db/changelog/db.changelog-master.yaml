@@ -3,4 +3,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/001-create-users-table.yml
 
+  # release 2: 28.08.2026
+  - include:
+      file: db/changelog/changes/002-validation-changes.yml
+
 

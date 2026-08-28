@@ -19,8 +19,8 @@ import java.util.List;
 @Validated
 @RequestMapping("/api")
 public class DirectoryController {
-    private static final String PATH_POST_STRICT_VALIDATOR_REGEXP = "^([\\p{L}\\p{N}_\\s-]+/)+$";
-    private static final String PATH_GET_STRICT_VALIDATOR_REGEXP = "^$|^([\\p{L}\\p{N}_\\s-]+/)+$";
+    private static final String PATH_POST_STRICT_VALIDATOR_REGEXP = "^([\\p{L}\\p{N}_\\s.-]+/)+$";
+    private static final String PATH_GET_STRICT_VALIDATOR_REGEXP = "^$|^([\\p{L}\\p{N}_\\s.-]+/)+$";
 
     private static final String WRONG_PATH = "Wrong path is provided";
 

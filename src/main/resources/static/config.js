@@ -43,8 +43,8 @@ window.APP_CONFIG = {
     //корректное имя для папки
     validFolderName: {
         minLength: 1,
-        maxLength: 200,
-        pattern: "^[^/\\\\:*?\"<>|]+$",
+        maxLength: Infinity,
+        pattern: "^[a-zA-Zа-яА-ЯёЁ0-9_\\s.-]+$",
     },
 
 

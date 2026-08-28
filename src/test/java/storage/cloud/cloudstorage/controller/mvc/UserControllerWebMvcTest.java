@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(UserController.class)
 class UserControllerWebMvcTest {
 
-    private static final String VALID_USERNAME = "tim1";
+    private static final String VALID_USERNAME = "tim11";
     private static final String VALID_PASSWORD = "sadfasfkljkjl22##";
 
     @Autowired
@@ -43,7 +43,7 @@ class UserControllerWebMvcTest {
 
     @Test
     public void registrationIsSucceeded() throws Exception {
-        String username = "tim1";
+        String username = "tim11";
         String passwordOriginal = "sadfasfkljkjl22##";
         UserRegisterRequest dto = new UserRegisterRequest(username, passwordOriginal);
 
@@ -61,7 +61,7 @@ class UserControllerWebMvcTest {
 
     @Test
     public void loginIsSucceeded() throws Exception {
-        String username = "tim1";
+        String username = "tim11";
         String passwordOriginal = "sadfasfkljkjl22##";
         UserLoginRequest dto = new UserLoginRequest(username, passwordOriginal);
 
@@ -140,12 +140,14 @@ class UserControllerWebMvcTest {
     private static Stream<Arguments> invalidRegistrationData() {
         return Stream.of(
                 Arguments.of("", VALID_PASSWORD),
-                Arguments.of("a", VALID_PASSWORD),
-                Arguments.of("a".repeat(101), VALID_PASSWORD),
+                Arguments.of("aaaa", VALID_PASSWORD),
+                Arguments.of("a".repeat(21), VALID_PASSWORD),
+                Arguments.of("tim-1", VALID_PASSWORD),
 
                 Arguments.of(VALID_USERNAME, ""),
-                Arguments.of(VALID_USERNAME, "a"),
-                Arguments.of(VALID_USERNAME, "a".repeat(101))
+                Arguments.of(VALID_USERNAME, "aaaa"),
+                Arguments.of(VALID_USERNAME, "a".repeat(21)),
+                Arguments.of(VALID_USERNAME, "abc 12")
         );
     }
 
@@ -164,12 +166,14 @@ class UserControllerWebMvcTest {
     private static Stream<Arguments> invalidLoginData() {
         return Stream.of(
                 Arguments.of("", VALID_PASSWORD),
-                Arguments.of("a", VALID_PASSWORD),
-                Arguments.of("a".repeat(101), VALID_PASSWORD),
+                Arguments.of("aaaa", VALID_PASSWORD),
+                Arguments.of("a".repeat(21), VALID_PASSWORD),
+                Arguments.of("tim-1", VALID_PASSWORD),
 
                 Arguments.of(VALID_USERNAME, ""),
-                Arguments.of(VALID_USERNAME, "a"),
-                Arguments.of(VALID_USERNAME, "a".repeat(101))
+                Arguments.of(VALID_USERNAME, "aaaa"),
+                Arguments.of(VALID_USERNAME, "a".repeat(21)),
+                Arguments.of(VALID_USERNAME, "abc 12")
         );
     }
 }

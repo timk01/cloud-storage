@@ -5,19 +5,19 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "conflict_user_{{$uuid}}",
+  "username": "conflict_{{$timestamp}}",
   "password": "superPassword123"
 }
 
 > {%
     client.global.set("conflict_name", response.body.username);
 
-    const runId = response.body.username.substring("conflict_user_".length);
+    const runId = response.body.username.substring("conflict_".length);
 
-    client.global.set("min_username", runId.substring(0, 3));
+    client.global.set("min_username", "u" + runId.substring(0, 4));
     client.global.set(
         "max_username",
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" + runId
+        "aaaaaaaaaa" + runId
     );
     client.global.set("min_password_username", "tim1_" + runId);
     client.global.set("max_password_username", "tim2_" + runId);
@@ -73,7 +73,7 @@ Content-Type: application/json
 
 {
   "username": "{{min_password_username}}",
-  "password": "222"
+  "password": "22222"
 }
 
 > {%
@@ -91,7 +91,7 @@ Content-Type: application/json
 
 {
   "username": "{{max_password_username}}",
-  "password": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  "password": "aaaaaaaaaaaaaaaaaaaa"
 }
 
 > {%
@@ -138,7 +138,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "aa",
+  "username": "aaaa",
   "password": "abc123"
 }
 
@@ -148,13 +148,13 @@ Content-Type: application/json
     });
 %}
 
-### 400 - Username is too long (over 100 characters)
+### 400 - Username is too long (over 20 characters)
 POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "password": "aaaa"
+  "username": "aaaaaaaaaaaaaaaaaaaaa",
+  "password": "abc123"
 }
 
 > {%
@@ -163,12 +163,27 @@ Content-Type: application/json
     });
 %}
 
+### 400 - Username contains invalid character
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "username": "tim-1",
+  "password": "abc123"
+}
+
+> {%
+    client.test("Cannot create a user since username contains invalid character", function() {
+        client.assert(response.status === 400, "Response status is 400 since username does not match pattern");
+    });
+%}
+
 ### 400 - Password is empty
 POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "tim1",
+  "username": "tim11",
   "password": ""
 }
 
@@ -183,7 +198,7 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "tim1",
+  "username": "tim11",
   "password": " "
 }
 
@@ -198,8 +213,8 @@ POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
-  "username": "tim1",
-  "password": "aa"
+  "username": "tim11",
+  "password": "aaaa"
 }
 
 > {%
@@ -208,18 +223,33 @@ Content-Type: application/json
     });
 %}
 
-### 400 - Password is too long (over 50 characters)
+### 400 - Password is too long (over 20 characters)
 POST {{baseUrl}}/auth/sign-up
 Content-Type: application/json
 
 {
   "username": "tim_too_long",
-  "password": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1"
+  "password": "aaaaaaaaaaaaaaaaaaaaa"
 }
 
 > {%
     client.test("Cannot create a user since password is too long", function() {
-        client.assert(response.status === 400, "esponse status is 400 since password is too long");
+        client.assert(response.status === 400, "Response status is 400 since password is too long");
+    });
+%}
+
+### 400 - Password contains invalid character
+POST {{baseUrl}}/auth/sign-up
+Content-Type: application/json
+
+{
+  "username": "tim12",
+  "password": "abc 12"
+}
+
+> {%
+    client.test("Cannot create a user since password contains invalid character", function() {
+        client.assert(response.status === 400, "Response status is 400 since password does not match pattern");
     });
 %}
 

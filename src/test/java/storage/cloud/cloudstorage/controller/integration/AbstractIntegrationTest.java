@@ -87,7 +87,7 @@ public class AbstractIntegrationTest {
 
     @BeforeEach
     public void start() throws Exception {
-        String username = "tim1" + UUID.randomUUID();
+        String username = "tim11" + System.currentTimeMillis();
         String passwordOriginal = "sadfasfkljkjl22##";
         UserRegisterRequest dto = new UserRegisterRequest(username, passwordOriginal);
 
