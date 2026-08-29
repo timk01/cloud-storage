@@ -14,7 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class CrossFunctionalUserIntegrationTest extends AbstractIntegrationTest {
 
     @Test
-    public void getFolderInfo() throws Exception {
+    public void anotherUserCanNotGetResourceInfoFromFirstUser() throws Exception {
         String folderName = "folder1";
         String type = Type.DIRECTORY.name();
         String path = folderName + "/";
