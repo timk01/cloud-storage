@@ -1,5 +1,14 @@
 package storage.cloud.cloudstorage.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -21,15 +30,16 @@ import java.util.List;
 
 import static storage.cloud.cloudstorage.service.ResourceServiceUtils.extractName;
 
+@Tag(name = "Resources")
+@CommonApiErrorResponses
 @RequiredArgsConstructor
 @RestController
 @Validated
 @RequestMapping("/api")
 public class ResourcesController {
-    private static final String PATH_STRICT_VALIDATOR_REGEXP = "^([\\p{L}\\p{N}_\\s.-]+/)+$";
 
-    private static final String PATH_UPLOAD_VALIDATOR_REGEXP = "^$|^([\\p{L}\\p{N}_\\s.-]+/)+$";
-    private static final String PATH_COMMON_VALIDATOR_REGEXP = "^[\\p{L}\\p{N}_\\s./-]+$";
+    private static final String PATH_UPLOAD_VALIDATOR_REGEXP = "^$|^([a-zA-Zа-яА-ЯёЁ0-9_\\s.-]+/)+$";
+    private static final String PATH_COMMON_VALIDATOR_REGEXP = "^[a-zA-Zа-яА-ЯёЁ0-9_\\s./-]+$";
     private static final String WRONG_PATH = "Wrong path is provided";
     private static final String INVALID_SYMBOLS_IN_PATH = "Invalid symbols in path are detected";
 
@@ -48,8 +58,23 @@ public class ResourcesController {
      * - existing file -> 409;
      * - multi-file upload is not atomic.
      */
+    @Operation(summary = "Upload file(s)", description = "Upload file(s) to the specified resource path")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Files(s) uploaded",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            array = @ArraySchema(
+                                    schema = @Schema(implementation = ResourceResponse.class)
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "409", description = "File(s) already exists")
+    })
     @PostMapping(value = "/resource", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<ResourceResponse>> upload(
+            @Parameter(hidden = true)
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("object") MultipartFile[] files,
             @RequestParam("path")
@@ -70,8 +95,22 @@ public class ResourcesController {
                 .body(resourcesResponse);
     }
 
+    @Operation(summary = "Search", description = "Search resources by query")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Search succeeded",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            array = @ArraySchema(
+                                    schema = @Schema(implementation = ResourceResponse.class)
+                            )
+                    )
+            )
+    })
     @GetMapping(value = "/resource/search")
     public ResponseEntity<List<ResourceResponse>> search(
+            @Parameter(hidden = true)
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("query")
             @NotBlank
@@ -88,8 +127,22 @@ public class ResourcesController {
                 .body(resourcesResponse);
     }
 
+    @Operation(summary = "Rename/move", description = "Rename/move resource(s) from one path to another")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Resource(s) renamed/moved",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ResourceResponse.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Resource(s) not found"),
+            @ApiResponse(responseCode = "409", description = "Resource(s) already exists in destination path ")
+    })
     @PostMapping(value = "/resource/move")
     public ResponseEntity<ResourceResponse> move(
+            @Parameter(hidden = true)
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("from")
             @NotBlank
@@ -117,8 +170,26 @@ public class ResourcesController {
                 .body(resourceResponse);
     }
 
+    @Operation(summary = "Download", description = "Download resource(s) from path (folder in zip, solo files as is)")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Downloaded resource(s)",
+                    headers = @Header(
+                            name = HttpHeaders.CONTENT_DISPOSITION,
+                            description = "Attachment filename",
+                            schema = @Schema(type = "string")
+                    ),
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE,
+                            schema = @Schema(type = "string", format = "binary")
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Resource(s) not found")
+    })
     @GetMapping(value = "/resource/download")
     public ResponseEntity<StreamingResponseBody> download(
+            @Parameter(hidden = true)
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("path")
             @NotBlank
@@ -152,8 +223,17 @@ public class ResourcesController {
                 .body(responseBody);
     }
 
+    @Operation(summary = "Delete", description = "Delete resource(s) from path")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Resource(s) deleted"
+            ),
+            @ApiResponse(responseCode = "404", description = "Resource(s) not found")
+    })
     @DeleteMapping(value = "/resource")
     public ResponseEntity<Void> delete(
+            @Parameter(hidden = true)
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("path")
             @NotBlank
@@ -174,8 +254,21 @@ public class ResourcesController {
                 .build();
     }
 
+    @Operation(summary = "Resource info", description = "Getting resource info")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Resource(s) info is received",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ResourceResponse.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Resource(s) not found")
+    })
     @GetMapping(value = "/resource")
     public ResponseEntity<ResourceResponse> info(
+            @Parameter(hidden = true)
             @SessionAttribute(name = "userId", required = false) Long userId,
             @RequestParam("path")
             @NotBlank
