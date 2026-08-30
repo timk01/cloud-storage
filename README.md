@@ -228,6 +228,64 @@ mvn clean test
 
 ## Деплой
 
+## Деплой
+
+Приложение развёртывается на удалённом Linux-сервере.
+
+PostgreSQL, Redis и MinIO запускаются через Docker Compose, а Spring Boot-приложение — как отдельный JAR-файл через `systemd`.
+
+На сервере должны быть установлены:
+
+* JRE 21;
+* Docker;
+* Docker Compose.
+
+Файлы приложения размещаются в:
+
+```text
+/opt/cloud-storage/
+```
+
+Пример структуры:
+
+```text
+/opt/cloud-storage/
+├── cloud-storage-0.0.1-SNAPSHOT.jar
+├── compose.yaml
+└── .env
+```
+
+Инфраструктура запускается командой:
+
+```bash
+docker compose up -d
+```
+
+В `.env` передаются необходимые переменные окружения приложения и Docker Compose.
+
+Spring Boot-приложение запускается через `systemd` и доступно на порту `8082`.
+
+Основные команды управления:
+
+```bash
+systemctl start cloud-storage
+systemctl stop cloud-storage
+systemctl restart cloud-storage
+systemctl status cloud-storage
+```
+
+Просмотр логов:
+
+```bash
+journalctl -u cloud-storage -f
+```
+
+Для контейнеров используется политика `restart: unless-stopped`, поэтому инфраструктура автоматически восстанавливается после перезагрузки сервера.
+
+Порты PostgreSQL, Redis и MinIO привязаны к `127.0.0.1` и недоступны извне.
+
+__И еще можно сделать спецскрипт для намного болеее легкого развертывания.__
+
 ---
 
 ## Контакты
