@@ -4,12 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import storage.cloud.cloudstorage.entity.User;
 import storage.cloud.cloudstorage.exception.managed.InvalidLoginDataException;
 import storage.cloud.cloudstorage.exception.managed.UserAlreadyExistsException;
+import storage.cloud.cloudstorage.repository.UserRepository;
 import storage.cloud.cloudstorage.request.UserLoginRequest;
 import storage.cloud.cloudstorage.request.UserRegisterRequest;
-import storage.cloud.cloudstorage.entity.User;
-import storage.cloud.cloudstorage.repository.UserRepository;
 import storage.cloud.cloudstorage.response.UserResponse;
 
 @Slf4j

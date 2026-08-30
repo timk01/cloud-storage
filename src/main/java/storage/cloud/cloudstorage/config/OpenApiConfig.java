@@ -26,7 +26,6 @@ public class OpenApiConfig {
                     if (operation.getResponses().containsKey("409")) {
                         operation.getResponses().get("409").setContent(errorContent);
                     }
-
                 })
         );
     }

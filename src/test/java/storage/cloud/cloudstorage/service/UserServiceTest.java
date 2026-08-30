@@ -136,7 +136,7 @@ class UserServiceTest {
         when(repository.findByUsername(username)).thenReturn(savedUser);
 
         String passwordOriginal = "sadfasfkljkjl22##";
-        when(encoder.matches(passwordOriginal, passwordHashed)).thenReturn(false);;
+        when(encoder.matches(passwordOriginal, passwordHashed)).thenReturn(false);
 
         UserLoginRequest dto = new UserLoginRequest(username, passwordOriginal);
 

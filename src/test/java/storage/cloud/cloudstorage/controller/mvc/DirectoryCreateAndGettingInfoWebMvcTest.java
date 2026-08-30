@@ -10,9 +10,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import storage.cloud.cloudstorage.controller.DirectoryController;
 import storage.cloud.cloudstorage.response.ResourceResponse;
+import storage.cloud.cloudstorage.service.Type;
 import storage.cloud.cloudstorage.service.directory.DirectoryCreateService;
 import storage.cloud.cloudstorage.service.directory.DirectoryGetInfoService;
-import storage.cloud.cloudstorage.service.Type;
 
 import java.util.List;
 import java.util.stream.Stream;

@@ -113,12 +113,6 @@ public class MinioRepository {
         }
     }
 
-    /**
-     * если файл ЕСТЬ в батче (т.е. нашли что любой из файлов уже был загружен) - значит эксепшнион
-     *
-     * @param fullPaths
-     */
-
     public void checkFiles(List<String> fullPaths) {
         try {
             for (String fullPath : fullPaths) {

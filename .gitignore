@@ -42,12 +42,12 @@ build/
 /log/
 out/
 
-# Игнорируем личный файл с реальными данными от базы данных
+# Ignore private file from DB real data
 src/main/resources/database.properties
 
-#... и скрипты по развертыванию на удаленном сервере
+#... and scripts for deploy on remote serve
 deploy-*.sh
 
-#не надо коммитить серкеты для сборки
+# don't commit secrets and rss
 .env
 /requests/resources/downloads/

@@ -30,10 +30,6 @@ public class DirectoryGetInfoServiceTest {
     @Mock
     private StorageInitializer storageInitializer;
 
-    /**
-     * Особное внимание на currentParent - в результаты он не попадает, т.к. мы ищем ресурсы в самой папочке,
-     * а не на уровне выше
-     */
     @Test
     public void getFolderInfoIsSucceeded() {
         ReflectionTestUtils.setField(
