@@ -96,7 +96,7 @@ public class GlobalExceptionHandler {
                     MissingServletRequestPartException.class
             }
     )
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(
+    public ResponseEntity<ErrorResponse> handleInvalidRequestException(
             Exception exception
     ) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
