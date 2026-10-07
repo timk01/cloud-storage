@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import storage.cloud.cloudstorage.exception.managed.UnauthorizedActionException;
-import storage.cloud.cloudstorage.exception.managed.UserNotAuthenticatedException;
 import storage.cloud.cloudstorage.request.UserLoginRequest;
 import storage.cloud.cloudstorage.request.UserRegisterRequest;
 import storage.cloud.cloudstorage.response.UserResponse;
@@ -40,12 +39,6 @@ public class UserController implements UserApi {
             Long userId,
             HttpSession session
     ) {
-        if (userId == null) {
-            throw new UserNotAuthenticatedException(
-                    "Cannot do logout since user is not authorized"
-            );
-        }
-
         session.invalidate();
 
         log.info(
@@ -78,7 +71,7 @@ public class UserController implements UserApi {
             Long userId,
             String username
     ) {
-        if (userId == null || username == null) {
+        if (username == null) {
             throw new UnauthorizedActionException("User is not authorized");
         }
 

@@ -45,7 +45,7 @@ public interface DirectoryApi {
     @PostMapping("/directory")
     ResponseEntity<ResourceResponse> createFolder(
             @Parameter(hidden = true)
-            @SessionAttribute(name = "userId", required = false) Long userId,
+            @CurrentUserId Long userId,
             @RequestParam("path")
             @NotBlank
             @Pattern(
@@ -75,7 +75,7 @@ public interface DirectoryApi {
     @GetMapping("/directory")
     ResponseEntity<List<ResourceResponse>> getFolderInfo(
             @Parameter(hidden = true)
-            @SessionAttribute(name = "userId", required = false) Long userId,
+            @CurrentUserId Long userId,
             @RequestParam("path")
             @Pattern(
                     regexp = PATH_GET_STRICT_VALIDATOR_REGEXP,

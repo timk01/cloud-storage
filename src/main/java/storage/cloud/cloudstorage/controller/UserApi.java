@@ -86,7 +86,7 @@ public interface UserApi {
     @PostMapping("/auth/sign-out")
     ResponseEntity<Void> logout(
             @Parameter(hidden = true)
-            @SessionAttribute(name = "userId", required = false) Long userId,
+            @CurrentUserId Long userId,
             HttpSession session
     );
 
@@ -153,7 +153,7 @@ public interface UserApi {
     @GetMapping("/user/me")
     ResponseEntity<UsernameResponse> getCurrentUser(
             @Parameter(hidden = true)
-            @SessionAttribute(name = "userId", required = false) Long userId,
+            @CurrentUserId Long userId,
             @Parameter(hidden = true)
             @SessionAttribute(name = "username", required = false) String username
     );

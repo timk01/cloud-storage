@@ -14,7 +14,10 @@ Content-Type: application/json
 
     const runId = response.body.username.substring("conflict_".length);
 
-    client.global.set("min_username", "u" + runId.substring(0, 4));
+    client.global.set(
+        "min_username",
+        "u" + runId.substring(runId.length - 4)
+    );
     client.global.set(
         "max_username",
         "aaaaaaaaaa" + runId

@@ -44,10 +44,6 @@ public class ResourcesController implements ResourcesApi {
             MultipartFile[] files,
             String path
     ) {
-        if (userId == null) {
-            throw new UnauthorizedActionException("User is not authorized");
-        }
-
         List<ResourceResponse> resourcesResponse = uploadService.upload(path, files, userId);
 
         return ResponseEntity
@@ -77,10 +73,6 @@ public class ResourcesController implements ResourcesApi {
             String fromPath,
             String toPath
     ) {
-        if (userId == null) {
-            throw new UnauthorizedActionException("User is not authorized");
-        }
-
         ResourceResponse resourceResponse = moveService.move(fromPath, toPath, userId);
 
         return ResponseEntity
@@ -93,10 +85,6 @@ public class ResourcesController implements ResourcesApi {
             Long userId,
             String path
     ) {
-        if (userId == null) {
-            throw new UnauthorizedActionException("User is not authorized");
-        }
-
         List<ResourceDownloadService.PreparedFileRecord> preparedResources
                 = downloadService.prepareResource(path, userId);
 
@@ -122,10 +110,6 @@ public class ResourcesController implements ResourcesApi {
             Long userId,
             String path
     ) {
-        if (userId == null) {
-            throw new UnauthorizedActionException("User is not authorized");
-        }
-
         deleteService.delete(path, userId);
 
         return ResponseEntity
@@ -138,10 +122,6 @@ public class ResourcesController implements ResourcesApi {
             Long userId,
             String path
     ) {
-        if (userId == null) {
-            throw new UnauthorizedActionException("User is not authorized");
-        }
-
         ResourceResponse resourceResponse = infoService.resourceInfo(path, userId);
 
         return ResponseEntity

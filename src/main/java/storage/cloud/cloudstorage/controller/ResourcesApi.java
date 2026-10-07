@@ -44,7 +44,7 @@ public interface ResourcesApi {
     @PostMapping(value = "/resource", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<List<ResourceResponse>> upload(
             @Parameter(hidden = true)
-            @SessionAttribute(name = "userId", required = false) Long userId,
+            @CurrentUserId Long userId,
             @RequestParam("object") MultipartFile[] files,
             @RequestParam("path")
             @Pattern(
@@ -70,7 +70,7 @@ public interface ResourcesApi {
     @GetMapping(value = "/resource/search")
     ResponseEntity<List<ResourceResponse>> search(
             @Parameter(hidden = true)
-            @SessionAttribute(name = "userId", required = false) Long userId,
+            @CurrentUserId Long userId,
             @RequestParam("query")
             @NotBlank
             String query
@@ -92,7 +92,7 @@ public interface ResourcesApi {
     @PostMapping(value = "/resource/move")
     ResponseEntity<ResourceResponse> move(
             @Parameter(hidden = true)
-            @SessionAttribute(name = "userId", required = false) Long userId,
+            @CurrentUserId Long userId,
             @RequestParam("from")
             @NotBlank
             @Pattern(
@@ -129,7 +129,7 @@ public interface ResourcesApi {
     @GetMapping(value = "/resource/download")
     ResponseEntity<StreamingResponseBody> download(
             @Parameter(hidden = true)
-            @SessionAttribute(name = "userId", required = false) Long userId,
+            @CurrentUserId Long userId,
             @RequestParam("path")
             @NotBlank
             @Pattern(
@@ -150,7 +150,7 @@ public interface ResourcesApi {
     @DeleteMapping(value = "/resource")
     ResponseEntity<Void> delete(
             @Parameter(hidden = true)
-            @SessionAttribute(name = "userId", required = false) Long userId,
+            @CurrentUserId Long userId,
             @RequestParam("path")
             @NotBlank
             @Pattern(
@@ -175,7 +175,7 @@ public interface ResourcesApi {
     @GetMapping(value = "/resource")
     ResponseEntity<ResourceResponse> info(
             @Parameter(hidden = true)
-            @SessionAttribute(name = "userId", required = false) Long userId,
+            @CurrentUserId Long userId,
             @RequestParam("path")
             @NotBlank
             @Pattern(

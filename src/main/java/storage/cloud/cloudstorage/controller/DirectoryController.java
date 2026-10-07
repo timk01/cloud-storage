@@ -23,10 +23,6 @@ public class DirectoryController implements DirectoryApi {
             Long userId,
             String path
     ) {
-        if (userId == null) {
-            throw new UnauthorizedActionException("User is not authorized");
-        }
-
         ResourceResponse resourceResponse = createFolderService.createFolder(path, userId);
 
         return ResponseEntity
@@ -39,10 +35,6 @@ public class DirectoryController implements DirectoryApi {
             Long userId,
             String path
     ) {
-        if (userId == null) {
-            throw new UnauthorizedActionException("User is not authorized");
-        }
-
         List<ResourceResponse> resourceResponse = getFolderInfoService.getFolderInfo(path, userId);
 
         return ResponseEntity
