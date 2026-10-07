@@ -1,35 +1,22 @@
 package storage.cloud.cloudstorage.config;
 
 import io.minio.MinioClient;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@RequiredArgsConstructor
 public class MinioConfig {
 
-    @Value("${minio.url}")
-    private String minioUrl;
-
-    @Value("${minio.user}")
-    private String minioUser;
-
-    @Value("${minio.password}")
-    private String minioPassword;
-
-    @Value("${minio.bucket.name}")
-    private String minBucketName;
+    private final MinioProperties properties;
 
     @Bean
     public MinioClient minioClient() {
         return MinioClient.builder()
-                .endpoint(minioUrl)
-                .credentials(minioUser, minioPassword)
+                .endpoint(properties.url())
+                .credentials(properties.user(), properties.password())
                 .build();
-    }
-
-    @Bean
-    public String minioBucketName() {
-        return this.minBucketName;
     }
 }

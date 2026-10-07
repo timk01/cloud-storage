@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.*;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
@@ -29,13 +30,13 @@ public class ResourceMoveServiceTest {
     @Mock
     private StorageInitializer storageInitializer;
 
+    @Mock
+    private MinioProperties properties;
+
     @Test
     public void moveFileIsSucceeded() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file1.txt";
@@ -74,11 +75,8 @@ public class ResourceMoveServiceTest {
 
     @Test
     public void moveDirectoryIsSucceeded() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
@@ -111,11 +109,8 @@ public class ResourceMoveServiceTest {
 
     @Test
     public void moveResourceFailsSinceFromPathDoesNotExist() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
@@ -140,11 +135,8 @@ public class ResourceMoveServiceTest {
 
     @Test
     public void moveResourceFailsSinceFromPathAndToPathAreTheSame() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
@@ -168,11 +160,8 @@ public class ResourceMoveServiceTest {
 
     @Test
     public void moveResourceFailsSinceFromAndToTypesAreDifferent() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/abc.txt";
@@ -197,11 +186,8 @@ public class ResourceMoveServiceTest {
 
     @Test
     public void moveResourceFailsSinceToPathAlreadyExists() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
@@ -227,11 +213,8 @@ public class ResourceMoveServiceTest {
 
     @Test
     public void moveDirectoryFailsSinceDestinationIsItsOwnSubdirectory() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_.../";

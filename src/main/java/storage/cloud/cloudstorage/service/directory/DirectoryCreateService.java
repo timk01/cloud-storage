@@ -3,6 +3,7 @@ package storage.cloud.cloudstorage.service.directory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
@@ -15,11 +16,11 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 @Service
 public class DirectoryCreateService {
     private final MinioRepository minioRepository;
-    private final String minioBucketName;
+    private final MinioProperties properties;
     private final StorageInitializer initializer;
 
     public ResourceResponse createFolder(String path, Long userId) {
-        String preparedRoot = buildPreparedRoot(userId, minioBucketName);
+        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
         initializer.initStorage(preparedRoot);
 
         String fullPath = buildPreparedPath(preparedRoot, path);

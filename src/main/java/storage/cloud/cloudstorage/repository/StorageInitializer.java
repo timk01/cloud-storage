@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import storage.cloud.cloudstorage.exception.technical.StorageException;
+import storage.cloud.cloudstorage.config.MinioProperties;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.security.NoSuchAlgorithmException;
 public class StorageInitializer {
 
     private final MinioClient minioClient;
-    private final String minioBucketName;
+    private final MinioProperties properties;
 
     public void initStorage(String fullPath) {
         try {
@@ -36,20 +37,20 @@ public class StorageInitializer {
         boolean doesBucketExist = minioClient.bucketExists(
                 BucketExistsArgs
                         .builder()
-                        .bucket(minioBucketName)
+                        .bucket(properties.bucket().name())
                         .build()
         );
         if (!doesBucketExist) {
             minioClient.makeBucket(
                     MakeBucketArgs
                             .builder()
-                            .bucket(minioBucketName)
+                            .bucket(properties.bucket().name())
                             .build()
             );
 
             log.info(
                     "MinIO bucket is created: bucketName={}",
-                    minioBucketName
+                    properties.bucket().name()
             );
         }
     }
@@ -60,7 +61,7 @@ public class StorageInitializer {
         Iterable<Result<Item>> rootResults = minioClient.listObjects(
                 ListObjectsArgs
                         .builder()
-                        .bucket(minioBucketName)
+                        .bucket(properties.bucket().name())
                         .prefix(root)
                         .maxKeys(1)
                         .build()
@@ -72,7 +73,7 @@ public class StorageInitializer {
             minioClient.putObject(
                     PutObjectArgs
                             .builder()
-                            .bucket(minioBucketName)
+                            .bucket(properties.bucket().name())
                             .object(root)
                             .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
                             .build()
@@ -80,7 +81,7 @@ public class StorageInitializer {
 
             log.info(
                     "MinIO bucket is created: bucketName={}",
-                    minioBucketName
+                    properties.bucket().name()
             );
         }
     }

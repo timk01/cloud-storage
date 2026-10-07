@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
+import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.InvalidFileNameException;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
@@ -37,13 +38,12 @@ class ResourceUploadServiceTest {
     @Mock
     private StorageInitializer storageInitializer;
 
+    @Mock
+    private MinioProperties properties;
     @Test
     public void uploadFileInfoIsSucceeded() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String parent = "parent1/";
         String minioRootFolder = "user-1-files/";
@@ -90,11 +90,8 @@ class ResourceUploadServiceTest {
     @ParameterizedTest
     @MethodSource("emptyUploadData")
     public void uploadFileInfoWasNotDoneSinceOriginalFilenameIsEmpty(String gorgonFilename) {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String parent = "parent1/";
         String minioRootFolder = "user-1-files/";
@@ -135,11 +132,8 @@ class ResourceUploadServiceTest {
     @ParameterizedTest
     @MethodSource("invalidFileUploadData")
     public void uploadFileInfoWasNotDoneSinceOriginalFileNameIsInvalid(String gorgonFilename) {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String parent = "parent1/";
         String minioRootFolder = "user-1-files/";

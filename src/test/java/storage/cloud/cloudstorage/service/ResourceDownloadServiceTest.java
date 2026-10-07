@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.SourceResourceNotFoundException;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
@@ -35,13 +36,13 @@ public class ResourceDownloadServiceTest {
     @Mock
     private StorageInitializer storageInitializer;
 
+    @Mock
+    private MinioProperties properties;
+
     @Test
     public void prepareFileSucceeded() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String path
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file2.txt";
@@ -74,11 +75,8 @@ public class ResourceDownloadServiceTest {
 
     @Test
     public void prepareFolderSucceeded() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String path = "folder1/folder2/folder3/";
         String minioRootFolder = "user-1-files/";
@@ -149,11 +147,8 @@ public class ResourceDownloadServiceTest {
 
     @Test
     public void prepareEmptyFolderSucceededWithNoRecordsToReturn() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String path = "folder1/folder2/folder3/";
         String minioRootFolder = "user-1-files/";
@@ -184,11 +179,8 @@ public class ResourceDownloadServiceTest {
 
     @Test
     public void prepareResourceIsFailedDueToNoResourceFound() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String path
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file2.txt";

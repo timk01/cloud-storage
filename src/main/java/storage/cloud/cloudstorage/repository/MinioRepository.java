@@ -9,6 +9,7 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
+import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.FileAlreadyExistsException;
 import storage.cloud.cloudstorage.exception.managed.FolderAlreadyExistsException;
 import storage.cloud.cloudstorage.exception.managed.FolderNotFoundException;
@@ -30,7 +31,7 @@ import java.util.List;
 public class MinioRepository {
 
     private final MinioClient minioClient;
-    private final String minioBucketName;
+    private final MinioProperties properties;
 
     public void creaTeFolder(String minioParentPath, String fullPath) {
         checkParentFolder(minioParentPath);
@@ -47,7 +48,7 @@ public class MinioRepository {
             minioClient.putObject(
                     PutObjectArgs
                             .builder()
-                            .bucket(minioBucketName)
+                            .bucket(properties.bucket().name())
                             .object(fullPath)
                             .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
                             .build()
@@ -61,7 +62,7 @@ public class MinioRepository {
         Iterable<Result<Item>> parentResults = minioClient.listObjects(
                 ListObjectsArgs
                         .builder()
-                        .bucket(minioBucketName)
+                        .bucket(properties.bucket().name())
                         .prefix(parentFolder)
                         .maxKeys(1)
                         .build()
@@ -83,7 +84,7 @@ public class MinioRepository {
             Iterable<Result<Item>> folderResults = minioClient.listObjects(
                     ListObjectsArgs
                             .builder()
-                            .bucket(minioBucketName)
+                            .bucket(properties.bucket().name())
                             .prefix(fullPath)
                             .recursive(false)
                             .build()
@@ -120,7 +121,7 @@ public class MinioRepository {
                     minioClient.statObject(
                             StatObjectArgs
                                     .builder()
-                                    .bucket(minioBucketName)
+                                    .bucket(properties.bucket().name())
                                     .object(fullPath)
                                     .build()
                     );
@@ -151,7 +152,7 @@ public class MinioRepository {
                 minioClient.putObject(
                         PutObjectArgs
                                 .builder()
-                                .bucket(minioBucketName)
+                                .bucket(properties.bucket().name())
                                 .object(fullPathTillFiles.get(index++))
                                 .stream(file.getInputStream(), file.getSize(), -1)
                                 .contentType(file.getContentType())
@@ -167,7 +168,7 @@ public class MinioRepository {
             Iterable<Result<Item>> results = minioClient.listObjects(
                     ListObjectsArgs
                             .builder()
-                            .bucket(minioBucketName)
+                            .bucket(properties.bucket().name())
                             .prefix(preparedRoot)
                             .recursive(true)
                             .build()
@@ -215,7 +216,7 @@ public class MinioRepository {
             return minioClient.statObject(
                     StatObjectArgs
                             .builder()
-                            .bucket(minioBucketName)
+                            .bucket(properties.bucket().name())
                             .object(pathTillObject)
                             .build()
             );
@@ -297,7 +298,7 @@ public class MinioRepository {
                         minioClient.putObject(
                                 PutObjectArgs
                                         .builder()
-                                        .bucket(minioBucketName)
+                                        .bucket(properties.bucket().name())
                                         .object(pathToFolderNormalized)
                                         .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
                                         .build()
@@ -330,12 +331,12 @@ public class MinioRepository {
             minioClient.copyObject(
                     CopyObjectArgs
                             .builder()
-                            .bucket(minioBucketName)
+                            .bucket(properties.bucket().name())
                             .object(toPath.get(i))
                             .source(
                                     CopySource
                                             .builder()
-                                            .bucket(minioBucketName)
+                                            .bucket(properties.bucket().name())
                                             .object(fromPaths.get(i))
                                             .build()
                             )
@@ -363,7 +364,7 @@ public class MinioRepository {
         minioClient.removeObject(
                 RemoveObjectArgs
                         .builder()
-                        .bucket(minioBucketName)
+                        .bucket(properties.bucket().name())
                         .object(fromPath)
                         .build()
         );
@@ -400,7 +401,7 @@ public class MinioRepository {
             minioClient.statObject(
                     StatObjectArgs
                             .builder()
-                            .bucket(minioBucketName)
+                            .bucket(properties.bucket().name())
                             .object(fullPath)
                             .build()
             );
@@ -423,7 +424,7 @@ public class MinioRepository {
             return minioClient.getObject(
                     GetObjectArgs
                             .builder()
-                            .bucket(minioBucketName)
+                            .bucket(properties.bucket().name())
                             .object(fullPathTillResource)
                             .build()
             );
@@ -479,7 +480,7 @@ public class MinioRepository {
         Iterable<Result<DeleteError>> results = minioClient.removeObjects(
                 RemoveObjectsArgs
                         .builder()
-                        .bucket(minioBucketName)
+                        .bucket(properties.bucket().name())
                         .objects(resources)
                         .build()
         );

@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.SourceResourceNotFoundException;
 import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
@@ -29,13 +30,13 @@ public class ResourceDeleteServiceTest {
     @Mock
     private StorageInitializer storageInitializer;
 
+    @Mock
+    private MinioProperties properties;
+
     @Test
     public void deleteFileIsSucceeded() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String path
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file1.txt";
@@ -56,11 +57,8 @@ public class ResourceDeleteServiceTest {
 
     @Test
     public void deleteFolderIsSucceeded() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String path
                 = "folder1/folder2/folder3/";
@@ -117,11 +115,8 @@ public class ResourceDeleteServiceTest {
 
     @Test
     public void deleteEmptyFolderIsSucceeded() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String path
                 = "folder1/folder2/folder3/";
@@ -157,11 +152,8 @@ public class ResourceDeleteServiceTest {
 
     @Test
     public void deleteFolderIsFailedDueToNoResourceFound() {
-        ReflectionTestUtils.setField(
-                service,
-                "minioBucketName",
-                "user-files"
-        );
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         String path
                 = "folder1/folder2/folder3/";
