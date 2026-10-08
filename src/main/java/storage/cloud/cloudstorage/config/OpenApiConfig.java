@@ -20,11 +20,20 @@ public class OpenApiConfig {
                             new MediaType().schema(new Schema<>().$ref("#/components/schemas/ErrorResponse"))
                     );
 
+                    if (operation.getResponses().containsKey("400")) {
+                        operation.getResponses().get("400").setContent(errorContent);
+                    }
+                    if (operation.getResponses().containsKey("401")) {
+                        operation.getResponses().get("401").setContent(errorContent);
+                    }
                     if (operation.getResponses().containsKey("404")) {
                         operation.getResponses().get("404").setContent(errorContent);
                     }
                     if (operation.getResponses().containsKey("409")) {
                         operation.getResponses().get("409").setContent(errorContent);
+                    }
+                    if (operation.getResponses().containsKey("500")) {
+                        operation.getResponses().get("500").setContent(errorContent);
                     }
                 })
         );

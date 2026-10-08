@@ -18,11 +18,7 @@ import storage.cloud.cloudstorage.response.UsernameResponse;
 
 @ApiResponse(
         responseCode = "500",
-        description = "Unknown server error",
-        content = @Content(
-                mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorResponse.class)
-        )
+        description = "Unknown server error"
 )
 @RequestMapping("/api")
 public interface UserApi {
@@ -43,19 +39,11 @@ public interface UserApi {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Validation error",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "Validation error"
             ),
             @ApiResponse(
                     responseCode = "409",
-                    description = "Username already exists",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "Username already exists"
             )
     })
     @PostMapping("/auth/sign-up")
@@ -76,11 +64,7 @@ public interface UserApi {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "User is not authorized",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "User is not authorized"
             )
     })
     @PostMapping("/auth/sign-out")
@@ -106,19 +90,11 @@ public interface UserApi {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Validation error",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "Validation error"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Invalid credentials",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "Invalid credentials"
             )
     })
     @PostMapping("/auth/sign-in")
@@ -143,11 +119,7 @@ public interface UserApi {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "User is not authorized",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "User is not authorized"
             )
     })
     @GetMapping("/user/me")
