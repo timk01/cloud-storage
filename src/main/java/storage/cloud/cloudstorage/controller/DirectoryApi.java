@@ -13,7 +13,10 @@ import jakarta.validation.constraints.Pattern;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 
 import java.util.List;
@@ -23,11 +26,6 @@ import java.util.List;
 @Validated
 @RequestMapping("/api")
 public interface DirectoryApi {
-
-    String PATH_POST_STRICT_VALIDATOR_REGEXP = "^([a-zA-Zа-яА-ЯёЁ0-9_\\s.-]+/)+$";
-    String PATH_GET_STRICT_VALIDATOR_REGEXP = "^$|^([a-zA-Zа-яА-ЯёЁ0-9_\\s.-]+/)+$";
-
-    String WRONG_PATH = "Wrong path is provided";
 
     @Operation(summary = "Create directory", description = "Creates a directory at the specified path")
     @ApiResponses({
@@ -49,8 +47,8 @@ public interface DirectoryApi {
             @RequestParam("path")
             @NotBlank
             @Pattern(
-                    regexp = PATH_POST_STRICT_VALIDATOR_REGEXP,
-                    message = WRONG_PATH
+                    regexp = PathCommonValidationConstraints.PATH_POST_STRICT_VALIDATOR_REGEXP,
+                    message = PathCommonValidationConstraints.WRONG_PATH
             )
             String path
     );
@@ -78,8 +76,8 @@ public interface DirectoryApi {
             @CurrentUserId Long userId,
             @RequestParam("path")
             @Pattern(
-                    regexp = PATH_GET_STRICT_VALIDATOR_REGEXP,
-                    message = WRONG_PATH
+                    regexp = PathCommonValidationConstraints.PATH_STRICT_VALIDATOR_REGEXP,
+                    message = PathCommonValidationConstraints.WRONG_PATH
             )
             String path
     );

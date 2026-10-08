@@ -27,10 +27,6 @@ import java.util.List;
 @Validated
 @RequestMapping("/api")
 public interface ResourcesApi {
-    String PATH_UPLOAD_VALIDATOR_REGEXP = "^$|^([a-zA-Zа-яА-ЯёЁ0-9_\\s.-]+/)+$";
-    String PATH_COMMON_VALIDATOR_REGEXP = "^[a-zA-Zа-яА-ЯёЁ0-9_\\s./-]+$";
-    String WRONG_PATH = "Wrong path is provided";
-    String INVALID_SYMBOLS_IN_PATH = "Invalid symbols in path are detected";
 
     @Operation(summary = "Upload file(s)", description = "Upload file(s) to the specified resource path")
     @ApiResponses({
@@ -53,8 +49,8 @@ public interface ResourcesApi {
             @RequestParam("object") MultipartFile[] files,
             @RequestParam("path")
             @Pattern(
-                    regexp = PATH_UPLOAD_VALIDATOR_REGEXP,
-                    message = WRONG_PATH
+                    regexp = PathCommonValidationConstraints.PATH_STRICT_VALIDATOR_REGEXP,
+                    message = PathCommonValidationConstraints.WRONG_PATH
             )
             String path
     );
@@ -101,15 +97,16 @@ public interface ResourcesApi {
             @RequestParam("from")
             @NotBlank
             @Pattern(
-                    regexp = PATH_COMMON_VALIDATOR_REGEXP,
-                    message = INVALID_SYMBOLS_IN_PATH
+                    regexp = PathCommonValidationConstraints.PATH_COMMON_VALIDATOR_REGEXP,
+                    message = PathCommonValidationConstraints.INVALID_SYMBOLS_IN_PATH
             )
             String fromPath,
+
             @RequestParam("to")
             @NotBlank
             @Pattern(
-                    regexp = PATH_COMMON_VALIDATOR_REGEXP,
-                    message = INVALID_SYMBOLS_IN_PATH
+                    regexp = PathCommonValidationConstraints.PATH_COMMON_VALIDATOR_REGEXP,
+                    message = PathCommonValidationConstraints.INVALID_SYMBOLS_IN_PATH
             )
             String toPath
     );
@@ -138,8 +135,8 @@ public interface ResourcesApi {
             @RequestParam("path")
             @NotBlank
             @Pattern(
-                    regexp = PATH_COMMON_VALIDATOR_REGEXP,
-                    message = INVALID_SYMBOLS_IN_PATH
+                    regexp = PathCommonValidationConstraints.PATH_COMMON_VALIDATOR_REGEXP,
+                    message = PathCommonValidationConstraints.INVALID_SYMBOLS_IN_PATH
             )
             String path
     );
@@ -159,8 +156,8 @@ public interface ResourcesApi {
             @RequestParam("path")
             @NotBlank
             @Pattern(
-                    regexp = PATH_COMMON_VALIDATOR_REGEXP,
-                    message = INVALID_SYMBOLS_IN_PATH
+                    regexp = PathCommonValidationConstraints.PATH_COMMON_VALIDATOR_REGEXP,
+                    message = PathCommonValidationConstraints.INVALID_SYMBOLS_IN_PATH
             )
             String path
     );
@@ -184,8 +181,8 @@ public interface ResourcesApi {
             @RequestParam("path")
             @NotBlank
             @Pattern(
-                    regexp = PATH_COMMON_VALIDATOR_REGEXP,
-                    message = INVALID_SYMBOLS_IN_PATH
+                    regexp = PathCommonValidationConstraints.PATH_COMMON_VALIDATOR_REGEXP,
+                    message = PathCommonValidationConstraints.INVALID_SYMBOLS_IN_PATH
             )
             String path
     );
