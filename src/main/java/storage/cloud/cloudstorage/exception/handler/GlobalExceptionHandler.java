@@ -31,7 +31,6 @@ public class GlobalExceptionHandler {
 
         KNOWN_EXCEPTIONS_STATUS_MAP.put(InvalidLoginDataException.class, HttpStatus.UNAUTHORIZED);
         KNOWN_EXCEPTIONS_STATUS_MAP.put(UnauthorizedActionException.class, HttpStatus.UNAUTHORIZED);
-        KNOWN_EXCEPTIONS_STATUS_MAP.put(UserNotAuthenticatedException.class, HttpStatus.UNAUTHORIZED);
 
         KNOWN_EXCEPTIONS_STATUS_MAP.put(ParentFolderHasNotFoundException.class, HttpStatus.NOT_FOUND);
 
