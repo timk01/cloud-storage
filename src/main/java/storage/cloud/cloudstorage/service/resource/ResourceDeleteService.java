@@ -29,7 +29,7 @@ public class ResourceDeleteService {
 
         validateResourceExists(storage.doesPathExist(fullPathTo), fullPathTo);
 
-        String type = path.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
+        Type type = path.endsWith("/") ? Type.DIRECTORY : Type.FILE;
 
         deleteResources(type, fullPathTo);
 
@@ -37,12 +37,12 @@ public class ResourceDeleteService {
                 "Resource is deleted for user: userId={}, path={}; with type={}",
                 userId,
                 path,
-                type
+                type.name()
         );
     }
 
-    private void deleteResources(String type, String fullPathTo) {
-        if ("FILE".equals(type)) {
+    private void deleteResources(Type type, String fullPathTo) {
+        if (Type.FILE == type) {
             storage.deleteFile(fullPathTo);
         } else {
             List<StorageItem> storageItems = storage.retrieveItemsRecursively(fullPathTo);

@@ -12,6 +12,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import storage.cloud.cloudstorage.controller.ResourcesController;
+import storage.cloud.cloudstorage.service.Type;
 import storage.cloud.cloudstorage.service.resource.*;
 
 import java.io.OutputStream;
@@ -57,7 +58,7 @@ public class ResourceDownloadWebMvcTest {
                 new ResourceDownloadService.PreparedFileRecord(
                         "file2.txt",
                         "user-1-files/folder1/folder2/folder3/file2.txt",
-                        "FILE"
+                        Type.FILE
                 )
         );
 
@@ -104,22 +105,22 @@ public class ResourceDownloadWebMvcTest {
                 new ResourceDownloadService.PreparedFileRecord(
                         "gorgon.jpg",
                         "user-1-files/folder1/folder2/folder3/gorgon.jpg",
-                        "FILE"
+                        Type.FILE
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "newFolder/",
                         "user-1-files/folder1/folder2/folder3/newFolder/",
-                        "DIRECTORY"
+                        Type.DIRECTORY
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "newFolder/file2.txt",
                         "user-1-files/folder1/folder2/folder3/newFolder/file2.txt",
-                        "FILE"
+                        Type.FILE
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "folder4/folder5/b.txt",
                         "user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt",
-                        "FILE"
+                        Type.FILE
                 )
         );
 

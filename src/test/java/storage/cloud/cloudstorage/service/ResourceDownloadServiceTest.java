@@ -55,7 +55,7 @@ public class ResourceDownloadServiceTest {
                         "file2.txt",
                         "user-1-files/gorgon_root/gorgon_archive/" +
                                 "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file2.txt",
-                        "FILE"
+                        Type.FILE
                 )
         );
 
@@ -125,22 +125,22 @@ public class ResourceDownloadServiceTest {
                 new ResourceDownloadService.PreparedFileRecord(
                         "gorgon.jpg",
                         "user-1-files/folder1/folder2/folder3/gorgon.jpg",
-                        "DIRECTORY"
+                        Type.DIRECTORY
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "newFolder/",
                         "user-1-files/folder1/folder2/folder3/newFolder/",
-                        "DIRECTORY"
+                        Type.DIRECTORY
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "newFolder/file2.txt",
                         "user-1-files/folder1/folder2/folder3/newFolder/file2.txt",
-                        "DIRECTORY"
+                        Type.DIRECTORY
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "folder4/folder5/b.txt",
                         "user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt",
-                        "DIRECTORY"
+                        Type.DIRECTORY
                 )
         );
 
@@ -217,7 +217,7 @@ public class ResourceDownloadServiceTest {
                         "file2.txt",
                         "user-1-files/gorgon_root/gorgon_archive/" +
                                 "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file2.txt",
-                        "FILE"
+                        Type.FILE
                 )
         );
 
@@ -245,22 +245,22 @@ public class ResourceDownloadServiceTest {
                 new ResourceDownloadService.PreparedFileRecord(
                         "gorgon.jpg",
                         "user-1-files/folder1/folder2/folder3/gorgon.jpg",
-                        "DIRECTORY"
+                        Type.DIRECTORY
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "newFolder/",
                         "user-1-files/folder1/folder2/folder3/newFolder/",
-                        "DIRECTORY"
+                        Type.DIRECTORY
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "newFolder/file2.txt",
                         "user-1-files/folder1/folder2/folder3/newFolder/file2.txt",
-                        "DIRECTORY"
+                        Type.DIRECTORY
                 ),
                 new ResourceDownloadService.PreparedFileRecord(
                         "folder4/folder5/b.txt",
                         "user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt",
-                        "DIRECTORY"
+                        Type.DIRECTORY
                 )
         );
 

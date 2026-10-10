@@ -26,8 +26,8 @@ public class ResourceMoveService {
 
         String fullPathFrom = buildPreparedPath(preparedRoot, fromPath);
         String fullPathTo = buildPreparedPath(preparedRoot, toPath);
-        String fromType = fromPath.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
-        String toType = toPath.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
+        Type fromType = fromPath.endsWith("/") ? Type.DIRECTORY : Type.FILE;
+        Type toType = toPath.endsWith("/") ? Type.DIRECTORY : Type.FILE;
 
         validateResourceExists(
                 storage.doesPathExist(fullPathFrom), fullPathFrom
@@ -48,7 +48,7 @@ public class ResourceMoveService {
                 userId,
                 fromPath,
                 toPath,
-                fromType
+                fromType.name()
         );
 
         return response;
@@ -64,8 +64,8 @@ public class ResourceMoveService {
         }
     }
 
-    private void validateResourcesTypes(String fromType, String toType) {
-        if (!fromType.equals(toType)) {
+    private void validateResourcesTypes(Type fromType, Type toType) {
+        if (fromType != toType) {
             throw new ResourceTypeMismatchException("Source and destination types are different");
         }
     }
@@ -80,8 +80,8 @@ public class ResourceMoveService {
         }
     }
 
-    private void validateDirectoryPaths(String fromPath, String toPath, String fromType) {
-        if (fromType.equals("DIRECTORY") && toPath.startsWith(fromPath)) {
+    private void validateDirectoryPaths(String fromPath, String toPath, Type fromType) {
+        if (Type.DIRECTORY == fromType && toPath.startsWith(fromPath)) {
             throw new ResourceMoveConflictException(
                     String.format(
                             "Resource cannot moved by path " +
@@ -91,8 +91,8 @@ public class ResourceMoveService {
         }
     }
 
-    private ResourceResponse moveResource(String toPath, String fromType, String fullPathFrom, String fullPathTo) {
-        if ("FILE".equals(fromType)) {
+    private ResourceResponse moveResource(String toPath, Type fromType, String fullPathFrom, String fullPathTo) {
+        if (Type.FILE == fromType) {
             long resourceSize = storage.retrieveResourceSize(fullPathFrom);
 
             storage.moveFile(fullPathFrom, fullPathTo);
@@ -103,7 +103,7 @@ public class ResourceMoveService {
                     .path(path)
                     .name(name)
                     .size(resourceSize)
-                    .type(Type.FILE.name())
+                    .type(fromType.name())
                     .build();
         } else {
             storage.moveDirectory(fullPathFrom, fullPathTo);
@@ -112,7 +112,7 @@ public class ResourceMoveService {
             return ResourceResponse.builder()
                     .path(result.resourceParentPath())
                     .name(result.folderName())
-                    .type(Type.DIRECTORY.name())
+                    .type(fromType.name())
                     .build();
         }
     }

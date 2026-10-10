@@ -34,7 +34,7 @@ public class ResourceDownloadService {
                 String folder = extractName(removeTrailingSlash(path)) + "/";
 
                 processEmptyFolder(folder, outputStream);
-            } else if ("FILE".equals(preparedFileRecords.getFirst().type())) {
+            } else if (Type.FILE == preparedFileRecords.getFirst().type()) {
                 processFile(preparedFileRecords, outputStream);
             } else {
                 processFolder(preparedFileRecords, outputStream);
@@ -97,8 +97,7 @@ public class ResourceDownloadService {
 
         String fullPathTo = buildPreparedPath(preparedRoot, path);
 
-        String type = path.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
-
+        Type type = path.endsWith("/") ? Type.DIRECTORY : Type.FILE;
         validateResourceExists(
                 storage.doesPathExist(fullPathTo), fullPathTo
         );
@@ -107,10 +106,10 @@ public class ResourceDownloadService {
                 "Resource is validated for download: userId={}, path={}; with type={}",
                 userId,
                 path,
-                type
+                type.name()
         );
 
-        if ("FILE".equals(type)) {
+        if (Type.FILE == type) {
             return Collections.singletonList(
                     new PreparedFileRecord(
                             extractName(path),
@@ -141,7 +140,7 @@ public class ResourceDownloadService {
 
             String fullPathTillResource,
 
-            String type
+            Type type
     ) {
     }
 }

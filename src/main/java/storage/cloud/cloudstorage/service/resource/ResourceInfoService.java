@@ -27,8 +27,8 @@ public class ResourceInfoService {
                 storage.doesPathExist(fullPath), fullPath
         );
 
-        String type = path.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
-        if ("FILE".equals(type)) {
+        Type type = path.endsWith("/") ? Type.DIRECTORY : Type.FILE;
+        if (Type.FILE == type) {
             long resourceSize = storage.retrieveResourceSize(fullPath);
             String name = extractName(path);
             String parentPath = extractParentPathForFile(path);
@@ -44,7 +44,7 @@ public class ResourceInfoService {
                     .path(parentPath)
                     .name(name)
                     .size(resourceSize)
-                    .type(Type.FILE.name())
+                    .type(type.name())
                     .build();
         } else {
             FolderPathParts result = getResult(path, fullPath);
@@ -53,13 +53,13 @@ public class ResourceInfoService {
                     "Resource info is received for user: userId={}, path={}; with type={}",
                     userId,
                     path,
-                    type
+                    type.name()
             );
 
             return ResourceResponse.builder()
                     .path(result.resourceParentPath())
                     .name(result.folderName())
-                    .type(Type.DIRECTORY.name())
+                    .type(type.name())
                     .build();
         }
     }
