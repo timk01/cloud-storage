@@ -16,7 +16,6 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 public class ResourceInfoService {
 
     private final ObjectStorage storage;
-    private final MinioProperties properties;
 
     public ResourceResponse resourceInfo(String path, Long userId) {
         String preparedRoot = buildPreparedRoot(userId);

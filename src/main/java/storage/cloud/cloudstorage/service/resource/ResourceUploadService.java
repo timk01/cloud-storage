@@ -23,7 +23,6 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.buildPrepa
 @Service
 public class ResourceUploadService {
     private final ObjectStorage storage;
-    private final MinioProperties properties;
 
     public List<ResourceResponse> upload(String path, MultipartFile[] files, Long userId) {
         String preparedRoot = buildPreparedRoot(userId);

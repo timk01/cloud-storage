@@ -19,7 +19,6 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 @Service
 public class ResourceMoveService {
     private final ObjectStorage storage;
-    private final MinioProperties properties;
 
     public ResourceResponse move(String fromPath, String toPath, Long userId) {
         String preparedRoot = buildPreparedRoot(userId);

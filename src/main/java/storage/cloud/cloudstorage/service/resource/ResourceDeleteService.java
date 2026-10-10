@@ -20,7 +20,6 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 public class ResourceDeleteService {
 
     private final ObjectStorage storage;
-    private final MinioProperties properties;
 
     public void delete(String path, Long userId) {
         String preparedRoot = buildPreparedRoot(userId);

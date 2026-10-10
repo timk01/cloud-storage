@@ -3,7 +3,6 @@ package storage.cloud.cloudstorage.service.resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.technical.ResourceDownloadException;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageItem;
@@ -26,7 +25,6 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 public class ResourceDownloadService {
 
     private final ObjectStorage storage;
-    private final MinioProperties properties;
 
     public void download(List<PreparedFileRecord> preparedFileRecords, OutputStream outputStream, String path) {
         try {
@@ -62,11 +60,7 @@ public class ResourceDownloadService {
             throws IOException {
         PreparedFileRecord file = preparedFileRecords.getFirst();
         try (InputStream inputStream = storage.readData(file.fullPathTillResource())) {
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, length);
-            }
+            inputStream.transferTo(outputStream);
         }
     }
 
@@ -79,11 +73,7 @@ public class ResourceDownloadService {
                 ZipEntry entry = new ZipEntry(fileRecord.pathForArchive());
                 zos.putNextEntry(entry);
 
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = inputStream.read(buffer)) != -1) {
-                    zos.write(buffer, 0, length);
-                }
+                inputStream.transferTo(zos);
 
                 zos.closeEntry();
             }

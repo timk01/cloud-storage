@@ -19,7 +19,6 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 @Service
 public class ResourceSearchService {
     private final ObjectStorage storage;
-    private final MinioProperties properties;
 
     public List<ResourceResponse> search(String query, Long userId) {
         String preparedRoot = buildPreparedRoot(userId);

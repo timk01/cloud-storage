@@ -25,7 +25,6 @@ public class UserService {
     private final UserRepository repository;
     private final PasswordEncoder encoder;
     private final StorageInitializer initializer;
-    private final MinioProperties properties;
 
     @Transactional
     public UserResponse register(UserRegisterRequest userRegisterDto) {
