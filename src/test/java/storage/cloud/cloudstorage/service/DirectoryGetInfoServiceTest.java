@@ -5,7 +5,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.response.ResourceResponse;
@@ -25,14 +24,8 @@ public class DirectoryGetInfoServiceTest {
     @Mock
     private ObjectStorage storage;
 
-    @Mock
-    private MinioProperties properties;
-
     @Test
     public void getFolderInfoIsSucceeded() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String parent = "parent1/";
         String minioRootFolder = "user-1-files/";
         String fullPath = minioRootFolder + parent;

@@ -5,7 +5,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.*;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.response.ResourceResponse;
@@ -24,14 +23,8 @@ public class ResourceMoveServiceTest {
     @Mock
     private ObjectStorage storage;
 
-    @Mock
-    private MinioProperties properties;
-
     @Test
     public void moveFileIsSucceeded() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file1.txt";
         String pathTo = "folder9/folder10/test_file1.txt";
@@ -68,9 +61,6 @@ public class ResourceMoveServiceTest {
 
     @Test
     public void moveDirectoryIsSucceeded() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
         String pathTo = "folder9/folder10/";
@@ -101,9 +91,6 @@ public class ResourceMoveServiceTest {
 
     @Test
     public void moveResourceFailsSinceFromPathDoesNotExist() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
         String pathTo = "folder9/folder10/";
@@ -126,9 +113,6 @@ public class ResourceMoveServiceTest {
 
     @Test
     public void moveResourceFailsSinceFromPathAndToPathAreTheSame() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
         String pathTo = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
@@ -150,9 +134,6 @@ public class ResourceMoveServiceTest {
 
     @Test
     public void moveResourceFailsSinceFromAndToTypesAreDifferent() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/abc.txt";
         String pathTo = "folder9/folder10/";
@@ -175,9 +156,6 @@ public class ResourceMoveServiceTest {
 
     @Test
     public void moveResourceFailsSinceToPathAlreadyExists() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/";
         String pathTo = "folder9/folder10/";
@@ -201,9 +179,6 @@ public class ResourceMoveServiceTest {
 
     @Test
     public void moveDirectoryFailsSinceDestinationIsItsOwnSubdirectory() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String pathFrom
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_.../";
         String pathTo = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_.../folder10/";

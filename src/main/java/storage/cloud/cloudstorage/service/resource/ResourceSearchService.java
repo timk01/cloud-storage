@@ -22,7 +22,7 @@ public class ResourceSearchService {
     private final MinioProperties properties;
 
     public List<ResourceResponse> search(String query, Long userId) {
-        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
+        String preparedRoot = buildPreparedRoot(userId);
 
         List<StorageItem> storageItems = storage.retrieveItemsRecursively(preparedRoot);
         List<ResourceResponse> resources = new ArrayList<>();

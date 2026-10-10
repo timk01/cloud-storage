@@ -19,7 +19,7 @@ public class ResourceInfoService {
     private final MinioProperties properties;
 
     public ResourceResponse resourceInfo(String path, Long userId) {
-        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
+        String preparedRoot = buildPreparedRoot(userId);
 
         String fullPath = buildPreparedPath(preparedRoot, path);
 

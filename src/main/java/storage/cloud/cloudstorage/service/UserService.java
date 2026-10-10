@@ -37,7 +37,7 @@ public class UserService {
         User user = repository.save(new User(userRegisterDto.username(), encodedPass));
 
         Long userId = user.getId();
-        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
+        String preparedRoot = buildPreparedRoot(userId);
         initializer.initStorage(preparedRoot);
 
         log.info(
@@ -58,7 +58,7 @@ public class UserService {
         }
 
         Long userId = user.getId();
-        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
+        String preparedRoot = buildPreparedRoot(userId);
         initializer.initStorage(preparedRoot);
 
         log.info(

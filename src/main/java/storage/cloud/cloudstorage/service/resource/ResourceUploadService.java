@@ -26,7 +26,7 @@ public class ResourceUploadService {
     private final MinioProperties properties;
 
     public List<ResourceResponse> upload(String path, MultipartFile[] files, Long userId) {
-        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
+        String preparedRoot = buildPreparedRoot(userId);
 
         String preparedPath = buildPreparedPath(preparedRoot, path);
         List<PreparedFile> preparedFiles = getPreparedFiles(files, preparedPath);

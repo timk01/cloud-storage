@@ -9,7 +9,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
-import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.entity.User;
 import storage.cloud.cloudstorage.exception.managed.InvalidLoginDataException;
 import storage.cloud.cloudstorage.exception.managed.UserAlreadyExistsException;
@@ -40,9 +39,6 @@ class UserServiceTest {
     @Mock
     private StorageInitializer storageInitializer;
 
-    @Mock
-    private MinioProperties properties;
-
     @Captor
     private ArgumentCaptor<User> userArgumentCaptor;
 
@@ -61,8 +57,6 @@ class UserServiceTest {
         when(repository.save(any(User.class))).thenReturn(savedUser);
 
         String minioRootFolder = "user-1-files/";
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         UserRegisterRequest dto = new UserRegisterRequest(username, passwordOriginal);
         UserResponse expected = new UserResponse(1L, username);
@@ -97,8 +91,6 @@ class UserServiceTest {
         when(encoder.matches(passwordOriginal, passwordHashed)).thenReturn(true);
 
         String minioRootFolder = "user-1-files/";
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
 
         UserLoginRequest dto = new UserLoginRequest(username, passwordOriginal);
         UserResponse expected = new UserResponse(1L, username);

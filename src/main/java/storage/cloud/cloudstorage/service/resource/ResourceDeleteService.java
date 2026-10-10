@@ -23,7 +23,7 @@ public class ResourceDeleteService {
     private final MinioProperties properties;
 
     public void delete(String path, Long userId) {
-        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
+        String preparedRoot = buildPreparedRoot(userId);
 
         String fullPathTo = buildPreparedPath(preparedRoot, path);
 

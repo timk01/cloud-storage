@@ -93,7 +93,7 @@ public class ResourceDownloadService {
     }
 
     public List<PreparedFileRecord> prepareResource(String path, Long userId) {
-        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
+        String preparedRoot = buildPreparedRoot(userId);
 
         String fullPathTo = buildPreparedPath(preparedRoot, path);
 

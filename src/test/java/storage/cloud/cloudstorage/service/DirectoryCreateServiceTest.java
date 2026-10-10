@@ -5,13 +5,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.directory.DirectoryCreateService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class DirectoryCreateServiceTest {
@@ -22,13 +22,8 @@ public class DirectoryCreateServiceTest {
     @Mock
     private ObjectStorage storage;
 
-    @Mock
-    private MinioProperties properties;
-
     @Test
     public void createStorageIsSucceeded() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
         String cleanPath = "folder_dd1503f9-49ec-4b9c-931c-4a088bba7bc7";
         String pathAsDirectory = cleanPath + "/";
         String minioRootFolder = "user-1-files/";

@@ -18,7 +18,7 @@ public class DirectoryCreateService {
     private final MinioProperties properties;
 
     public ResourceResponse createFolder(String path, Long userId) {
-        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
+        String preparedRoot = buildPreparedRoot(userId);
 
         String fullPath = buildPreparedPath(preparedRoot, path);
         FolderPathParts result = getResult(path, fullPath);

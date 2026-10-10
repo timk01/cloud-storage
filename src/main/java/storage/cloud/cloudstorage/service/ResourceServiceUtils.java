@@ -4,6 +4,8 @@ import storage.cloud.cloudstorage.exception.managed.SourceResourceNotFoundExcept
 
 public final class ResourceServiceUtils {
 
+    public static final String USER_ROOT_PATTERN = "user-%d-files/";
+
     private ResourceServiceUtils() {
     }
 
@@ -48,9 +50,8 @@ public final class ResourceServiceUtils {
         return preparedRoot + path;
     }
 
-    public static String buildPreparedRoot(Long userId, String minioBucketName) {
-        String[] splitBucket = minioBucketName.split("-");
-        return splitBucket[0] + "-" + userId + "-" + splitBucket[1] + "/";
+    public static String buildPreparedRoot(Long userId) {
+        return USER_ROOT_PATTERN.formatted(userId);
     }
 
     public static void validateResourceExists(boolean doesResourceExist, String pathTillResource) {

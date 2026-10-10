@@ -22,7 +22,7 @@ public class DirectoryGetInfoService {
     private final MinioProperties properties;
 
     public List<ResourceResponse> getFolderInfo(String path, Long userId) {
-        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
+        String preparedRoot = buildPreparedRoot(userId);
 
         String fullPath = buildPreparedPath(preparedRoot, path);
         List<StorageItem> storageItems = storage.retrieveDirectoryItems(fullPath);

@@ -5,7 +5,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.SourceResourceNotFoundException;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageItem;
@@ -31,14 +30,8 @@ public class ResourceDownloadServiceTest {
     @Mock
     private ObjectStorage storage;
 
-    @Mock
-    private MinioProperties properties;
-
     @Test
     public void prepareFileSucceeded() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String path
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file2.txt";
         String minioRootFolder = "user-1-files/";
@@ -69,9 +62,6 @@ public class ResourceDownloadServiceTest {
 
     @Test
     public void prepareFolderSucceeded() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String path = "folder1/folder2/folder3/";
         String minioRootFolder = "user-1-files/";
 
@@ -154,9 +144,6 @@ public class ResourceDownloadServiceTest {
 
     @Test
     public void prepareEmptyFolderSucceededWithNoRecordsToReturn() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String path = "folder1/folder2/folder3/";
         String minioRootFolder = "user-1-files/";
 
@@ -187,9 +174,6 @@ public class ResourceDownloadServiceTest {
 
     @Test
     public void prepareResourceIsFailedDueToNoResourceFound() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String path
                 = "gorgon_root/gorgon_archive/gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/file2.txt";
         String minioRootFolder = "user-1-files/";

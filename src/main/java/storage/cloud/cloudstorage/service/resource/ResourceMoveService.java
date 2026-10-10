@@ -22,7 +22,7 @@ public class ResourceMoveService {
     private final MinioProperties properties;
 
     public ResourceResponse move(String fromPath, String toPath, Long userId) {
-        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
+        String preparedRoot = buildPreparedRoot(userId);
 
         String fullPathFrom = buildPreparedPath(preparedRoot, fromPath);
         String fullPathTo = buildPreparedPath(preparedRoot, toPath);

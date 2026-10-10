@@ -11,7 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
-import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.InvalidFileNameException;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.response.ResourceResponse;
@@ -33,16 +32,9 @@ class ResourceUploadServiceTest {
     @Mock
     private ObjectStorage storage;
 
-    @Mock
-    private MinioProperties properties;
-
     @Test
     public void uploadFileInfoIsSucceeded() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String parent = "parent1/";
-        String minioRootFolder = "user-1-files/";
 
         Long userId = 1L;
 
@@ -85,11 +77,7 @@ class ResourceUploadServiceTest {
     @ParameterizedTest
     @MethodSource("emptyUploadData")
     public void uploadFileInfoWasNotDoneSinceOriginalFilenameIsEmpty(String gorgonFilename) {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String parent = "parent1/";
-        String minioRootFolder = "user-1-files/";
 
         Long userId = 1L;
 
@@ -126,11 +114,7 @@ class ResourceUploadServiceTest {
     @ParameterizedTest
     @MethodSource("invalidFileUploadData")
     public void uploadFileInfoWasNotDoneSinceOriginalFileNameIsInvalid(String gorgonFilename) {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String parent = "parent1/";
-        String minioRootFolder = "user-1-files/";
 
         Long userId = 1L;
 

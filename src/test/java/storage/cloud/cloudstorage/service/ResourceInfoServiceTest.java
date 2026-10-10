@@ -5,7 +5,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.SourceResourceNotFoundException;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.response.ResourceResponse;
@@ -24,14 +23,8 @@ public class ResourceInfoServiceTest {
     @Mock
     private ObjectStorage storage;
 
-    @Mock
-    private MinioProperties properties;
-
     @Test
     public void gettingResourceInfoForFileIsSucceeded() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String path
                 = "folder1/folder2/folder3/gorgon.jpg";
         String minioRootFolder = "user-1-files/";
@@ -57,9 +50,6 @@ public class ResourceInfoServiceTest {
 
     @Test
     public void gettingResourceInfoForFolderIsSucceeded() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String path
                 = "folder1/folder2/folder3/";
         String minioRootFolder = "user-1-files/";
@@ -80,9 +70,6 @@ public class ResourceInfoServiceTest {
 
     @Test
     public void gettingResourceInfoForRootFolderIsSucceeded() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String path
                 = "folder1/";
         String minioRootFolder = "user-1-files/";
@@ -103,9 +90,6 @@ public class ResourceInfoServiceTest {
 
     @Test
     public void gettingResourceInfoForFileFailsDueToPathDoesNotExist() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String path
                 = "folder1/folder2/folder3/abrakadabra";
         String minioRootFolder = "user-1-files/";
@@ -123,9 +107,6 @@ public class ResourceInfoServiceTest {
 
     @Test
     public void gettingResourceInfoForFolderFailsDueToPathDoesNotExist() {
-        when(properties.bucket())
-                .thenReturn(new MinioProperties.Bucket("user-files"));
-
         String path
                 = "folder1/folder2/folder3/";
         String minioRootFolder = "user-1-files/";
