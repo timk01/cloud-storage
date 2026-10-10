@@ -1,12 +1,12 @@
 package storage.cloud.cloudstorage.service.resource;
 
-import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.config.MinioProperties;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
+import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
 
@@ -19,7 +19,7 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 @RequiredArgsConstructor
 @Service
 public class ResourceSearchService {
-    private final MinioRepository minioRepository;
+    private final ObjectStorage storage;
     private final MinioProperties properties;
     private final StorageInitializer initializer;
 
@@ -27,10 +27,10 @@ public class ResourceSearchService {
         String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
         initializer.initStorage(preparedRoot);
 
-        List<Item> searchResult = minioRepository.search(preparedRoot);
+        List<StorageItem> storageItems = storage.retrieveItemsRecursively(preparedRoot);
         List<ResourceResponse> resources = new ArrayList<>();
-        for (Item item : searchResult) {
-            String fullPathTillItem = item.objectName();
+        for (StorageItem item : storageItems) {
+            String fullPathTillItem = item.resourcePath();
             String itemFullPathWithoutRoot = fullPathTillItem.replace(preparedRoot, "");
 
             String normalizedQuery = query.toLowerCase();
@@ -50,7 +50,7 @@ public class ResourceSearchService {
                     );
                 }
             } else {
-                String fileName = parseFileName(item);
+                String fileName = parseFileName(item.resourcePath());
                 if (fileName.toLowerCase().contains(normalizedQuery)) {
                     String path = itemFullPathWithoutRoot.replace(fileName, "");
                     resources.add(
@@ -76,8 +76,7 @@ public class ResourceSearchService {
         return resources;
     }
 
-    private String parseFileName(Item item) {
-        String fullname = item.objectName();
-        return extractName(fullname);
+    private String parseFileName(String resourcePath) {
+        return extractName(resourcePath);
     }
 }

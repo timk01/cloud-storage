@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.config.MinioProperties;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
@@ -15,7 +15,7 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 @RequiredArgsConstructor
 @Service
 public class DirectoryCreateService {
-    private final MinioRepository minioRepository;
+    private final ObjectStorage storage;
     private final MinioProperties properties;
     private final StorageInitializer initializer;
 
@@ -26,7 +26,7 @@ public class DirectoryCreateService {
         String fullPath = buildPreparedPath(preparedRoot, path);
         FolderPathParts result = getResult(path, fullPath);
 
-        minioRepository.creaTeFolder(result.minioParentPath(), fullPath);
+        storage.creaTeFolder(result.minioParentPath(), fullPath);
 
         log.info(
                 "Folder is created for user: userId={}, original path={};" +

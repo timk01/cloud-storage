@@ -1,12 +1,12 @@
 package storage.cloud.cloudstorage.service.resource;
 
-import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.config.MinioProperties;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
+import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.service.Type;
 
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 @Service
 public class ResourceDeleteService {
 
-    private final MinioRepository minioRepository;
+    private final ObjectStorage storage;
     private final MinioProperties properties;
     private final StorageInitializer initializer;
 
@@ -30,7 +30,7 @@ public class ResourceDeleteService {
 
         String fullPathTo = buildPreparedPath(preparedRoot, path);
 
-        validateResourceExists(minioRepository.doesPathExist(fullPathTo), fullPathTo);
+        validateResourceExists(storage.doesPathExist(fullPathTo), fullPathTo);
 
         String type = path.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
 
@@ -46,22 +46,22 @@ public class ResourceDeleteService {
 
     private void deleteResources(String type, String fullPathTo) {
         if ("FILE".equals(type)) {
-            minioRepository.deleteFile(fullPathTo);
+            storage.deleteFile(fullPathTo);
         } else {
-            List<Item> searchResult = minioRepository.search(fullPathTo);
+            List<StorageItem> storageItems = storage.retrieveItemsRecursively(fullPathTo);
 
             List<String> filesPath = new ArrayList<>();
             List<String> directoriesPath = new ArrayList<>();
-            fillDirectoryPaths(searchResult, directoriesPath, filesPath);
+            fillDirectoryPaths(storageItems, directoriesPath, filesPath);
 
-            minioRepository.deleteResources(filesPath, directoriesPath);
+            storage.deleteResources(filesPath, directoriesPath);
         }
     }
 
-    private void fillDirectoryPaths(List<Item> searchResult, List<String> directoriesPath, List<String> filesPath) {
-        for (Item item : searchResult) {
-            String pathToResource = item.objectName();
-            if (pathToResource.endsWith("/")) {
+    private void fillDirectoryPaths(List<StorageItem> searchResult, List<String> directoriesPath, List<String> filesPath) {
+        for (StorageItem item : searchResult) {
+            String pathToResource = item.resourcePath();
+            if (item.directory()) {
                 directoriesPath.add(pathToResource);
             } else {
                 filesPath.add(pathToResource);

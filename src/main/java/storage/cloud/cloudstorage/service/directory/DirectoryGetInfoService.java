@@ -1,12 +1,12 @@
 package storage.cloud.cloudstorage.service.directory;
 
-import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.config.MinioProperties;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
+import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
 
@@ -19,7 +19,7 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 @RequiredArgsConstructor
 @Service
 public class DirectoryGetInfoService {
-    private final MinioRepository minioRepository;
+    private final ObjectStorage storage;
     private final MinioProperties properties;
     private final StorageInitializer initializer;
 
@@ -28,19 +28,19 @@ public class DirectoryGetInfoService {
         initializer.initStorage(preparedRoot);
 
         String fullPath = buildPreparedPath(preparedRoot, path);
-        List<Item> items = minioRepository.getFolderInfo(fullPath);
+        List<StorageItem> storageItems = storage.retrieveDirectoryItems(fullPath);
 
         List<ResourceResponse> resources = new ArrayList<>();
-        for (Item item : items) {
-            if (fullPath.equals(item.objectName())) {
+        for (StorageItem item : storageItems) {
+            if (fullPath.equals(item.resourcePath())) {
                 continue;
             }
-            if (item.isDir()) {
+            if (item.directory()) {
                 resources.add(
                         ResourceResponse
                                 .builder()
                                 .path(path)
-                                .name(parseDirName(item))
+                                .name(parseDirName(item.resourcePath()))
                                 .type(Type.DIRECTORY.name())
                                 .build()
                 );
@@ -49,7 +49,7 @@ public class DirectoryGetInfoService {
                         ResourceResponse
                                 .builder()
                                 .path(path)
-                                .name(parseFileName(item))
+                                .name(parseFileName(item.resourcePath()))
                                 .size(item.size())
                                 .type(Type.FILE.name())
                                 .build()
@@ -68,14 +68,12 @@ public class DirectoryGetInfoService {
         return resources;
     }
 
-    private String parseDirName(Item item) {
-        String fullname = item.objectName();
-        String trimmedFullName = removeTrailingSlash(fullname);
+    private String parseDirName(String resourcePath) {
+        String trimmedFullName = removeTrailingSlash(resourcePath);
         return extractName(trimmedFullName);
     }
 
-    private String parseFileName(Item item) {
-        String fullname = item.objectName();
-        return extractName(fullname);
+    private String parseFileName(String resourcePath) {
+        return extractName(resourcePath);
     }
 }

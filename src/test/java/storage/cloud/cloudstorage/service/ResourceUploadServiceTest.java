@@ -10,11 +10,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.InvalidFileNameException;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.resource.ResourceUploadService;
@@ -33,13 +32,14 @@ class ResourceUploadServiceTest {
     private ResourceUploadService service;
 
     @Mock
-    private MinioRepository repository;
+    private ObjectStorage storage;
 
     @Mock
     private StorageInitializer storageInitializer;
 
     @Mock
     private MinioProperties properties;
+
     @Test
     public void uploadFileInfoIsSucceeded() {
         when(properties.bucket())
@@ -79,9 +79,9 @@ class ResourceUploadServiceTest {
         );
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1))
+        verify(storage, times(1))
                 .checkFiles(List.of(fullPathTillFile));
-        verify(repository, times(1))
+        verify(storage, times(1))
                 .upload(List.of(gorgonFile[0]), List.of(fullPathTillFile));
 
         assertThat(actual).containsExactlyElementsOf(expected);
@@ -114,9 +114,9 @@ class ResourceUploadServiceTest {
         );
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1))
+        verify(storage, times(1))
                 .checkFiles(List.of());
-        verify(repository, times(1))
+        verify(storage, times(1))
                 .upload(List.of(), List.of());
 
         assertThat(actual).isEmpty();
@@ -151,9 +151,9 @@ class ResourceUploadServiceTest {
                 .isInstanceOf(InvalidFileNameException.class);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, never())
+        verify(storage, never())
                 .checkFiles(anyList());
-        verify(repository, never()).upload(anyList(), anyList());
+        verify(storage, never()).upload(anyList(), anyList());
     }
 
     private static Stream<Arguments> invalidFileUploadData() {

@@ -1,13 +1,15 @@
 package storage.cloud.cloudstorage.repository;
 
-import io.minio.*;
+import io.minio.BucketExistsArgs;
+import io.minio.MakeBucketArgs;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import io.minio.errors.*;
-import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import storage.cloud.cloudstorage.exception.technical.StorageException;
 import storage.cloud.cloudstorage.config.MinioProperties;
+import storage.cloud.cloudstorage.exception.technical.StorageException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -21,6 +23,7 @@ public class StorageInitializer {
 
     private final MinioClient minioClient;
     private final MinioProperties properties;
+    private final MinioRepository minioRepository;
 
     public void initStorage(String fullPath) {
         try {
@@ -58,18 +61,8 @@ public class StorageInitializer {
     private void initRoot(String root) throws ErrorResponseException, InsufficientDataException, InternalException,
             InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException,
             XmlParserException {
-        Iterable<Result<Item>> rootResults = minioClient.listObjects(
-                ListObjectsArgs
-                        .builder()
-                        .bucket(properties.bucket().name())
-                        .prefix(root)
-                        .maxKeys(1)
-                        .build()
-        );
 
-        boolean hasRoot = rootResults.iterator().hasNext();
-
-        if (!hasRoot) {
+        if (!minioRepository.doesPrefixExist(root)) {
             minioClient.putObject(
                     PutObjectArgs
                             .builder()

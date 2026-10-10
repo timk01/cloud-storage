@@ -1,13 +1,13 @@
 package storage.cloud.cloudstorage.service.resource;
 
-import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.technical.ResourceDownloadException;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
+import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.service.Type;
 
 import java.io.IOException;
@@ -26,7 +26,7 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 @Service
 public class ResourceDownloadService {
 
-    private final MinioRepository minioRepository;
+    private final ObjectStorage storage;
     private final MinioProperties properties;
     private final StorageInitializer initializer;
 
@@ -63,7 +63,7 @@ public class ResourceDownloadService {
     private void processFile(List<PreparedFileRecord> preparedFileRecords, OutputStream outputStream)
             throws IOException {
         PreparedFileRecord file = preparedFileRecords.getFirst();
-        try (InputStream inputStream = minioRepository.readData(file.fullPathTillResource())) {
+        try (InputStream inputStream = storage.readData(file.fullPathTillResource())) {
             byte[] buffer = new byte[1024];
             int length;
             while ((length = inputStream.read(buffer)) != -1) {
@@ -76,7 +76,7 @@ public class ResourceDownloadService {
             throws IOException {
         ZipOutputStream zos = new ZipOutputStream(outputStream);
         for (PreparedFileRecord fileRecord : preparedFileRecords) {
-            try (InputStream inputStream = minioRepository.readData(fileRecord.fullPathTillResource())) {
+            try (InputStream inputStream = storage.readData(fileRecord.fullPathTillResource())) {
 
                 ZipEntry entry = new ZipEntry(fileRecord.pathForArchive());
                 zos.putNextEntry(entry);
@@ -103,7 +103,7 @@ public class ResourceDownloadService {
         String type = path.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
 
         validateResourceExists(
-                minioRepository.doesPathExist(fullPathTo), fullPathTo
+                storage.doesPathExist(fullPathTo), fullPathTo
         );
 
         log.info(
@@ -123,15 +123,15 @@ public class ResourceDownloadService {
             );
         }
 
-        List<Item> items = minioRepository.search(fullPathTo);
+        List<StorageItem> storageItems = storage.retrieveItemsRecursively(fullPathTo);
 
         List<PreparedFileRecord> paths = new ArrayList<>();
-        for (Item item : items) {
-            String fullObjectName = item.objectName();
-            String relativePath = fullObjectName.substring(fullPathTo.length());
+        for (StorageItem item : storageItems) {
+            String resourcePath = item.resourcePath();
+            String relativePath = resourcePath.substring(fullPathTo.length());
 
             if (!relativePath.isEmpty()) {
-                PreparedFileRecord record = new PreparedFileRecord(relativePath, fullObjectName, type);
+                PreparedFileRecord record = new PreparedFileRecord(relativePath, resourcePath, type);
                 paths.add(record);
             }
         }

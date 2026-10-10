@@ -1,16 +1,15 @@
 package storage.cloud.cloudstorage.service;
 
-import io.minio.messages.Item;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.SourceResourceNotFoundException;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
+import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.service.resource.ResourceDeleteService;
 
 import java.util.List;
@@ -25,7 +24,7 @@ public class ResourceDeleteServiceTest {
     private ResourceDeleteService service;
 
     @Mock
-    private MinioRepository repository;
+    private ObjectStorage storage;
 
     @Mock
     private StorageInitializer storageInitializer;
@@ -46,13 +45,13 @@ public class ResourceDeleteServiceTest {
 
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPath)).thenReturn(true);
+        when(storage.doesPathExist(fullPath)).thenReturn(true);
 
         service.delete(path, userId);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPath);
-        verify(repository, times(1)).deleteFile(fullPath);
+        verify(storage, times(1)).doesPathExist(fullPath);
+        verify(storage, times(1)).deleteFile(fullPath);
     }
 
     @Test
@@ -60,57 +59,70 @@ public class ResourceDeleteServiceTest {
         when(properties.bucket())
                 .thenReturn(new MinioProperties.Bucket("user-files"));
 
-        String path
-                = "folder1/folder2/folder3/";
+        String path = "folder1/folder2/folder3/";
         String minioRootFolder = "user-1-files/";
         String fullPathToResource = minioRootFolder + path;
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathToResource)).thenReturn(true);
+        when(storage.doesPathExist(fullPathToResource)).thenReturn(true);
 
-        Item rootFolderMarker = mock(Item.class);
-        when(rootFolderMarker.objectName()).thenReturn("user-1-files/folder1/folder2/folder3/");
+        StorageItem rootFolderMarker = new StorageItem(
+                "user-1-files/folder1/folder2/folder3/",
+                true,
+                0L
+        );
 
-        Item file1 = mock(Item.class);
-        when(file1.objectName()).thenReturn("user-1-files/folder1/folder2/folder3/gorgon.jpg");
+        StorageItem file1 = new StorageItem(
+                "user-1-files/folder1/folder2/folder3/gorgon.jpg",
+                false,
+                10L
+        );
 
-        Item nestedFolder = mock(Item.class);
-        when(nestedFolder.objectName()).thenReturn("user-1-files/folder1/folder2/folder3/newFolder/");
+        StorageItem nestedFolder = new StorageItem(
+                "user-1-files/folder1/folder2/folder3/newFolder/",
+                true,
+                0L
+        );
 
-        Item file2 = mock(Item.class);
-        when(file2.objectName()).thenReturn("user-1-files/folder1/folder2/folder3/newFolder/file2.txt");
+        StorageItem file2 = new StorageItem(
+                "user-1-files/folder1/folder2/folder3/newFolder/file2.txt",
+                false,
+                10L
+        );
 
-        Item file3InNewFolder = mock(Item.class);
-        when(file3InNewFolder.objectName()).thenReturn("user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt");
+        StorageItem file3InNewFolder = new StorageItem(
+                "user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt",
+                false,
+                10L
+        );
 
-        when(repository.search(fullPathToResource)).thenReturn(
-                List.of(
+        when(storage.retrieveItemsRecursively(fullPathToResource))
+                .thenReturn(List.of(
                         rootFolderMarker,
                         file1,
                         nestedFolder,
                         file2,
                         file3InNewFolder
-                )
-        );
+                ));
 
         List<String> filesPath = List.of(
-                file1.objectName(),
-                file2.objectName(),
-                file3InNewFolder.objectName()
+                file1.resourcePath(),
+                file2.resourcePath(),
+                file3InNewFolder.resourcePath()
         );
 
         List<String> directoriesPath = List.of(
-                nestedFolder.objectName(),
-                rootFolderMarker.objectName()
+                nestedFolder.resourcePath(),
+                rootFolderMarker.resourcePath()
         );
 
 
         service.delete(path, userId);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathToResource);
-        verify(repository, times(1)).search(fullPathToResource);
-        verify(repository, times(1)).deleteResources(filesPath, directoriesPath);
+        verify(storage, times(1)).doesPathExist(fullPathToResource);
+        verify(storage, times(1)).retrieveItemsRecursively(fullPathToResource);
+        verify(storage, times(1)).deleteResources(filesPath, directoriesPath);
     }
 
     @Test
@@ -124,30 +136,32 @@ public class ResourceDeleteServiceTest {
         String fullPathToResource = minioRootFolder + path;
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathToResource)).thenReturn(true);
+        when(storage.doesPathExist(fullPathToResource)).thenReturn(true);
 
-        Item rootFolderMarker = mock(Item.class);
-        when(rootFolderMarker.objectName()).thenReturn("user-1-files/folder1/folder2/folder3/");
-
-        when(repository.search(fullPathToResource)).thenReturn(
-                List.of(
-                        rootFolderMarker
-                )
+        StorageItem rootFolderMarker = new StorageItem(
+                "user-1-files/folder1/folder2/folder3/",
+                true,
+                0L
         );
+
+        when(storage.retrieveItemsRecursively(fullPathToResource))
+                .thenReturn(List.of(
+                        rootFolderMarker
+                ));
 
         List<String> filesPath = List.of(
         );
 
         List<String> directoriesPath = List.of(
-                rootFolderMarker.objectName()
+                rootFolderMarker.resourcePath()
         );
 
         service.delete(path, userId);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathToResource);
-        verify(repository, times(1)).search(fullPathToResource);
-        verify(repository, times(1)).deleteResources(filesPath, directoriesPath);
+        verify(storage, times(1)).doesPathExist(fullPathToResource);
+        verify(storage, times(1)).retrieveItemsRecursively(fullPathToResource);
+        verify(storage, times(1)).deleteResources(filesPath, directoriesPath);
     }
 
     @Test
@@ -161,15 +175,15 @@ public class ResourceDeleteServiceTest {
         String fullPathToResource = minioRootFolder + path;
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathToResource)).thenReturn(false);
+        when(storage.doesPathExist(fullPathToResource)).thenReturn(false);
 
         assertThatThrownBy(() -> service.delete(path, userId))
                 .isInstanceOf(SourceResourceNotFoundException.class);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathToResource);
-        verify(repository, never()).search(anyString());
-        verify(repository, never()).deleteFile(anyString());
-        verify(repository, never()).deleteResources(anyList(), anyList());
+        verify(storage, times(1)).doesPathExist(fullPathToResource);
+        verify(storage, never()).retrieveItemsRecursively(anyString());
+        verify(storage, never()).deleteFile(anyString());
+        verify(storage, never()).deleteResources(anyList(), anyList());
     }
 }

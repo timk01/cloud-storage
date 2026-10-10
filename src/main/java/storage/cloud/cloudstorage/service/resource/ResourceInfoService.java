@@ -1,11 +1,10 @@
 package storage.cloud.cloudstorage.service.resource;
 
-import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.config.MinioProperties;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
@@ -17,7 +16,7 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 @Service
 public class ResourceInfoService {
 
-    private final MinioRepository minioRepository;
+    private final ObjectStorage storage;
     private final MinioProperties properties;
     private final StorageInitializer initializer;
 
@@ -28,13 +27,12 @@ public class ResourceInfoService {
         String fullPath = buildPreparedPath(preparedRoot, path);
 
         validateResourceExists(
-                minioRepository.doesPathExist(fullPath), fullPath
+                storage.doesPathExist(fullPath), fullPath
         );
 
         String type = path.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
         if ("FILE".equals(type)) {
-            StatObjectResponse objectResponse = minioRepository.getObjectResponse(fullPath);
-
+            long resourceSize = storage.retrieveResourceSize(fullPath);
             String name = extractName(path);
             String parentPath = extractParentPathForFile(path);
 
@@ -48,7 +46,7 @@ public class ResourceInfoService {
             return ResourceResponse.builder()
                     .path(parentPath)
                     .name(name)
-                    .size(objectResponse.size())
+                    .size(resourceSize)
                     .type(Type.FILE.name())
                     .build();
         } else {

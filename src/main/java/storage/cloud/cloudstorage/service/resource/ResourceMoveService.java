@@ -1,6 +1,5 @@
 package storage.cloud.cloudstorage.service.resource;
 
-import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -9,7 +8,7 @@ import storage.cloud.cloudstorage.exception.managed.DestinationResourceAlreadyEx
 import storage.cloud.cloudstorage.exception.managed.ResourceMoveConflictException;
 import storage.cloud.cloudstorage.exception.managed.ResourceTypeMismatchException;
 import storage.cloud.cloudstorage.exception.managed.SourceAndDestinationAreEqualException;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
@@ -20,7 +19,7 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 @RequiredArgsConstructor
 @Service
 public class ResourceMoveService {
-    private final MinioRepository minioRepository;
+    private final ObjectStorage storage;
     private final MinioProperties properties;
     private final StorageInitializer initializer;
 
@@ -34,7 +33,7 @@ public class ResourceMoveService {
         String toType = toPath.endsWith("/") ? Type.DIRECTORY.name() : Type.FILE.name();
 
         validateResourceExists(
-                minioRepository.doesPathExist(fullPathFrom), fullPathFrom
+                storage.doesPathExist(fullPathFrom), fullPathFrom
         );
 
         validateSourceAndDestinationAreDistinct(fullPathFrom, fullPathTo);
@@ -75,7 +74,7 @@ public class ResourceMoveService {
     }
 
     private void validateDestination(String fullPathTo) {
-        if (minioRepository.doesPathExist(fullPathTo)) {
+        if (storage.doesPathExist(fullPathTo)) {
             throw new DestinationResourceAlreadyExistsException(
                     String.format(
                             "Resource already exists by path: %s", fullPathTo
@@ -97,20 +96,20 @@ public class ResourceMoveService {
 
     private ResourceResponse moveResource(String toPath, String fromType, String fullPathFrom, String fullPathTo) {
         if ("FILE".equals(fromType)) {
-            StatObjectResponse objectResponse = minioRepository.getObjectResponse(fullPathFrom);
+            long resourceSize = storage.retrieveResourceSize(fullPathFrom);
 
-            minioRepository.moveFile(fullPathFrom, fullPathTo);
+            storage.moveFile(fullPathFrom, fullPathTo);
 
             String name = extractName(toPath);
             String path = extractParentPathForFile(toPath);
             return ResourceResponse.builder()
                     .path(path)
                     .name(name)
-                    .size(objectResponse.size())
+                    .size(resourceSize)
                     .type(Type.FILE.name())
                     .build();
         } else {
-            minioRepository.moveDirectory(fullPathFrom, fullPathTo);
+            storage.moveDirectory(fullPathFrom, fullPathTo);
 
             FolderPathParts result = getResult(toPath, fullPathTo);
             return ResourceResponse.builder()

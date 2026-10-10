@@ -1,16 +1,14 @@
 package storage.cloud.cloudstorage.service;
 
-import io.minio.messages.Contents;
-import io.minio.messages.Item;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import storage.cloud.cloudstorage.config.MinioProperties;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
+import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.resource.ResourceSearchService;
 
@@ -26,7 +24,7 @@ public class ResourceSearchServiceTest {
     private ResourceSearchService service;
 
     @Mock
-    private MinioRepository repository;
+    private ObjectStorage storage;
 
     @Mock
     private StorageInitializer storageInitializer;
@@ -44,34 +42,53 @@ public class ResourceSearchServiceTest {
 
         Long userId = 1L;
 
-        Item firstDirectory = new Contents("user-1-files/gorgon_root/");
+        StorageItem firstDirectory = new StorageItem(
+                "user-1-files/gorgon_root/",
+                true,
+                0L
+        );
 
-        Item secondDirectory = new Contents("user-1-files/gorgon_root/gorgon_archive/");
+        StorageItem secondDirectory = new StorageItem(
+                "user-1-files/gorgon_root/gorgon_archive/",
+                true,
+                0L
+        );
 
-        Item thirdDirectory = new Contents("user-1-files/gorgon_root/gorgon_archive/" +
-                "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/");
+        StorageItem thirdDirectory = new StorageItem(
+                "user-1-files/gorgon_root/gorgon_archive/" +
+                        "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/",
+                true,
+                0L
+        );
 
-        String pathTillFirstFile = "user-1-files/gorgon_root/gorgon_archive/" +
-                "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/gorgon.jpg";
-        Item firstFile = mock(Item.class);
-        when(firstFile.objectName()).thenReturn(pathTillFirstFile);
-        when(firstFile.size()).thenReturn(1500L);
+        String pathTillFirstFile =
+                "user-1-files/gorgon_root/gorgon_archive/" +
+                        "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/gorgon.jpg";
 
-        String pathTillSecondFile = "user-1-files/gorgon_root/gorgon_archive/" +
-                "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/description_gorgon.txt";
-        Item secondFile = mock(Item.class);
-        when(secondFile.objectName()).thenReturn(pathTillSecondFile);
-        when(secondFile.size()).thenReturn(123L);
+        StorageItem firstFile = new StorageItem(
+                pathTillFirstFile,
+                false,
+                1500L
+        );
 
-        when(repository.search(minioRootFolder)).thenReturn(
-                List.of(
+        String pathTillSecondFile =
+                "user-1-files/gorgon_root/gorgon_archive/" +
+                        "gorgon_files__timur_auto_550e8400-e29b-41d4-a716-446655440000/description_gorgon.txt";
+
+        StorageItem secondFile = new StorageItem(
+                pathTillSecondFile,
+                false,
+                123L
+        );
+
+        when(storage.retrieveItemsRecursively(minioRootFolder))
+                .thenReturn(List.of(
                         firstDirectory,
                         secondDirectory,
                         thirdDirectory,
                         firstFile,
                         secondFile
-                )
-        );
+                ));
 
         List<ResourceResponse> expected = List.of(
                 ResourceResponse.builder()
@@ -111,7 +128,7 @@ public class ResourceSearchServiceTest {
         List<ResourceResponse> actual = service.search(query, userId);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).search(minioRootFolder);
+        verify(storage, times(1)).retrieveItemsRecursively(minioRootFolder);
 
         assertThat(actual).containsExactlyElementsOf(expected);
     }
@@ -125,24 +142,31 @@ public class ResourceSearchServiceTest {
 
         Long userId = 1L;
 
-        Item firstDirectory = new Contents("user-1-files/gorgon_root/");
+        StorageItem firstDirectory = new StorageItem(
+                "user-1-files/gorgon_root/",
+                true,
+                0L
+        );
 
         String pathTillSecondFile = "user-1-files/gorgon_root/description_gorgon.txt";
-        Item secondFile = mock(Item.class);
-        when(secondFile.objectName()).thenReturn(pathTillSecondFile);
 
-        when(repository.search(minioRootFolder)).thenReturn(
-                List.of(
+        StorageItem secondFile = new StorageItem(
+                pathTillSecondFile,
+                false,
+                123L
+        );
+
+        when(storage.retrieveItemsRecursively(minioRootFolder))
+                .thenReturn(List.of(
                         firstDirectory,
                         secondFile
-                )
-        );
+                ));
 
         String query = "cat";
         List<ResourceResponse> actual = service.search(query, userId);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).search(minioRootFolder);
+        verify(storage, times(1)).retrieveItemsRecursively(minioRootFolder);
 
         assertThat(actual).isEmpty();
     }

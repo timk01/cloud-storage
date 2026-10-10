@@ -28,10 +28,70 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Repository
-public class MinioRepository {
+public class MinioRepository implements ObjectStorage {
 
     private final MinioClient minioClient;
     private final MinioProperties properties;
+
+    @Override
+    public List<StorageItem> retrieveDirectoryItems(String fullPath) {
+        return retrieveStorageItems(fullPath, false, true);
+    }
+
+    @Override
+    public List<StorageItem> retrieveItemsRecursively(String fullPath) {
+        return retrieveStorageItems(fullPath, true, false);
+    }
+
+    private List<StorageItem> retrieveStorageItems(String fullPath, boolean isRecursive, boolean isThisFolder) {
+        try {
+            Iterable<Result<Item>> folderResults = minioClient.listObjects(
+                    ListObjectsArgs
+                            .builder()
+                            .bucket(properties.bucket().name())
+                            .prefix(fullPath)
+                            .recursive(isRecursive)
+                            .build()
+            );
+
+            if (isThisFolder) {
+                checkFolderExists(fullPath, folderResults);
+            }
+
+            List<StorageItem> items = new ArrayList<>();
+            for (Result<Item> itemResult : folderResults) {
+                Item item = itemResult.get();
+
+                items.add(new StorageItem(
+                                item.objectName(),
+                                item.isDir(),
+                                item.size()
+                        )
+                );
+            }
+
+            return items;
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
+        }
+    }
+
+    @Override
+    public long retrieveResourceSize(String path) {
+        try {
+            StatObjectResponse statObjectResponse = minioClient.statObject(
+                    StatObjectArgs
+                            .builder()
+                            .bucket(properties.bucket().name())
+                            .object(path)
+                            .build()
+            );
+
+            return statObjectResponse.size();
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
+        }
+    }
 
     public void creaTeFolder(String minioParentPath, String fullPath) {
         checkParentFolder(minioParentPath);
@@ -59,18 +119,7 @@ public class MinioRepository {
     }
 
     private void checkParentFolder(String parentFolder) {
-        Iterable<Result<Item>> parentResults = minioClient.listObjects(
-                ListObjectsArgs
-                        .builder()
-                        .bucket(properties.bucket().name())
-                        .prefix(parentFolder)
-                        .maxKeys(1)
-                        .build()
-        );
-
-        boolean hasParent = parentResults.iterator().hasNext();
-
-        if (!hasParent) {
+        if (!doesPrefixExist(parentFolder)) {
             throw new ParentFolderHasNotFoundException(
                     String.format(
                             "No parent folder has been found: %s", parentFolder
@@ -163,28 +212,6 @@ public class MinioRepository {
         }
     }
 
-    public List<Item> search(String preparedRoot) {
-        try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs
-                            .builder()
-                            .bucket(properties.bucket().name())
-                            .prefix(preparedRoot)
-                            .recursive(true)
-                            .build()
-            );
-
-            List<Item> items = new ArrayList<>();
-            for (Result<Item> itemResult : results) {
-                items.add(itemResult.get());
-            }
-
-            return items;
-        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
-            throw new StorageException("Storage operation failed", exception);
-        }
-    }
-
     public void moveFile(String fromPath, String toPath) {
         try {
             createFoldersRecursively(List.of(toPath));
@@ -206,20 +233,6 @@ public class MinioRepository {
 
                 throw deletionException;
             }
-        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
-            throw new StorageException("Storage operation failed", exception);
-        }
-    }
-
-    public StatObjectResponse getObjectResponse(String pathTillObject) {
-        try {
-            return minioClient.statObject(
-                    StatObjectArgs
-                            .builder()
-                            .bucket(properties.bucket().name())
-                            .object(pathTillObject)
-                            .build()
-            );
         } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
             throw new StorageException("Storage operation failed", exception);
         }
@@ -254,6 +267,28 @@ public class MinioRepository {
             }
 
             removeResources(fullPathTillResourceOldLocations);
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new StorageException("Storage operation failed", exception);
+        }
+    }
+
+    private List<Item> search(String preparedRoot) {
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs
+                            .builder()
+                            .bucket(properties.bucket().name())
+                            .prefix(preparedRoot)
+                            .recursive(true)
+                            .build()
+            );
+
+            List<Item> items = new ArrayList<>();
+            for (Result<Item> itemResult : results) {
+                items.add(itemResult.get());
+            }
+
+            return items;
         } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException exception) {
             throw new StorageException("Storage operation failed", exception);
         }
@@ -492,5 +527,18 @@ public class MinioRepository {
         }
 
         return errors;
+    }
+
+    boolean doesPrefixExist(String prefix) {
+        Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs
+                        .builder()
+                        .bucket(properties.bucket().name())
+                        .prefix(prefix)
+                        .maxKeys(1)
+                        .build()
+        );
+
+        return results.iterator().hasNext();
     }
 }

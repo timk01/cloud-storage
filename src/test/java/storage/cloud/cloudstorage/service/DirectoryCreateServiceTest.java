@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.directory.DirectoryCreateService;
@@ -22,7 +23,7 @@ public class DirectoryCreateServiceTest {
     private DirectoryCreateService service;
 
     @Mock
-    private MinioRepository repository;
+    private ObjectStorage storage;
 
     @Mock
     private StorageInitializer storageInitializer;
@@ -51,7 +52,7 @@ public class DirectoryCreateServiceTest {
         ResourceResponse actual = service.createFolder(pathAsDirectory, userId);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).creaTeFolder(minioRootFolder, fullPath);
+        verify(storage, times(1)).creaTeFolder(minioRootFolder, fullPath);
 
         assertThat(actual.path()).isEqualTo(expected.path());
         assertThat(actual.name()).isEqualTo(expected.name());

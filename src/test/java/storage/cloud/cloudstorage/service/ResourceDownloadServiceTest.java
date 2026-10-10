@@ -1,16 +1,15 @@
 package storage.cloud.cloudstorage.service;
 
-import io.minio.messages.Item;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.SourceResourceNotFoundException;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
+import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.service.resource.ResourceDownloadService;
 
 import java.io.ByteArrayInputStream;
@@ -31,7 +30,7 @@ public class ResourceDownloadServiceTest {
     private ResourceDownloadService service;
 
     @Mock
-    private MinioRepository repository;
+    private ObjectStorage storage;
 
     @Mock
     private StorageInitializer storageInitializer;
@@ -52,7 +51,7 @@ public class ResourceDownloadServiceTest {
 
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathToResource)).thenReturn(true);
+        when(storage.doesPathExist(fullPathToResource)).thenReturn(true);
 
         List<ResourceDownloadService.PreparedFileRecord> expectedRecords
                 = List.of(
@@ -67,8 +66,8 @@ public class ResourceDownloadServiceTest {
         List<ResourceDownloadService.PreparedFileRecord> actualRecords = service.prepareResource(path, userId);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathToResource);
-        verify(repository, never()).search(fullPathToResource);
+        verify(storage, times(1)).doesPathExist(fullPathToResource);
+        verify(storage, never()).retrieveItemsRecursively(fullPathToResource);
 
         assertThat(actualRecords).isEqualTo(expectedRecords);
     }
@@ -85,32 +84,46 @@ public class ResourceDownloadServiceTest {
 
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathToResource)).thenReturn(true);
+        when(storage.doesPathExist(fullPathToResource)).thenReturn(true);
 
-        Item rootFolderMarker = mock(Item.class);
-        when(rootFolderMarker.objectName()).thenReturn("user-1-files/folder1/folder2/folder3/");
+        StorageItem rootFolderMarker = new StorageItem(
+                "user-1-files/folder1/folder2/folder3/",
+                true,
+                0L
+        );
 
-        Item file1 = mock(Item.class);
-        when(file1.objectName()).thenReturn("user-1-files/folder1/folder2/folder3/gorgon.jpg");
+        StorageItem file1 = new StorageItem(
+                "user-1-files/folder1/folder2/folder3/gorgon.jpg",
+                false,
+                10L
+        );
 
-        Item emptyFolder = mock(Item.class);
-        when(emptyFolder.objectName()).thenReturn("user-1-files/folder1/folder2/folder3/newFolder/");
+        StorageItem nestedFolder = new StorageItem(
+                "user-1-files/folder1/folder2/folder3/newFolder/",
+                true,
+                0L
+        );
 
-        Item file2 = mock(Item.class);
-        when(file2.objectName()).thenReturn("user-1-files/folder1/folder2/folder3/newFolder/file2.txt");
+        StorageItem file2 = new StorageItem(
+                "user-1-files/folder1/folder2/folder3/newFolder/file2.txt",
+                false,
+                10L
+        );
 
-        Item file3InNewFolder = mock(Item.class);
-        when(file3InNewFolder.objectName()).thenReturn("user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt");
+        StorageItem file3InNewFolder = new StorageItem(
+                "user-1-files/folder1/folder2/folder3/folder4/folder5/b.txt",
+                false,
+                10L
+        );
 
-        when(repository.search(fullPathToResource)).thenReturn(
-                List.of(
+        when(storage.retrieveItemsRecursively(fullPathToResource))
+                .thenReturn(List.of(
                         rootFolderMarker,
                         file1,
-                        emptyFolder,
+                        nestedFolder,
                         file2,
                         file3InNewFolder
-                )
-        );
+                ));
 
         List<ResourceDownloadService.PreparedFileRecord> expectedRecords
                 = List.of(
@@ -139,8 +152,8 @@ public class ResourceDownloadServiceTest {
         List<ResourceDownloadService.PreparedFileRecord> actualRecords = service.prepareResource(path, userId);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathToResource);
-        verify(repository, times(1)).search(fullPathToResource);
+        verify(storage, times(1)).doesPathExist(fullPathToResource);
+        verify(storage, times(1)).retrieveItemsRecursively(fullPathToResource);
 
         assertThat(actualRecords).containsExactlyElementsOf(expectedRecords);
     }
@@ -157,22 +170,24 @@ public class ResourceDownloadServiceTest {
 
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathToResource)).thenReturn(true);
+        when(storage.doesPathExist(fullPathToResource)).thenReturn(true);
 
-        Item rootFolderMarker = mock(Item.class);
-        when(rootFolderMarker.objectName()).thenReturn("user-1-files/folder1/folder2/folder3/");
-
-        when(repository.search(fullPathToResource)).thenReturn(
-                List.of(
-                        rootFolderMarker
-                )
+        StorageItem rootFolderMarker = new StorageItem(
+                "user-1-files/folder1/folder2/folder3/",
+                true,
+                0L
         );
+
+        when(storage.retrieveItemsRecursively(fullPathToResource))
+                .thenReturn(List.of(
+                        rootFolderMarker
+                ));
 
         List<ResourceDownloadService.PreparedFileRecord> actualRecords = service.prepareResource(path, userId);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathToResource);
-        verify(repository, times(1)).search(fullPathToResource);
+        verify(storage, times(1)).doesPathExist(fullPathToResource);
+        verify(storage, times(1)).retrieveItemsRecursively(fullPathToResource);
 
         assertThat(actualRecords).isEmpty();
     }
@@ -190,14 +205,14 @@ public class ResourceDownloadServiceTest {
 
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathToResource)).thenReturn(false);
+        when(storage.doesPathExist(fullPathToResource)).thenReturn(false);
 
         assertThatThrownBy(() -> service.prepareResource(path, userId))
                 .isInstanceOf(SourceResourceNotFoundException.class);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathToResource);
-        verify(repository, never()).search(fullPathToResource);
+        verify(storage, times(1)).doesPathExist(fullPathToResource);
+        verify(storage, never()).retrieveItemsRecursively(fullPathToResource);
     }
 
     @Test
@@ -219,13 +234,13 @@ public class ResourceDownloadServiceTest {
 
         InputStream inputStream = new ByteArrayInputStream(fake_data.getBytes((StandardCharsets.UTF_8)));
 
-        when(repository.readData(preparedFileRecords.get(0).fullPathTillResource())).thenReturn(inputStream);
+        when(storage.readData(preparedFileRecords.get(0).fullPathTillResource())).thenReturn(inputStream);
 
 
         service.download(preparedFileRecords, outputStream, fake_data);
 
 
-        verify(repository, times(1)).readData(preparedFileRecords.get(0).fullPathTillResource());
+        verify(storage, times(1)).readData(preparedFileRecords.get(0).fullPathTillResource());
 
         assertThat(outputStream.size()).isGreaterThan(0);
     }
@@ -271,13 +286,13 @@ public class ResourceDownloadServiceTest {
                 inputStream = new ByteArrayInputStream(fake_data.getBytes((StandardCharsets.UTF_8)));
             }
 
-            when(repository.readData(preparedRecord.fullPathTillResource())).thenReturn(inputStream);
+            when(storage.readData(preparedRecord.fullPathTillResource())).thenReturn(inputStream);
         }
 
         service.download(preparedRecords, outputStream, "folder1/folder2/folder3/");
 
         for (ResourceDownloadService.PreparedFileRecord preparedRecord : preparedRecords) {
-            verify(repository, times(1)).readData(preparedRecord.fullPathTillResource());
+            verify(storage, times(1)).readData(preparedRecord.fullPathTillResource());
         }
 
         assertThat(outputStream.size()).isGreaterThan(0);

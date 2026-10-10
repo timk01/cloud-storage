@@ -1,15 +1,13 @@
 package storage.cloud.cloudstorage.service;
 
-import io.minio.StatObjectResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.*;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.resource.ResourceMoveService;
@@ -25,7 +23,7 @@ public class ResourceMoveServiceTest {
     private ResourceMoveService service;
 
     @Mock
-    private MinioRepository repository;
+    private ObjectStorage storage;
 
     @Mock
     private StorageInitializer storageInitializer;
@@ -48,27 +46,27 @@ public class ResourceMoveServiceTest {
 
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathFrom)).thenReturn(true);
-        when(repository.doesPathExist(fullPathTo)).thenReturn(false);
+        when(storage.doesPathExist(fullPathFrom)).thenReturn(true);
+        when(storage.doesPathExist(fullPathTo)).thenReturn(false);
 
-        StatObjectResponse firstFileStatObject = mock(StatObjectResponse.class);
-        when(firstFileStatObject.size()).thenReturn(1500L);
-
-        when(repository.getObjectResponse(fullPathFrom)).thenReturn(firstFileStatObject);
+        when(storage.retrieveResourceSize(fullPathFrom)).thenReturn(
+                1500L
+        );
 
         ResourceResponse expected = ResourceResponse.builder()
                 .path("folder9/folder10/")
                 .name("test_file1.txt")
-                .size(firstFileStatObject.size())
+                .size(1500L)
                 .type(Type.FILE.name())
                 .build();
 
         ResourceResponse actual = service.move(pathFrom, pathTo, userId);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathFrom);
-        verify(repository, times(1)).doesPathExist(fullPathTo);
-        verify(repository, times(1)).moveFile(fullPathFrom, fullPathTo);
+        verify(storage, times(1)).doesPathExist(fullPathFrom);
+        verify(storage, times(1)).doesPathExist(fullPathTo);
+        verify(storage, times(1)).retrieveResourceSize(fullPathFrom);
+        verify(storage, times(1)).moveFile(fullPathFrom, fullPathTo);
 
         assertThat(actual).isEqualTo(expected);
     }
@@ -88,8 +86,8 @@ public class ResourceMoveServiceTest {
 
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathFrom)).thenReturn(true);
-        when(repository.doesPathExist(fullPathTo)).thenReturn(false);
+        when(storage.doesPathExist(fullPathFrom)).thenReturn(true);
+        when(storage.doesPathExist(fullPathTo)).thenReturn(false);
 
         ResourceResponse expected = ResourceResponse.builder()
                 .path("folder9/")
@@ -100,9 +98,9 @@ public class ResourceMoveServiceTest {
         ResourceResponse actual = service.move(pathFrom, pathTo, userId);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathFrom);
-        verify(repository, times(1)).doesPathExist(fullPathTo);
-        verify(repository, times(1)).moveDirectory(fullPathFrom, fullPathTo);
+        verify(storage, times(1)).doesPathExist(fullPathFrom);
+        verify(storage, times(1)).doesPathExist(fullPathTo);
+        verify(storage, times(1)).moveDirectory(fullPathFrom, fullPathTo);
 
         assertThat(actual).isEqualTo(expected);
     }
@@ -122,15 +120,15 @@ public class ResourceMoveServiceTest {
 
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathFrom)).thenReturn(false);
+        when(storage.doesPathExist(fullPathFrom)).thenReturn(false);
 
         assertThatThrownBy(() -> service.move(pathFrom, pathTo, userId))
                 .isInstanceOf(SourceResourceNotFoundException.class);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathFrom);
-        verify(repository, never()).doesPathExist(fullPathTo);
-        verify(repository, never()).moveDirectory(fullPathFrom, fullPathTo);
+        verify(storage, times(1)).doesPathExist(fullPathFrom);
+        verify(storage, never()).doesPathExist(fullPathTo);
+        verify(storage, never()).moveDirectory(fullPathFrom, fullPathTo);
     }
 
     @Test
@@ -148,14 +146,14 @@ public class ResourceMoveServiceTest {
 
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathFrom)).thenReturn(true);
+        when(storage.doesPathExist(fullPathFrom)).thenReturn(true);
 
         assertThatThrownBy(() -> service.move(pathFrom, pathTo, userId))
                 .isInstanceOf(SourceAndDestinationAreEqualException.class);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathFrom);
-        verify(repository, never()).moveDirectory(fullPathFrom, fullPathTo);
+        verify(storage, times(1)).doesPathExist(fullPathFrom);
+        verify(storage, never()).moveDirectory(fullPathFrom, fullPathTo);
     }
 
     @Test
@@ -173,15 +171,15 @@ public class ResourceMoveServiceTest {
 
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathFrom)).thenReturn(true);
+        when(storage.doesPathExist(fullPathFrom)).thenReturn(true);
 
         assertThatThrownBy(() -> service.move(pathFrom, pathTo, userId))
                 .isInstanceOf(ResourceTypeMismatchException.class);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathFrom);
-        verify(repository, never()).doesPathExist(fullPathTo);
-        verify(repository, never()).moveDirectory(fullPathFrom, fullPathTo);
+        verify(storage, times(1)).doesPathExist(fullPathFrom);
+        verify(storage, never()).doesPathExist(fullPathTo);
+        verify(storage, never()).moveDirectory(fullPathFrom, fullPathTo);
     }
 
     @Test
@@ -199,16 +197,16 @@ public class ResourceMoveServiceTest {
 
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathFrom)).thenReturn(true);
-        when(repository.doesPathExist(fullPathTo)).thenReturn(true);
+        when(storage.doesPathExist(fullPathFrom)).thenReturn(true);
+        when(storage.doesPathExist(fullPathTo)).thenReturn(true);
 
         assertThatThrownBy(() -> service.move(pathFrom, pathTo, userId))
                 .isInstanceOf(DestinationResourceAlreadyExistsException.class);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathFrom);
-        verify(repository, times(1)).doesPathExist(fullPathTo);
-        verify(repository, never()).moveDirectory(fullPathFrom, fullPathTo);
+        verify(storage, times(1)).doesPathExist(fullPathFrom);
+        verify(storage, times(1)).doesPathExist(fullPathTo);
+        verify(storage, never()).moveDirectory(fullPathFrom, fullPathTo);
     }
 
     @Test
@@ -226,15 +224,15 @@ public class ResourceMoveServiceTest {
 
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathFrom)).thenReturn(true);
-        when(repository.doesPathExist(fullPathTo)).thenReturn(false);
+        when(storage.doesPathExist(fullPathFrom)).thenReturn(true);
+        when(storage.doesPathExist(fullPathTo)).thenReturn(false);
 
         assertThatThrownBy(() -> service.move(pathFrom, pathTo, userId))
                 .isInstanceOf(ResourceMoveConflictException.class);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathFrom);
-        verify(repository, times(1)).doesPathExist(fullPathTo);
-        verify(repository, never()).moveDirectory(fullPathFrom, fullPathTo);
+        verify(storage, times(1)).doesPathExist(fullPathFrom);
+        verify(storage, times(1)).doesPathExist(fullPathTo);
+        verify(storage, never()).moveDirectory(fullPathFrom, fullPathTo);
     }
 }

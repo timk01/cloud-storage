@@ -1,15 +1,13 @@
 package storage.cloud.cloudstorage.service;
 
-import io.minio.StatObjectResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.SourceResourceNotFoundException;
-import storage.cloud.cloudstorage.repository.MinioRepository;
+import storage.cloud.cloudstorage.repository.ObjectStorage;
 import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.resource.ResourceInfoService;
@@ -25,7 +23,7 @@ public class ResourceInfoServiceTest {
     private ResourceInfoService service;
 
     @Mock
-    private MinioRepository repository;
+    private ObjectStorage storage;
 
     @Mock
     private StorageInitializer storageInitializer;
@@ -44,13 +42,10 @@ public class ResourceInfoServiceTest {
         String fullPathToResource = minioRootFolder + path;
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathToResource)).thenReturn(true);
+        when(storage.doesPathExist(fullPathToResource)).thenReturn(true);
 
-        StatObjectResponse firstFileStatObject = mock(StatObjectResponse.class);
-        when(firstFileStatObject.size()).thenReturn(1500L);
-
-        when(repository.getObjectResponse(fullPathToResource)).thenReturn(
-                firstFileStatObject
+        when(storage.retrieveResourceSize(fullPathToResource)).thenReturn(
+                1500L
         );
 
         ResourceResponse actual = service.resourceInfo(path, userId);
@@ -61,8 +56,8 @@ public class ResourceInfoServiceTest {
         assertThat(actual.type()).isEqualTo(Type.FILE.name());
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathToResource);
-        verify(repository, times(1)).getObjectResponse(fullPathToResource);
+        verify(storage, times(1)).doesPathExist(fullPathToResource);
+        verify(storage, times(1)).retrieveResourceSize(fullPathToResource);
     }
 
     @Test
@@ -76,7 +71,7 @@ public class ResourceInfoServiceTest {
         String fullPathToResource = minioRootFolder + path;
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathToResource)).thenReturn(true);
+        when(storage.doesPathExist(fullPathToResource)).thenReturn(true);
 
         ResourceResponse actual = service.resourceInfo(path, userId);
 
@@ -85,8 +80,8 @@ public class ResourceInfoServiceTest {
         assertThat(actual.type()).isEqualTo(Type.DIRECTORY.name());
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathToResource);
-        verify(repository, never()).getObjectResponse(anyString());
+        verify(storage, times(1)).doesPathExist(fullPathToResource);
+        verify(storage, never()).retrieveResourceSize(anyString());
     }
 
     @Test
@@ -100,7 +95,7 @@ public class ResourceInfoServiceTest {
         String fullPathToResource = minioRootFolder + path;
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathToResource)).thenReturn(true);
+        when(storage.doesPathExist(fullPathToResource)).thenReturn(true);
 
         ResourceResponse actual = service.resourceInfo(path, userId);
 
@@ -109,8 +104,8 @@ public class ResourceInfoServiceTest {
         assertThat(actual.type()).isEqualTo(Type.DIRECTORY.name());
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathToResource);
-        verify(repository, never()).getObjectResponse(anyString());
+        verify(storage, times(1)).doesPathExist(fullPathToResource);
+        verify(storage, never()).retrieveResourceSize(anyString());
     }
 
     @Test
@@ -124,14 +119,14 @@ public class ResourceInfoServiceTest {
         String fullPathToResource = minioRootFolder + path;
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathToResource)).thenReturn(false);
+        when(storage.doesPathExist(fullPathToResource)).thenReturn(false);
 
         assertThatThrownBy(() -> service.resourceInfo(path, userId))
                 .isInstanceOf(SourceResourceNotFoundException.class);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathToResource);
-        verify(repository, never()).getObjectResponse(anyString());
+        verify(storage, times(1)).doesPathExist(fullPathToResource);
+        verify(storage, never()).retrieveResourceSize(anyString());
     }
 
     @Test
@@ -145,13 +140,13 @@ public class ResourceInfoServiceTest {
         String fullPathToResource = minioRootFolder + path;
         Long userId = 1L;
 
-        when(repository.doesPathExist(fullPathToResource)).thenReturn(false);
+        when(storage.doesPathExist(fullPathToResource)).thenReturn(false);
 
         assertThatThrownBy(() -> service.resourceInfo(path, userId))
                 .isInstanceOf(SourceResourceNotFoundException.class);
 
         verify(storageInitializer, times(1)).initStorage(minioRootFolder);
-        verify(repository, times(1)).doesPathExist(fullPathToResource);
-        verify(repository, never()).getObjectResponse(anyString());
+        verify(storage, times(1)).doesPathExist(fullPathToResource);
+        verify(storage, never()).retrieveResourceSize(anyString());
     }
 }
