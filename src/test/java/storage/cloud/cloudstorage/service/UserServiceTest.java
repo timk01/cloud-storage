@@ -9,9 +9,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
+import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.entity.User;
 import storage.cloud.cloudstorage.exception.managed.InvalidLoginDataException;
 import storage.cloud.cloudstorage.exception.managed.UserAlreadyExistsException;
+import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.repository.UserRepository;
 import storage.cloud.cloudstorage.request.UserLoginRequest;
 import storage.cloud.cloudstorage.request.UserRegisterRequest;
@@ -35,6 +37,12 @@ class UserServiceTest {
     @Mock
     private PasswordEncoder encoder;
 
+    @Mock
+    private StorageInitializer storageInitializer;
+
+    @Mock
+    private MinioProperties properties;
+
     @Captor
     private ArgumentCaptor<User> userArgumentCaptor;
 
@@ -52,6 +60,10 @@ class UserServiceTest {
         ReflectionTestUtils.setField(savedUser, "id", 1L);
         when(repository.save(any(User.class))).thenReturn(savedUser);
 
+        String minioRootFolder = "user-1-files/";
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
+
         UserRegisterRequest dto = new UserRegisterRequest(username, passwordOriginal);
         UserResponse expected = new UserResponse(1L, username);
         UserResponse actual = service.register(dto);
@@ -59,6 +71,7 @@ class UserServiceTest {
         verify(repository, times(1)).existsByUsername(username);
         verify(encoder, times(1)).encode(passwordOriginal);
         verify(repository, times(1)).save(userArgumentCaptor.capture());
+        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
 
         User captorValue = userArgumentCaptor.getValue();
 
@@ -83,12 +96,18 @@ class UserServiceTest {
         String passwordOriginal = "sadfasfkljkjl22##";
         when(encoder.matches(passwordOriginal, passwordHashed)).thenReturn(true);
 
+        String minioRootFolder = "user-1-files/";
+        when(properties.bucket())
+                .thenReturn(new MinioProperties.Bucket("user-files"));
+
         UserLoginRequest dto = new UserLoginRequest(username, passwordOriginal);
         UserResponse expected = new UserResponse(1L, username);
         UserResponse actual = service.login(dto);
 
         verify(repository, times(1)).findByUsername(username);
         verify(encoder, times(1)).matches(passwordOriginal, passwordHashed);
+        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
+
         assertThat(actual).isNotNull();
         assertThat(actual.username()).isEqualTo(expected.username());
         assertThat(actual.id()).isEqualTo(expected.id());
@@ -108,6 +127,7 @@ class UserServiceTest {
                 .isInstanceOf(UserAlreadyExistsException.class);
         verify(repository, times(1)).existsByUsername(username);
         verify(encoder, never()).encode(passwordOriginal);
+        verify(storageInitializer, never()).initStorage(anyString());
     }
 
     @Test
@@ -124,6 +144,7 @@ class UserServiceTest {
                 .isInstanceOf(InvalidLoginDataException.class);
         verify(repository, times(1)).findByUsername(username);
         verify(encoder, never()).matches(passwordOriginal, passwordHashed);
+        verify(storageInitializer, never()).initStorage(anyString());
     }
 
     @Test
@@ -144,5 +165,6 @@ class UserServiceTest {
                 .isInstanceOf(InvalidLoginDataException.class);
         verify(repository, times(1)).findByUsername(username);
         verify(encoder, times(1)).matches(passwordOriginal, passwordHashed);
+        verify(storageInitializer, never()).initStorage(anyString());
     }
 }

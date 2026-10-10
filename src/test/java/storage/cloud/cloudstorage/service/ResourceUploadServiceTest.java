@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.InvalidFileNameException;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
-import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.resource.ResourceUploadService;
 
@@ -33,9 +32,6 @@ class ResourceUploadServiceTest {
 
     @Mock
     private ObjectStorage storage;
-
-    @Mock
-    private StorageInitializer storageInitializer;
 
     @Mock
     private MinioProperties properties;
@@ -78,7 +74,6 @@ class ResourceUploadServiceTest {
                 userId
         );
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1))
                 .checkFiles(List.of(fullPathTillFile));
         verify(storage, times(1))
@@ -113,7 +108,6 @@ class ResourceUploadServiceTest {
                 userId
         );
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1))
                 .checkFiles(List.of());
         verify(storage, times(1))
@@ -150,7 +144,6 @@ class ResourceUploadServiceTest {
         assertThatThrownBy(() -> service.upload(parent, gorgonFile, userId))
                 .isInstanceOf(InvalidFileNameException.class);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, never())
                 .checkFiles(anyList());
         verify(storage, never()).upload(anyList(), anyList());

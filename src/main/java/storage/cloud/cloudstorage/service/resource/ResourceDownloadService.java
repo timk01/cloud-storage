@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.technical.ResourceDownloadException;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
-import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.service.Type;
 
@@ -28,7 +27,6 @@ public class ResourceDownloadService {
 
     private final ObjectStorage storage;
     private final MinioProperties properties;
-    private final StorageInitializer initializer;
 
     public void download(List<PreparedFileRecord> preparedFileRecords, OutputStream outputStream, String path) {
         try {
@@ -96,7 +94,6 @@ public class ResourceDownloadService {
 
     public List<PreparedFileRecord> prepareResource(String path, Long userId) {
         String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
-        initializer.initStorage(preparedRoot);
 
         String fullPathTo = buildPreparedPath(preparedRoot, path);
 

@@ -8,7 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.SourceResourceNotFoundException;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
-import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.service.resource.ResourceDeleteService;
 
@@ -25,9 +24,6 @@ public class ResourceDeleteServiceTest {
 
     @Mock
     private ObjectStorage storage;
-
-    @Mock
-    private StorageInitializer storageInitializer;
 
     @Mock
     private MinioProperties properties;
@@ -49,7 +45,6 @@ public class ResourceDeleteServiceTest {
 
         service.delete(path, userId);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPath);
         verify(storage, times(1)).deleteFile(fullPath);
     }
@@ -119,7 +114,6 @@ public class ResourceDeleteServiceTest {
 
         service.delete(path, userId);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathToResource);
         verify(storage, times(1)).retrieveItemsRecursively(fullPathToResource);
         verify(storage, times(1)).deleteResources(filesPath, directoriesPath);
@@ -158,7 +152,6 @@ public class ResourceDeleteServiceTest {
 
         service.delete(path, userId);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathToResource);
         verify(storage, times(1)).retrieveItemsRecursively(fullPathToResource);
         verify(storage, times(1)).deleteResources(filesPath, directoriesPath);
@@ -180,7 +173,6 @@ public class ResourceDeleteServiceTest {
         assertThatThrownBy(() -> service.delete(path, userId))
                 .isInstanceOf(SourceResourceNotFoundException.class);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathToResource);
         verify(storage, never()).retrieveItemsRecursively(anyString());
         verify(storage, never()).deleteFile(anyString());

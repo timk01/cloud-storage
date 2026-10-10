@@ -9,7 +9,6 @@ import storage.cloud.cloudstorage.exception.managed.ResourceMoveConflictExceptio
 import storage.cloud.cloudstorage.exception.managed.ResourceTypeMismatchException;
 import storage.cloud.cloudstorage.exception.managed.SourceAndDestinationAreEqualException;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
-import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
 
@@ -21,11 +20,9 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 public class ResourceMoveService {
     private final ObjectStorage storage;
     private final MinioProperties properties;
-    private final StorageInitializer initializer;
 
     public ResourceResponse move(String fromPath, String toPath, Long userId) {
         String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
-        initializer.initStorage(preparedRoot);
 
         String fullPathFrom = buildPreparedPath(preparedRoot, fromPath);
         String fullPathTo = buildPreparedPath(preparedRoot, toPath);

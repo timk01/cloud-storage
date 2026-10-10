@@ -7,7 +7,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
-import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.resource.ResourceSearchService;
@@ -25,9 +24,6 @@ public class ResourceSearchServiceTest {
 
     @Mock
     private ObjectStorage storage;
-
-    @Mock
-    private StorageInitializer storageInitializer;
 
     @Mock
     private MinioProperties properties;
@@ -127,7 +123,6 @@ public class ResourceSearchServiceTest {
         String query = "GoRgOn";
         List<ResourceResponse> actual = service.search(query, userId);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).retrieveItemsRecursively(minioRootFolder);
 
         assertThat(actual).containsExactlyElementsOf(expected);
@@ -165,7 +160,6 @@ public class ResourceSearchServiceTest {
         String query = "cat";
         List<ResourceResponse> actual = service.search(query, userId);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).retrieveItemsRecursively(minioRootFolder);
 
         assertThat(actual).isEmpty();

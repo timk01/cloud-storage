@@ -8,7 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.*;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
-import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.resource.ResourceMoveService;
 
@@ -24,9 +23,6 @@ public class ResourceMoveServiceTest {
 
     @Mock
     private ObjectStorage storage;
-
-    @Mock
-    private StorageInitializer storageInitializer;
 
     @Mock
     private MinioProperties properties;
@@ -62,7 +58,6 @@ public class ResourceMoveServiceTest {
 
         ResourceResponse actual = service.move(pathFrom, pathTo, userId);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathFrom);
         verify(storage, times(1)).doesPathExist(fullPathTo);
         verify(storage, times(1)).retrieveResourceSize(fullPathFrom);
@@ -97,7 +92,6 @@ public class ResourceMoveServiceTest {
 
         ResourceResponse actual = service.move(pathFrom, pathTo, userId);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathFrom);
         verify(storage, times(1)).doesPathExist(fullPathTo);
         verify(storage, times(1)).moveDirectory(fullPathFrom, fullPathTo);
@@ -125,7 +119,6 @@ public class ResourceMoveServiceTest {
         assertThatThrownBy(() -> service.move(pathFrom, pathTo, userId))
                 .isInstanceOf(SourceResourceNotFoundException.class);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathFrom);
         verify(storage, never()).doesPathExist(fullPathTo);
         verify(storage, never()).moveDirectory(fullPathFrom, fullPathTo);
@@ -151,7 +144,6 @@ public class ResourceMoveServiceTest {
         assertThatThrownBy(() -> service.move(pathFrom, pathTo, userId))
                 .isInstanceOf(SourceAndDestinationAreEqualException.class);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathFrom);
         verify(storage, never()).moveDirectory(fullPathFrom, fullPathTo);
     }
@@ -176,7 +168,6 @@ public class ResourceMoveServiceTest {
         assertThatThrownBy(() -> service.move(pathFrom, pathTo, userId))
                 .isInstanceOf(ResourceTypeMismatchException.class);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathFrom);
         verify(storage, never()).doesPathExist(fullPathTo);
         verify(storage, never()).moveDirectory(fullPathFrom, fullPathTo);
@@ -203,7 +194,6 @@ public class ResourceMoveServiceTest {
         assertThatThrownBy(() -> service.move(pathFrom, pathTo, userId))
                 .isInstanceOf(DestinationResourceAlreadyExistsException.class);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathFrom);
         verify(storage, times(1)).doesPathExist(fullPathTo);
         verify(storage, never()).moveDirectory(fullPathFrom, fullPathTo);
@@ -230,7 +220,6 @@ public class ResourceMoveServiceTest {
         assertThatThrownBy(() -> service.move(pathFrom, pathTo, userId))
                 .isInstanceOf(ResourceMoveConflictException.class);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathFrom);
         verify(storage, times(1)).doesPathExist(fullPathTo);
         verify(storage, never()).moveDirectory(fullPathFrom, fullPathTo);

@@ -4,13 +4,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.entity.User;
 import storage.cloud.cloudstorage.exception.managed.InvalidLoginDataException;
 import storage.cloud.cloudstorage.exception.managed.UserAlreadyExistsException;
+import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.repository.UserRepository;
 import storage.cloud.cloudstorage.request.UserLoginRequest;
 import storage.cloud.cloudstorage.request.UserRegisterRequest;
 import storage.cloud.cloudstorage.response.UserResponse;
+
+import static storage.cloud.cloudstorage.service.ResourceServiceUtils.buildPreparedRoot;
 
 @Slf4j
 @Service
@@ -19,7 +24,10 @@ public class UserService {
 
     private final UserRepository repository;
     private final PasswordEncoder encoder;
+    private final StorageInitializer initializer;
+    private final MinioProperties properties;
 
+    @Transactional
     public UserResponse register(UserRegisterRequest userRegisterDto) {
         if (repository.existsByUsername(userRegisterDto.username())) {
             throw new UserAlreadyExistsException("User name is already taken");
@@ -28,13 +36,17 @@ public class UserService {
         String encodedPass = encoder.encode(userRegisterDto.password());
         User user = repository.save(new User(userRegisterDto.username(), encodedPass));
 
+        Long userId = user.getId();
+        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
+        initializer.initStorage(preparedRoot);
+
         log.info(
                 "User is registered: userId={}, name={}",
-                user.getId(),
+                userId,
                 user.getUsername()
         );
 
-        return new UserResponse(user.getId(), user.getUsername());
+        return new UserResponse(userId, user.getUsername());
     }
 
     public UserResponse login(UserLoginRequest userLoginDto) {
@@ -45,12 +57,16 @@ public class UserService {
             throw new InvalidLoginDataException("Invalid credentials");
         }
 
+        Long userId = user.getId();
+        String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
+        initializer.initStorage(preparedRoot);
+
         log.info(
                 "User is logged in: userId={}, name={}",
-                user.getId(),
+                userId,
                 user.getUsername()
         );
 
-        return new UserResponse(user.getId(), user.getUsername());
+        return new UserResponse(userId, user.getUsername());
     }
 }

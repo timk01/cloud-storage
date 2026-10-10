@@ -7,7 +7,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
-import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.directory.DirectoryGetInfoService;
@@ -25,9 +24,6 @@ public class DirectoryGetInfoServiceTest {
 
     @Mock
     private ObjectStorage storage;
-
-    @Mock
-    private StorageInitializer storageInitializer;
 
     @Mock
     private MinioProperties properties;
@@ -98,7 +94,6 @@ public class DirectoryGetInfoServiceTest {
         );
         List<ResourceResponse> actual = service.getFolderInfo(parent, userId);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).retrieveDirectoryItems(fullPath);
 
         assertThat(actual).containsExactlyElementsOf(expected);

@@ -8,9 +8,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.InvalidFileNameException;
-import storage.cloud.cloudstorage.repository.MinioRepository;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
-import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
 
@@ -26,11 +24,9 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.buildPrepa
 public class ResourceUploadService {
     private final ObjectStorage storage;
     private final MinioProperties properties;
-    private final StorageInitializer initializer;
 
     public List<ResourceResponse> upload(String path, MultipartFile[] files, Long userId) {
         String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
-        initializer.initStorage(preparedRoot);
 
         String preparedPath = buildPreparedPath(preparedRoot, path);
         List<PreparedFile> preparedFiles = getPreparedFiles(files, preparedPath);

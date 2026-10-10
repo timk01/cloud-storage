@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
-import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.Type;
@@ -21,11 +20,9 @@ import static storage.cloud.cloudstorage.service.ResourceServiceUtils.*;
 public class ResourceSearchService {
     private final ObjectStorage storage;
     private final MinioProperties properties;
-    private final StorageInitializer initializer;
 
     public List<ResourceResponse> search(String query, Long userId) {
         String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
-        initializer.initStorage(preparedRoot);
 
         List<StorageItem> storageItems = storage.retrieveItemsRecursively(preparedRoot);
         List<ResourceResponse> resources = new ArrayList<>();

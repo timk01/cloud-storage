@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
-import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.service.Type;
 
@@ -22,11 +21,9 @@ public class ResourceDeleteService {
 
     private final ObjectStorage storage;
     private final MinioProperties properties;
-    private final StorageInitializer initializer;
 
     public void delete(String path, Long userId) {
         String preparedRoot = buildPreparedRoot(userId, properties.bucket().name());
-        initializer.initStorage(preparedRoot);
 
         String fullPathTo = buildPreparedPath(preparedRoot, path);
 

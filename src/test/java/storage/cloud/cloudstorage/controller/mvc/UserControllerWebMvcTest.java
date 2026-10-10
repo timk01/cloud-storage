@@ -12,7 +12,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.controller.UserController;
+import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.request.UserLoginRequest;
 import storage.cloud.cloudstorage.request.UserRegisterRequest;
 import storage.cloud.cloudstorage.response.UserResponse;
@@ -38,6 +40,9 @@ class UserControllerWebMvcTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private StorageInitializer initializer;
 
     private ObjectMapper objectMapper = new ObjectMapper();
 

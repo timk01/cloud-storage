@@ -8,7 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.SourceResourceNotFoundException;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
-import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.repository.StorageItem;
 import storage.cloud.cloudstorage.service.resource.ResourceDownloadService;
 
@@ -31,9 +30,6 @@ public class ResourceDownloadServiceTest {
 
     @Mock
     private ObjectStorage storage;
-
-    @Mock
-    private StorageInitializer storageInitializer;
 
     @Mock
     private MinioProperties properties;
@@ -65,7 +61,6 @@ public class ResourceDownloadServiceTest {
 
         List<ResourceDownloadService.PreparedFileRecord> actualRecords = service.prepareResource(path, userId);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathToResource);
         verify(storage, never()).retrieveItemsRecursively(fullPathToResource);
 
@@ -151,7 +146,6 @@ public class ResourceDownloadServiceTest {
 
         List<ResourceDownloadService.PreparedFileRecord> actualRecords = service.prepareResource(path, userId);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathToResource);
         verify(storage, times(1)).retrieveItemsRecursively(fullPathToResource);
 
@@ -185,7 +179,6 @@ public class ResourceDownloadServiceTest {
 
         List<ResourceDownloadService.PreparedFileRecord> actualRecords = service.prepareResource(path, userId);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathToResource);
         verify(storage, times(1)).retrieveItemsRecursively(fullPathToResource);
 
@@ -210,7 +203,6 @@ public class ResourceDownloadServiceTest {
         assertThatThrownBy(() -> service.prepareResource(path, userId))
                 .isInstanceOf(SourceResourceNotFoundException.class);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathToResource);
         verify(storage, never()).retrieveItemsRecursively(fullPathToResource);
     }
@@ -238,7 +230,6 @@ public class ResourceDownloadServiceTest {
 
 
         service.download(preparedFileRecords, outputStream, fake_data);
-
 
         verify(storage, times(1)).readData(preparedFileRecords.get(0).fullPathTillResource());
 

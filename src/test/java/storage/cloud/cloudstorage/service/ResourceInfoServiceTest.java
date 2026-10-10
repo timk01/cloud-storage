@@ -8,7 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import storage.cloud.cloudstorage.config.MinioProperties;
 import storage.cloud.cloudstorage.exception.managed.SourceResourceNotFoundException;
 import storage.cloud.cloudstorage.repository.ObjectStorage;
-import storage.cloud.cloudstorage.repository.StorageInitializer;
 import storage.cloud.cloudstorage.response.ResourceResponse;
 import storage.cloud.cloudstorage.service.resource.ResourceInfoService;
 
@@ -24,9 +23,6 @@ public class ResourceInfoServiceTest {
 
     @Mock
     private ObjectStorage storage;
-
-    @Mock
-    private StorageInitializer storageInitializer;
 
     @Mock
     private MinioProperties properties;
@@ -55,7 +51,6 @@ public class ResourceInfoServiceTest {
         assertThat(actual.size()).isEqualTo(1500L);
         assertThat(actual.type()).isEqualTo(Type.FILE.name());
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathToResource);
         verify(storage, times(1)).retrieveResourceSize(fullPathToResource);
     }
@@ -79,7 +74,6 @@ public class ResourceInfoServiceTest {
         assertThat(actual.name()).isEqualTo("folder3");
         assertThat(actual.type()).isEqualTo(Type.DIRECTORY.name());
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathToResource);
         verify(storage, never()).retrieveResourceSize(anyString());
     }
@@ -103,7 +97,6 @@ public class ResourceInfoServiceTest {
         assertThat(actual.name()).isEqualTo("folder1");
         assertThat(actual.type()).isEqualTo(Type.DIRECTORY.name());
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathToResource);
         verify(storage, never()).retrieveResourceSize(anyString());
     }
@@ -124,7 +117,6 @@ public class ResourceInfoServiceTest {
         assertThatThrownBy(() -> service.resourceInfo(path, userId))
                 .isInstanceOf(SourceResourceNotFoundException.class);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathToResource);
         verify(storage, never()).retrieveResourceSize(anyString());
     }
@@ -145,7 +137,6 @@ public class ResourceInfoServiceTest {
         assertThatThrownBy(() -> service.resourceInfo(path, userId))
                 .isInstanceOf(SourceResourceNotFoundException.class);
 
-        verify(storageInitializer, times(1)).initStorage(minioRootFolder);
         verify(storage, times(1)).doesPathExist(fullPathToResource);
         verify(storage, never()).retrieveResourceSize(anyString());
     }
